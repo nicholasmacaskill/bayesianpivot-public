@@ -1,5 +1,6 @@
 import json
 import logging
+import pandas as pd
 from datetime import datetime, timezone
 from src.core.database import get_db_connection, execute_db_write_with_retry
 
@@ -114,27 +115,64 @@ class CounterfactualTracker:
                 r_mult = 0.0
 
                 if df is not None and not df.empty:
-                    recent_high = float(df["high"].max())
-                    recent_low = float(df["low"].min())
+                    df_post = df.copy()
+                    if "timestamp" in df_post.columns:
+                        if pd.api.types.is_datetime64_any_dtype(df_post["timestamp"]):
+                            if df_post["timestamp"].dt.tz is not None:
+                                df_post = df_post[df_post["timestamp"] >= created_at]
+                            else:
+                                df_post = df_post[df_post["timestamp"] >= created_at.replace(tzinfo=None)]
+                        else:
+                            try:
+                                dt_series = pd.to_datetime(df_post["timestamp"])
+                                if dt_series.dt.tz is not None:
+                                    df_post = df_post[dt_series >= created_at]
+                                else:
+                                    df_post = df_post[dt_series >= created_at.replace(tzinfo=None)]
+                            except Exception:
+                                pass
 
-                    if direction in ["BUY", "LONG"]:
-                        if tp > 0 and recent_high >= tp:
-                            outcome = "HIT_TP"
-                            r_mult = 2.5
-                            pnl = 250.0
-                        elif sl > 0 and recent_low <= sl:
-                            outcome = "HIT_SL"
-                            r_mult = -1.0
-                            pnl = -100.0
-                    else: # SELL / SHORT
-                        if tp > 0 and recent_low <= tp:
-                            outcome = "HIT_TP"
-                            r_mult = 2.5
-                            pnl = 250.0
-                        elif sl > 0 and recent_high >= sl:
-                            outcome = "HIT_SL"
-                            r_mult = -1.0
-                            pnl = -100.0
+                    if not df_post.empty:
+                        for _, candle in df_post.iterrows():
+                            c_high = float(candle.get("high", 0.0))
+                            c_low = float(candle.get("low", 0.0))
+
+                            if direction in ["BUY", "LONG"]:
+                                hit_sl = (sl > 0 and c_low <= sl)
+                                hit_tp = (tp > 0 and c_high >= tp)
+                                if hit_sl and hit_tp:
+                                    outcome = "HIT_SL"
+                                    r_mult = -1.0
+                                    pnl = -100.0
+                                    break
+                                elif hit_sl:
+                                    outcome = "HIT_SL"
+                                    r_mult = -1.0
+                                    pnl = -100.0
+                                    break
+                                elif hit_tp:
+                                    outcome = "HIT_TP"
+                                    r_mult = 2.5
+                                    pnl = 250.0
+                                    break
+                            else:  # SELL / SHORT
+                                hit_sl = (sl > 0 and c_high >= sl)
+                                hit_tp = (tp > 0 and c_low <= tp)
+                                if hit_sl and hit_tp:
+                                    outcome = "HIT_SL"
+                                    r_mult = -1.0
+                                    pnl = -100.0
+                                    break
+                                elif hit_sl:
+                                    outcome = "HIT_SL"
+                                    r_mult = -1.0
+                                    pnl = -100.0
+                                    break
+                                elif hit_tp:
+                                    outcome = "HIT_TP"
+                                    r_mult = 2.5
+                                    pnl = 250.0
+                                    break
 
                 # Auto-expire stale shadow trades after 48h regardless of data fetch
                 if not outcome and age_hours > 48.0:
