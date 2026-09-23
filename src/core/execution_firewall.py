@@ -187,7 +187,8 @@ class ExecutionFirewall:
                         current_cluster.append({'time': t_sec, 'symbol': sym, 'pnl': pnl})
                     else:
                         ref = current_cluster[0]
-                        if abs(t_sec - ref['time']) <= 900 and sym == ref['symbol']:
+                        # 45-minute window accounts for multi-account adaptive pacing and delayed broker syncs of the same setup
+                        if abs(t_sec - ref['time']) <= 2700 and sym == ref['symbol']:
                             current_cluster.append({'time': t_sec, 'symbol': sym, 'pnl': pnl})
                         else:
                             setup_clusters.append(current_cluster)
