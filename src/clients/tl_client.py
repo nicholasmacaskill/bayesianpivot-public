@@ -31,6 +31,7 @@ class TradeLockerHelper:
         self._instruments_cache = dict(TradeLockerHelper._shared_instruments_cache)
         self._symbol_cache = dict(TradeLockerHelper._shared_symbol_cache)
         self._bracket_cache = {}
+        self._pos_cache = None
         
     def sync_instruments(self):
         """Discovers and caches all tradable instruments and routes directly from the broker API."""
@@ -205,8 +206,15 @@ class TradeLockerHelper:
         except Exception:
             return 0.0
 
-    def get_open_positions(self):
-        """Fetches currently active positions."""
+    def get_open_positions(self, max_age_seconds=3.0):
+        """Fetches currently active positions with rate-limit dampening cache."""
+        import time
+        now = time.time()
+        if hasattr(self, '_pos_cache') and self._pos_cache is not None:
+            cached_time, cached_data = self._pos_cache
+            if now - cached_time < max_age_seconds:
+                return list(cached_data)
+
         if not self.access_token and not self.login(): return []
         
         try:
@@ -320,6 +328,7 @@ class TradeLockerHelper:
                 stale_keys = [k for k in self._bracket_cache if k not in active_pos_ids]
                 for sk in stale_keys:
                     self._bracket_cache.pop(sk, None)
+                self._pos_cache = (now, list(trades))
                 return trades
             elif resp.status_code == 401:
                 logger.warning(f"401 Unauthorized for {self.email} on positions. Re-authenticating...")
@@ -548,6 +557,7 @@ class TradeLockerHelper:
 
                 if resp.status_code in [200, 201]:
                     res_json = resp.json()
+                    self._pos_cache = None
                     logger.info(f"✅ Order Executed: {side} {aligned_qty} on {instrument_id}")
                     
                     # Ensure Stop Loss & Take Profit are verified & attached via Position PATCH fallback
@@ -680,6 +690,7 @@ class TradeLockerHelper:
                             if pos_k not in self._bracket_cache: self._bracket_cache[pos_k] = {}
                             if stop_loss is not None: self._bracket_cache[pos_k]['stopLoss'] = float(stop_loss)
                             if take_profit is not None: self._bracket_cache[pos_k]['takeProfit'] = float(take_profit)
+                            self._pos_cache = None
                             return True
                     logger.error(f"❌ Failed to patch position {position_id}: {resp.status_code} - {resp.text}")
                     return False
@@ -703,6 +714,7 @@ class TradeLockerHelper:
             try:
                 resp = requests.delete(url, headers=self._get_headers(auth=True), timeout=10)
                 if resp.status_code in [200, 204]:
+                    self._pos_cache = None
                     logger.info(f"✅ Position {position_id} successfully closed.")
                     return True
                 elif resp.status_code == 401 and attempt == 0:
@@ -758,6 +770,13 @@ class TradeLockerClient:
             if email and password and email.strip() not in seen_emails:
                 seen_emails.add(email.strip())
                 self.helpers.append(TradeLockerHelper(email, password, server, base_url))
+        self._open_positions_cache = None
+
+    def invalidate_positions_cache(self):
+        """Immediately clears open positions cache on order execution, modify, or close."""
+        self._open_positions_cache = None
+        for helper in self.helpers:
+            helper._pos_cache = None
 
     def update_fleet_stop_loss(self, new_stop_loss, symbol="BTC/USD"):
         """
@@ -810,9 +829,15 @@ class TradeLockerClient:
         return total_closed
 
 
-    def get_open_positions(self):
-        """Aggregates open positions from all accounts with rate-limit pacing."""
+    def get_open_positions(self, max_age_seconds=5.0):
+        """Aggregates open positions from all accounts with rate-limit pacing and smart caching."""
         import time
+        now = time.time()
+        if hasattr(self, '_open_positions_cache') and self._open_positions_cache is not None:
+            cached_time, cached_trades = self._open_positions_cache
+            if now - cached_time < max_age_seconds:
+                return list(cached_trades)
+
         all_trades = []
         for i, helper in enumerate(self.helpers):
             if i > 0:
@@ -820,6 +845,7 @@ class TradeLockerClient:
             trades = helper.get_open_positions()
             if trades:
                 all_trades.extend(trades)
+        self._open_positions_cache = (now, list(all_trades))
         return all_trades
 
     def get_total_equity(self):
@@ -1329,6 +1355,10 @@ class TradeLockerClient:
                 except Exception as recon_err:
                     logger.error(f"Rule 4 verification error on Account {i+1}: {recon_err}")
         
+        # Invalidate positions cache across fleet so immediate queries see fresh state
+        if filled_count > 0:
+            self.invalidate_positions_cache()
+
         # Record Persistent Cooldown & Setup Lock upon successful order execution (Invariant 8 & 11)
         if filled_count > 0 and not bypass_firewall:
             ExecutionFirewall.record_trade_execution(symbol)

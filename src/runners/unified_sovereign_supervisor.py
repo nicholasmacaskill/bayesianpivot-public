@@ -89,7 +89,7 @@ class UnifiedSovereignSupervisor:
         while self.running:
             try:
                 live_symbols = list(getattr(Config, 'SYMBOLS', ['BTC/USD']))
-                shadow_symbols = list(getattr(Config, 'SHADOW_SYMBOLS', ['XAU/USD', 'ETH/USD', 'SOL/USD']))
+                shadow_symbols = list(getattr(Config, 'SHADOW_SYMBOLS', ['ETH/USD', 'SOL/USD']))
                 all_symbols = list(dict.fromkeys(live_symbols + shadow_symbols))
 
                 # 1. Check & trail open positions
@@ -183,7 +183,24 @@ class UnifiedSovereignSupervisor:
                         
                         qty = float(pos.get('qty') or 0.0)
                         contract_size = Config.get_contract_size(symbol)
-                        risk_usd = abs(entry - sl) * qty * contract_size
+
+                        # Establish and freeze true initial risk basis on first observation
+                        # Prevents artificial R-multiple inflation after stepped defense or BE trails
+                        if "initial_sl" not in sym_data or sym_data["initial_sl"] <= 0:
+                            min_stop_pct = Config.MIN_STOP_PCT.get(symbol, 0.003)
+                            dist = abs(entry - sl)
+                            if dist < (entry * min_stop_pct * 0.5):
+                                scan_sl = scan.get('stop_loss') if scan else None
+                                if scan_sl and float(scan_sl) > 0 and abs(entry - float(scan_sl)) >= (entry * min_stop_pct * 0.5):
+                                    sl = float(scan_sl)
+                                else:
+                                    sl = entry - (entry * min_stop_pct) if side.upper() == "BUY" else entry + (entry * min_stop_pct)
+                            sym_data["initial_sl"] = sl
+                            sym_data["initial_risk_usd"] = abs(entry - sl) * qty * contract_size
+                            self.watchdog.save_state()
+
+                        initial_sl = sym_data.get("initial_sl", sl)
+                        risk_usd = sym_data.get("initial_risk_usd") or (abs(entry - initial_sl) * qty * contract_size)
                         if risk_usd <= 0:
                             continue
 
@@ -209,7 +226,7 @@ class UnifiedSovereignSupervisor:
                         is_scaled_out = sym_data.get("scaleout_executed") or self.watchdog.alerted_trades.get(t_id, {}).get("scaleout_executed")
                         if stepped_enabled and r_multiple >= stepped_trigger and not is_stepped and not is_scaled_out:
                             logger.info(f"🛡️ [STEPPED DEFENSE] {symbol} reached {r_multiple:.2f}R! Tightening Stop Loss to {stepped_locked_r:.1f}R across fleet...")
-                            self.watchdog.execute_stepped_defense(symbol, entry, sl, side=side, locked_r=stepped_locked_r)
+                            self.watchdog.execute_stepped_defense(symbol, entry, initial_sl, side=side, locked_r=stepped_locked_r)
                             sym_data["stepped_defense_executed"] = True
                             self.watchdog.alerted_trades[t_id]["stepped_defense_executed"] = True
                             self.watchdog.save_state()
@@ -219,7 +236,7 @@ class UnifiedSovereignSupervisor:
                         is_scaled_out = sym_data.get("scaleout_executed") or self.watchdog.alerted_trades.get(t_id, {}).get("scaleout_executed")
                         if r_multiple >= be_trigger and not is_scaled_out:
                             logger.info(f"💰 [AUTO SCALE-OUT] {symbol} reached {r_multiple:.2f}R! Executing 50% fleet closure & Break-Even trail...")
-                            self.watchdog.execute_fleet_scaleout(symbol, entry, reason=f"+{be_trigger:.1f}R Target Reached", side=side, initial_sl=sl)
+                            self.watchdog.execute_fleet_scaleout(symbol, entry, reason=f"+{be_trigger:.1f}R Target Reached", side=side, initial_sl=initial_sl)
                             sym_data["scaleout_executed"] = True
                             self.watchdog.alerted_trades[t_id]["scaleout_executed"] = True
                             self.watchdog.save_state()
@@ -233,7 +250,7 @@ class UnifiedSovereignSupervisor:
                             retrace = peak_r - r_multiple
                             if retrace >= mfe_max_retrace and not is_mfe_scaled:
                                 logger.warning(f"🛡️ [MFE PEAK RATCHET] {symbol} peaked at +{peak_r:.2f}R, retraced {retrace:.2f}R! Banking profit at market...")
-                                self.watchdog.execute_fleet_scaleout(symbol, entry, reason=f"MFE Peak Retracement (+{peak_r:.2f}R -> +{r_multiple:.2f}R)", side=side, initial_sl=sl)
+                                self.watchdog.execute_fleet_scaleout(symbol, entry, reason=f"MFE Peak Retracement (+{peak_r:.2f}R -> +{r_multiple:.2f}R)", side=side, initial_sl=initial_sl)
                                 sym_data["mfe_scaleout_executed"] = True
                                 self.watchdog.alerted_trades[t_id]["mfe_scaleout_executed"] = True
                                 self.watchdog.save_state()
@@ -248,7 +265,7 @@ class UnifiedSovereignSupervisor:
                                 is_safe, cal_reason = CalendarFilter().is_safe_to_trade(symbol)
                                 if not is_safe and "⛔ MACRO BLACKOUT" in str(cal_reason):
                                     logger.warning(f"⚡ [PRE-MACRO DEFENSE] {symbol} at +{r_multiple:.2f}R approaching macro event! Banking profit & locking BE...")
-                                    self.watchdog.execute_fleet_scaleout(symbol, entry, reason=f"Pre-Macro Defense: {cal_reason}", side=side, initial_sl=sl)
+                                    self.watchdog.execute_fleet_scaleout(symbol, entry, reason=f"Pre-Macro Defense: {cal_reason}", side=side, initial_sl=initial_sl)
                                     sym_data["macro_scaleout_executed"] = True
                                     self.watchdog.alerted_trades[t_id]["macro_scaleout_executed"] = True
                                     self.watchdog.save_state()

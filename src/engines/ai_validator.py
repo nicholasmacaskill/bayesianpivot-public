@@ -375,7 +375,7 @@ class AIValidator:
             c = conn.cursor()
             
             rows = c.execute(
-                "SELECT timestamp, side, pnl FROM journal WHERE status = 'CLOSED' AND pnl < 0 ORDER BY rowid DESC LIMIT 20"
+                "SELECT timestamp, symbol, side, pnl FROM journal WHERE status = 'CLOSED' AND pnl < 0 ORDER BY rowid DESC LIMIT 30"
             ).fetchall()
             conn.close()
             
@@ -384,9 +384,13 @@ class AIValidator:
                 
             cutoff = datetime.utcnow() - timedelta(hours=cooldown_hours)
             target_side = str(direction or "BUY").upper()
+            target_sym = str(symbol or "").replace("/", "").replace("_", "").upper()
             
             for r in rows:
-                ts_str, side, pnl = r[0], str(r[1]).upper(), float(r[2] or 0.0)
+                ts_str, r_sym, side, pnl = r[0], str(r[1] or ""), str(r[2]).upper(), float(r[3] or 0.0)
+                clean_r_sym = r_sym.replace("/", "").replace("_", "").upper()
+                if target_sym and clean_r_sym and target_sym != clean_r_sym:
+                    continue
                 try:
                     ts = pd.to_datetime(ts_str).tz_localize(None)
                 except Exception:
@@ -394,7 +398,7 @@ class AIValidator:
                     
                 if ts >= cutoff and side == target_side:
                     hrs_ago = (datetime.utcnow() - ts).total_seconds() / 3600.0
-                    return False, f"DIRECTIONAL COOLDOWN: Stopped out on {side} trade {hrs_ago:.1f}h ago (< {cooldown_hours}h limit). Cooldown active."
+                    return False, f"DIRECTIONAL COOLDOWN: Stopped out on {symbol} {side} trade {hrs_ago:.1f}h ago (< {cooldown_hours}h limit). Cooldown active."
                     
             return True, "Directional cooldown clear"
         except Exception as e:

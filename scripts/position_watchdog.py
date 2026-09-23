@@ -78,7 +78,7 @@ class PositionWatchdog:
             resp = self.sb.client.table("scans")\
                 .select("*")\
                 .eq("symbol", norm_sym)\
-                .eq("verdict", "ACCEPTED")\
+                .in_("verdict", ["CONFIRMED", "ACCEPTED", "FLOW_GO", "EXECUTED"])\
                 .gt("timestamp", time_threshold)\
                 .order("timestamp", desc=True)\
                 .limit(1)\
@@ -138,10 +138,26 @@ class PositionWatchdog:
                     if not sl or entry <= 0:
                         continue
                     
-                    # 2. Calculate R
                     qty = float(pos.get('qty') or 0.0)
                     contract_size = Config.get_contract_size(symbol)
-                    risk_usd = abs(entry - sl) * qty * contract_size
+
+                    # Establish and freeze true initial risk basis on first observation
+                    # Prevents artificial R-multiple inflation after stepped defense or BE trails
+                    if "initial_sl" not in sym_data or sym_data["initial_sl"] <= 0:
+                        min_stop_pct = Config.MIN_STOP_PCT.get(symbol, 0.003)
+                        dist = abs(entry - sl)
+                        if dist < (entry * min_stop_pct * 0.5):
+                            scan_sl = scan.get('stop_loss') if scan else None
+                            if scan_sl and float(scan_sl) > 0 and abs(entry - float(scan_sl)) >= (entry * min_stop_pct * 0.5):
+                                sl = float(scan_sl)
+                            else:
+                                sl = entry - (entry * min_stop_pct) if side.upper() == "BUY" else entry + (entry * min_stop_pct)
+                        sym_data["initial_sl"] = sl
+                        sym_data["initial_risk_usd"] = abs(entry - sl) * qty * contract_size
+                        self.save_state()
+
+                    initial_sl = sym_data.get("initial_sl", sl)
+                    risk_usd = sym_data.get("initial_risk_usd") or (abs(entry - initial_sl) * qty * contract_size)
                     
                     if not risk_usd or risk_usd <= 0:
                         continue
@@ -168,7 +184,7 @@ class PositionWatchdog:
                     is_scaled_out = sym_data.get("scaleout_executed") or self.alerted_trades.get(t_id, {}).get("scaleout_executed")
                     if stepped_enabled and r_multiple >= stepped_trigger and not is_stepped and not is_scaled_out:
                         print(f"🛡️ [STEPPED DEFENSE] {symbol} hit {r_multiple:.2f}R (>= +{stepped_trigger:.1f}R)! Tightening Stop Loss to {stepped_locked_r:.1f}R across fleet...")
-                        self.execute_stepped_defense(symbol, entry, sl, side=side, locked_r=stepped_locked_r)
+                        self.execute_stepped_defense(symbol, entry, initial_sl, side=side, locked_r=stepped_locked_r)
                         sym_data["stepped_defense_executed"] = True
                         self.alerted_trades[t_id]["stepped_defense_executed"] = True
                         self.save_state()
@@ -178,7 +194,7 @@ class PositionWatchdog:
                     is_scaled_out = sym_data.get("scaleout_executed") or self.alerted_trades.get(t_id, {}).get("scaleout_executed")
                     if r_multiple >= be_trigger and not is_scaled_out:
                         print(f"💰 [AUTO SCALE-OUT] {symbol} hit {r_multiple:.2f}R! Executing Fleet Break-Even & Scale-Out...")
-                        self.execute_fleet_scaleout(symbol, entry, reason=f"+{be_trigger:.1f}R Target Reached", side=side, initial_sl=sl)
+                        self.execute_fleet_scaleout(symbol, entry, reason=f"+{be_trigger:.1f}R Target Reached", side=side, initial_sl=initial_sl)
                         sym_data["scaleout_executed"] = True
                         self.alerted_trades[t_id]["scaleout_executed"] = True
                         self.save_state()
@@ -192,7 +208,7 @@ class PositionWatchdog:
                         retrace = peak_r - r_multiple
                         if retrace >= mfe_max_retrace and not is_mfe_scaled:
                             print(f"🛡️ [MFE PEAK RATCHET] {symbol} peaked at +{peak_r:.2f}R, retraced {retrace:.2f}R (now {r_multiple:.2f}R)! Executing defensive scale-out...")
-                            self.execute_fleet_scaleout(symbol, entry, reason=f"MFE Peak Retracement (+{peak_r:.2f}R -> +{r_multiple:.2f}R)", side=side, initial_sl=sl)
+                            self.execute_fleet_scaleout(symbol, entry, reason=f"MFE Peak Retracement (+{peak_r:.2f}R -> +{r_multiple:.2f}R)", side=side, initial_sl=initial_sl)
                             sym_data["mfe_scaleout_executed"] = True
                             self.alerted_trades[t_id]["mfe_scaleout_executed"] = True
                             self.save_state()
@@ -207,7 +223,7 @@ class PositionWatchdog:
                             is_safe, cal_reason = CalendarFilter().is_safe_to_trade(symbol)
                             if not is_safe and "⛔ MACRO BLACKOUT" in str(cal_reason):
                                 print(f"⚡ [PRE-MACRO DEFENSE] {symbol} at +{r_multiple:.2f}R approaching macro event! Banking profit & locking BE...")
-                                self.execute_fleet_scaleout(symbol, entry, reason=f"Pre-Macro Defense: {cal_reason}", side=side, initial_sl=sl)
+                                self.execute_fleet_scaleout(symbol, entry, reason=f"Pre-Macro Defense: {cal_reason}", side=side, initial_sl=initial_sl)
                                 sym_data["macro_scaleout_executed"] = True
                                 self.alerted_trades[t_id]["macro_scaleout_executed"] = True
                                 self.save_state()

@@ -75,7 +75,7 @@ class AlphaSweepScanner(SMCScanner):
             return "ASIAN_SESSION_JUDAS"
         elif 7.0 <= utc_float < 10.0:
             return "LONDON_OPEN"
-        elif 13.5 <= utc_float <= 17.0:
+        elif 12.0 <= utc_float <= 17.0:
             return "LONDON_CLOSE_NY_MORNING"
         elif 17.0 < utc_float < 20.0:
             return "NY_AFTERNOON_SHADOW"
@@ -1144,10 +1144,10 @@ class AlphaSweepScanner(SMCScanner):
                 tag_label = "shadow trade, low-density noise sweep"
                 pattern_str = f"[👻 SHADOW - LOW DENSITY SWEEP ({liq_density:.1f}/10)] {base_pattern_str}"
                 ai_reasoning = f"[👻 SHADOW LAB (LOW DENSITY SWEEP)] {pattern_type.replace('_', ' ')} of level {setup['level']:.2f} has insufficient stop cluster density ({liq_density:.1f}/10 < 6.0). Not a verified institutional POI. Quarantined to $0 risk."
-            elif killzone == "NY_AFTERNOON_SHADOW" or killzone not in ["LONDON_OPEN", "NEW_YORK_AM", "LONDON_CLOSE"]:
+            elif killzone == "NY_AFTERNOON_SHADOW" or killzone not in ["LONDON_OPEN", "LONDON_CLOSE_NY_MORNING", "ASIAN_SESSION_JUDAS", "NEW_YORK_AM", "LONDON_CLOSE"]:
                 tag_label = "shadow session quarantine"
                 pattern_str = f"[👻 SHADOW - SESSION RESTRICTED] {base_pattern_str}"
-                ai_reasoning = f"[👻 SHADOW LAB (SESSION RESTRICTED)] {pattern_type.replace('_', ' ')} on {symbol} is shadow-only during {killzone} (Live execution restricted to London/NY). AI Score: {shadow_score:.1f}/10."
+                ai_reasoning = f"[👻 SHADOW LAB (SESSION RESTRICTED)] {pattern_type.replace('_', ' ')} on {symbol} is shadow-only during {killzone} (Live execution restricted to London/NY/Asian). AI Score: {shadow_score:.1f}/10."
             elif setup.get('is_shadow_only', False):
                 tag_label = "shadow lab quarantine"
                 pattern_str = f"[👻 SHADOW LAB] {base_pattern_str}"
@@ -1303,7 +1303,7 @@ class AlphaSweepScanner(SMCScanner):
                 
             # Auto-Execution Tranche 1 Probe (50% scale / ~0.20% fleet risk)
             exec_result = None
-            if not is_shadow_strategy and getattr(Config, 'LIVE_AUTO_EXECUTION', False) and ai_score_val >= getattr(Config, 'AUTO_EXECUTION_MIN_SCORE', 8.5):
+            if not is_shadow_strategy and getattr(Config, 'LIVE_AUTO_EXECUTION', False) and ai_score_val >= getattr(Config, 'AUTO_EXECUTION_MIN_SCORE', 8.0):
                 # Anti-stacking: check for existing open positions across fleet
                 has_active_pos = False
                 try:
@@ -1462,9 +1462,10 @@ class AlphaSweepScanner(SMCScanner):
                     continue
 
                 initial_r_dist = cached_r_dist if cached_r_dist > 0 else abs(entry_price - current_sl)
-                if initial_r_dist <= 0:
-                    # Fallback estimate based on typical 0.25% stop if uninitialized
-                    initial_r_dist = entry_price * 0.0025
+                # Plausible stop floor: if SL has already trailed or is uninitialized, fall back to minimum ATR stop distance
+                min_stop_pct = Config.MIN_STOP_PCT.get(symbol, 0.003)
+                if initial_r_dist < (entry_price * min_stop_pct * 0.5):
+                    initial_r_dist = entry_price * min_stop_pct
 
                 # Fetch live mark price with symbol normalization & broker fallback
                 fetch_sym = symbol
