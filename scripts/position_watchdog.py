@@ -112,6 +112,23 @@ class PositionWatchdog:
                         self.symbol_state.clear()
                         self.alerted_trades.clear()
                         self.save_state()
+                else:
+                    # Friday Pre-Weekend Auto-Flatten Gate: Flatten fleet at Friday 20:00 UTC to eliminate weekend gap slippage
+                    now_utc = datetime.now(timezone.utc)
+                    if now_utc.weekday() == 4 and now_utc.hour >= 20:
+                        print("🛡️ [FRIDAY PRE-WEEKEND AUTO-FLATTEN] Friday 20:00 UTC reached! Flattening all open positions across fleet to prevent weekend gap slippage...")
+                        closed = self.tl.close_all_fleet_positions()
+                        if hasattr(self, 'notifier') and self.notifier:
+                            self.notifier._send_message(
+                                f"🛡️ <b>FRIDAY PRE-WEEKEND AUTO-FLATTEN EXECUTED</b>\n\n"
+                                f"Market close protection active. Flattened {closed} positions across fleet.\n"
+                                f"✅ <b>Invariant:</b> Zero weekend gap exposure."
+                            )
+                        self.symbol_state.clear()
+                        self.alerted_trades.clear()
+                        self.save_state()
+                        time.sleep(30)
+                        continue
                 
                 for pos in positions:
                     t_id = pos['id']
@@ -263,6 +280,7 @@ class PositionWatchdog:
             trailed_count = 0
             closed_count = 0
             target_sym = symbol.replace("/", "").replace("_", "").upper()
+            target_inst_id = str(self.tl.resolve_instrument_id(symbol))
             
             # Decoupled fleet indices:
             # Scale-out accounts: Account 1 (0), Account 3 (2), Account 9 (8)
@@ -297,7 +315,10 @@ class PositionWatchdog:
                     positions = helper.get_open_positions()
                     target_pos = [
                         p for p in positions 
-                        if target_sym in str(p.get("symbol", "")).replace("/", "").replace("_", "").upper()
+                        if (
+                            target_sym in str(p.get("symbol", "")).replace("/", "").replace("_", "").upper()
+                            or str(p.get("tradableInstrumentId") or p.get("instrumentId") or "") == target_inst_id
+                        )
                     ]
                     
                     if not target_pos:
@@ -394,6 +415,7 @@ class PositionWatchdog:
         try:
             trailed_count = 0
             target_sym = symbol.replace("/", "").replace("_", "").upper()
+            target_inst_id = str(self.tl.resolve_instrument_id(symbol))
             side_upper = str(side).upper()
             risk_dist = abs(entry_price - initial_sl)
             if risk_dist <= 0:
@@ -429,7 +451,10 @@ class PositionWatchdog:
                     positions = helper.get_open_positions()
                     target_pos = [
                         p for p in positions
-                        if target_sym in str(p.get("symbol", "")).replace("/", "").replace("_", "").upper()
+                        if (
+                            target_sym in str(p.get("symbol", "")).replace("/", "").replace("_", "").upper()
+                            or str(p.get("tradableInstrumentId") or p.get("instrumentId") or "") == target_inst_id
+                        )
                     ]
                     if not target_pos:
                         continue

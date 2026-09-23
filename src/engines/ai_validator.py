@@ -1,9 +1,12 @@
 import os
 import json
+import logging
 import numpy as np
 import pandas as pd
 from src.core.config import Config
 from src.engines.ai_hub import SovereignAIHub
+
+logger = logging.getLogger(__name__)
 
 class AIValidator:
     """

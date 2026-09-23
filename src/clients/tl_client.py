@@ -71,8 +71,9 @@ class TradeLockerHelper:
     def resolve_symbol(self, instrument_id):
         """Maps internal IDs to human-readable symbols using live cache with canonical fallback."""
         str_id = str(instrument_id)
-        if hasattr(self, '_symbol_cache') and str_id in self._symbol_cache:
-            return self._symbol_cache[str_id]
+        cache = getattr(self, '_symbol_cache', None) or TradeLockerHelper._shared_symbol_cache
+        if cache and str_id in cache:
+            return cache[str_id]
         mapping = {
             "206": "BTC/USD",
             "207": "ETH/USD",
@@ -499,8 +500,9 @@ class TradeLockerHelper:
 
         # Dynamically determine routeId from metadata cache
         route_id = 2025730
-        if hasattr(self, '_instruments_cache') and self._instruments_cache:
-            for inst_meta in self._instruments_cache.values():
+        cache_to_use = getattr(self, '_instruments_cache', None) or TradeLockerHelper._shared_instruments_cache
+        if cache_to_use:
+            for inst_meta in cache_to_use.values():
                 if str(inst_meta.get('tradableInstrumentId')) == str(instrument_id):
                     route_id = inst_meta.get('routeId', 2025730)
                     break
@@ -662,6 +664,7 @@ class TradeLockerHelper:
                     if pos_k not in self._bracket_cache: self._bracket_cache[pos_k] = {}
                     if stop_loss is not None: self._bracket_cache[pos_k]['stopLoss'] = float(stop_loss)
                     if take_profit is not None: self._bracket_cache[pos_k]['takeProfit'] = float(take_profit)
+                    self._pos_cache = None
                     return True
                 elif resp.status_code == 401 and attempt == 0:
                     logger.warning(f"⚠️ 401 Unauthorized on position patch for {position_id}. Refreshing token...")
@@ -812,6 +815,7 @@ class TradeLockerClient:
                             results.append(res)
             except Exception as e:
                 logger.error(f"Error updating fleet stop loss on account {i+1}: {e}")
+        self.invalidate_positions_cache()
         return results
 
     def close_all_fleet_positions(self):
@@ -826,6 +830,7 @@ class TradeLockerClient:
                 if pos_id:
                     if helper.close_position(pos_id):
                         total_closed += 1
+        self.invalidate_positions_cache()
         return total_closed
 
 
@@ -933,9 +938,12 @@ class TradeLockerClient:
         norm = symbol.replace("/", "").replace("_", "").upper()
         # 1. First check if any helper has dynamic broker metadata cached
         for h in self.helpers:
-            if hasattr(h, '_instruments_cache') and h._instruments_cache:
-                for k, meta in h._instruments_cache.items():
-                    if norm == k or norm in k or k in norm:
+            cache = getattr(h, '_instruments_cache', None) or TradeLockerHelper._shared_instruments_cache
+            if cache:
+                if norm in cache:
+                    return str(cache[norm]['tradableInstrumentId'])
+                for k, meta in cache.items():
+                    if len(k) >= 6 and len(norm) >= 6 and (norm in k or k in norm):
                         return str(meta['tradableInstrumentId'])
                         
         # 2. Hardcoded canonical mappings as verified fallback
@@ -1301,8 +1309,14 @@ class TradeLockerClient:
                         symbol_hint=symbol
                     )
                     success = bool(res_t1 or res_t2)
-                    if success:
+                    if res_t1 and res_t2:
                         logger.info(f"✅ Account {i+1} ({helper.email}) [SCALE-OUT SPLIT] Filled T1={lot_t1} lots (TP1: {tp1_price}) & T2={lot_t2} lots (TP2: {take_profit}) on {symbol}")
+                        results.append(True)
+                    elif res_t1:
+                        logger.warning(f"⚠️ Account {i+1} ({helper.email}) [SCALE-OUT PARTIAL] Filled T1={lot_t1} lots, but T2 failed on {symbol}")
+                        results.append(True)
+                    elif res_t2:
+                        logger.warning(f"⚠️ Account {i+1} ({helper.email}) [SCALE-OUT PARTIAL] Filled T2={lot_t2} lots, but T1 failed on {symbol}")
                         results.append(True)
                     else:
                         logger.warning(f"⚠️ Account {i+1} ({helper.email}) scale-out order placement failed.")

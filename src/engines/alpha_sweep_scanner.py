@@ -621,7 +621,7 @@ class AlphaSweepScanner(SMCScanner):
             now_utc = datetime.now(timezone.utc)
             is_weekday = now_utc.weekday() < 5
             kz_str = str(killzone or "").upper()
-            is_gold_liquid_session = any(k in kz_str for k in ["LONDON", "NY_AM", "CONTINUOUS", "NEW_YORK", "ASIAN"])
+            is_gold_liquid_session = any(k in kz_str for k in ["LONDON", "NY", "NEW_YORK", "CONTINUOUS", "ASIAN"])
             
             # 1H HTF Trend Check (Mandatory Bullish Structure for Longs)
             ema50_1h = df_1h['close'].ewm(span=min(50, len(df_1h))).mean().iloc[-1]
@@ -760,22 +760,22 @@ class AlphaSweepScanner(SMCScanner):
         # 3. Tertiary Hunt: London Close Silver Bullet (10-11 AM EST Rebalance)
         if not setup:
             setup = self.check_london_close_silver_bullet(symbol, df_5m, df_1h, killzone)
+
+        # 4. Quaternary Hunt: 50% Consequent Encroachment FVG Fill (Strategy 5 - Live Champion for Gold Longs)
+        if not setup:
+            setup = self.check_fvg_50pct_ce_midpoint_shadow(symbol, df_5m, df_1h, killzone)
             
-        # 4. Quaternary Hunt: NY HFT Double-Sweep Purge (100% Zero-Risk Shadow Tracking)
+        # 5. Quinary Hunt: NY HFT Double-Sweep Purge (100% Zero-Risk Shadow Tracking)
         if not setup:
             setup = self.check_ny_hft_double_sweep_shadow(symbol, df_5m, df_1h, killzone)
             
-        # 5. Quinary Hunt: Retail LuxAlgo Trap Fade (100% Zero-Risk Shadow Tracking)
+        # 6. Senary Hunt: Retail LuxAlgo Trap Fade (100% Zero-Risk Shadow Tracking)
         if not setup:
             setup = self.check_retail_trap_shadow(symbol, df_5m, df_1h, killzone)
 
-        # 6. Senary Hunt: Strong SMT Divergence Sweep (100% Zero-Risk Shadow Tracking)
+        # 7. Septenary Hunt: Strong SMT Divergence Sweep (100% Zero-Risk Shadow Tracking)
         if not setup:
             setup = self.check_strong_smt_sweep_shadow(symbol, df_5m, df_1h, killzone)
-
-        # 7. Septenary Hunt: 50% Consequent Encroachment FVG Fill (100% Zero-Risk Shadow Tracking)
-        if not setup:
-            setup = self.check_fvg_50pct_ce_midpoint_shadow(symbol, df_5m, df_1h, killzone)
 
         # 8. Octonary Hunt: Non-ICT Quantitative Microstructure Contenders (100% Zero-Risk Shadow Tracking)
         if not setup and getattr(self, 'auction_engine', None):
@@ -851,8 +851,11 @@ class AlphaSweepScanner(SMCScanner):
             if risk_amt > max_risk:
                 risk_amt = max_risk
                 
-            # Calculate position size (lots)
-            lots = round(risk_amt / stop_distance, 4) if stop_distance > 0 else 0
+            contract_size = Config.get_contract_size(symbol)
+
+            # Calculate position size (lots) with exact broker contract size multiplier
+            denom = stop_distance * contract_size
+            lots = round(risk_amt / denom, 4) if denom > 0 else 0
             
             # Symbol Cap
             max_allowed_size = getattr(Config, 'MAX_POSITION_SIZES', {}).get(symbol)
@@ -860,21 +863,22 @@ class AlphaSweepScanner(SMCScanner):
                 lots = max_allowed_size
                 
             # Notional Cap
-            position_value = lots * entry_price
+            position_value = lots * entry_price * contract_size
             max_notional = getattr(Config, 'MAX_NOTIONAL_VALUE_USD', 50000.0)
             if position_value > max_notional:
-                lots = round(max_notional / entry_price, 4)
-                position_value = lots * entry_price
+                lots = round(max_notional / (entry_price * contract_size), 4)
+                position_value = lots * entry_price * contract_size
                 
-            # Take Profit Clamping (Max Profit USD cap)
+            # Take Profit Clamping (Max Profit USD cap / 20% consistency rule)
             max_profit = getattr(Config, 'MAX_PROFIT_USD', 400.0)
             if lots > 0:
-                potential_profit = lots * abs(tp_price - entry_price)
+                potential_profit = lots * abs(tp_price - entry_price) * contract_size
                 if potential_profit > max_profit:
+                    tp_step = max_profit / (lots * contract_size)
                     if setup['direction'] == 'LONG':
-                        tp_price = entry_price + (max_profit / lots)
+                        tp_price = entry_price + tp_step
                     else:
-                        tp_price = entry_price - (max_profit / lots)
+                        tp_price = entry_price - tp_step
             
             # Run Shadow Substitution Audit (Quantitative AI Confluence Tracking)
             try:

@@ -235,15 +235,18 @@ class ExecutionFirewall:
         
 
     @staticmethod
-    def check_news_calendar() -> Tuple[bool, str]:
+    def check_news_calendar(symbol: Optional[str] = None) -> Tuple[bool, str]:
         """
-        INVARIANT 13: Economic Calendar / News Filter
+        INVARIANT 13: Economic Calendar / News Filter (asset-aware).
         """
         try:
             from src.engines.calendar_filter import CalendarFilter
             cal = CalendarFilter()
             if hasattr(cal, "is_safe_to_trade"):
-                is_safe, reason = cal.is_safe_to_trade()
+                try:
+                    is_safe, reason = cal.is_safe_to_trade(symbol=symbol)
+                except TypeError:
+                    is_safe, reason = cal.is_safe_to_trade()
             elif hasattr(cal, "check"):
                 is_safe, reason = cal.check()
             else:
@@ -405,7 +408,7 @@ class ExecutionFirewall:
 
         # ── INVARIANT 13: Economic News Calendar ──
         if not bypass_circuit_breaker:
-            news_ok, news_reason = ExecutionFirewall.check_news_calendar()
+            news_ok, news_reason = ExecutionFirewall.check_news_calendar(symbol=symbol)
             if not news_ok:
                 logger.critical(f"🛡️ [FIREWALL BLOCKED] {news_reason}")
                 return False, news_reason

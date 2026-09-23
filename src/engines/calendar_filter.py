@@ -129,7 +129,21 @@ class CalendarFilter:
         now_utc = datetime.utcnow()
         window = timedelta(minutes=self.blackout_minutes)
 
+        # Determine relevant currencies for the target asset (default USD)
+        relevant_currencies = {'USD'}
+        if symbol:
+            sym_clean = symbol.upper()
+            for curr in MONITORED_CURRENCIES:
+                if curr in sym_clean:
+                    relevant_currencies.add(curr)
+
         for event in self._events:
+            event_curr = str(event.get('currency', '')).upper()
+            event_title = str(event.get('title', '')).lower()
+            is_global_event = any(kw in event_title for kw in ['fomc', 'fed ', 'jerome powell', 'interest rate decision'])
+            if symbol and event_curr not in relevant_currencies and not is_global_event:
+                continue
+
             event_time = event['time_utc']
             diff_minutes = (event_time - now_utc).total_seconds() / 60
 

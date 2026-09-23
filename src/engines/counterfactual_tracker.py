@@ -114,6 +114,12 @@ class CounterfactualTracker:
                 pnl = 0.0
                 r_mult = 0.0
 
+                # Calculate expected target R dynamically
+                risk_dist = abs(entry - sl) if (entry > 0 and sl > 0) else 0.0
+                reward_dist = abs(tp - entry) if (entry > 0 and tp > 0) else 0.0
+                target_r = round(reward_dist / risk_dist, 2) if risk_dist > 0 else 2.5
+                target_pnl = round(target_r * 100.0, 2)
+
                 if df is not None and not df.empty:
                     df_post = df.copy()
                     if "timestamp" in df_post.columns:
@@ -152,8 +158,8 @@ class CounterfactualTracker:
                                     break
                                 elif hit_tp:
                                     outcome = "HIT_TP"
-                                    r_mult = 2.5
-                                    pnl = 250.0
+                                    r_mult = target_r
+                                    pnl = target_pnl
                                     break
                             else:  # SELL / SHORT
                                 hit_sl = (sl > 0 and c_high >= sl)
@@ -170,8 +176,8 @@ class CounterfactualTracker:
                                     break
                                 elif hit_tp:
                                     outcome = "HIT_TP"
-                                    r_mult = 2.5
-                                    pnl = 250.0
+                                    r_mult = target_r
+                                    pnl = target_pnl
                                     break
 
                 # Auto-expire stale shadow trades after 48h regardless of data fetch

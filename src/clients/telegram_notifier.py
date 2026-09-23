@@ -480,7 +480,7 @@ class TelegramNotifier:
             f"• Trades Audited: {_teal(summary.get('total_shadow_trades', 0))}\n"
             f"• Prevented Losses: {_teal(f'${prev_loss:,.2f}')}\n"
             f"• Net Filter Impact: {_teal(f'${net_impact:,.2f}')}\n\n"
-            f"⚡ <i>8 Active Mandates Provisioned & Hardened.</i>"
+            f"⚡ <i>Active Fleet Mandates Provisioned & Hardened.</i>"
         )
         
         buttons = [
@@ -533,18 +533,19 @@ class TelegramNotifier:
                     elif target_cmd in ["/kill", "btn_kill", "/emergency_kill"]:
                         logger.warning("🚨 Telegram Emergency Kill Command Received! Executing portfolio wipe...")
                         from scripts.maintenance.emergency_kill_switch import execute_emergency_kill_switch
-                        self._send_message("🚨 <b>EMERGENCY KILL SWITCH TRIGGERED VIA TELEGRAM</b>\nLiquidating all open positions across all 8 accounts...")
+                        self._send_message("🚨 <b>EMERGENCY KILL SWITCH TRIGGERED VIA TELEGRAM</b>\nLiquidating all open positions across the entire account fleet...")
                         execute_emergency_kill_switch()
-                        self._send_message("✅ <b>EMERGENCY LIQUIDATION COMPLETE.</b> All open positions closed across all 8 account mandates.")
+                        self._send_message("✅ <b>EMERGENCY LIQUIDATION COMPLETE.</b> All open positions closed across all account mandates.")
 
                     elif target_cmd.startswith("scale_"):
                         logger.info(f"🚀 Telegram Scale-In Command Received: {target_cmd}")
                         try:
-                            # format: scale_BTCUSD_buy_78648.0_79048.0_77371.0
+                            # format: scale_BTCUSD_buy_78648.0_77371.0_79048.0 (scale_<SYM>_<SIDE>_<ENTRY>_<SL>_<TP>)
                             parts = target_cmd.split("_")
                             raw_sym = parts[1].upper()
                             sym = f"{raw_sym[:3]}/{raw_sym[3:]}" if len(raw_sym) == 6 else raw_sym
                             side = parts[2].lower()
+                            entry_p = float(parts[3])
                             sl = float(parts[4])
                             tp = float(parts[5])
                             
@@ -554,6 +555,7 @@ class TelegramNotifier:
                             res = TradeLockerClient().execute_trade_across_all_accounts(
                                 symbol=sym,
                                 side=side,
+                                entry_price=entry_p,
                                 stop_loss=sl,
                                 take_profit=tp,
                                 risk_scale=getattr(Config, 'SCALE_IN_TRANCHE_2_SCALE', 0.50),

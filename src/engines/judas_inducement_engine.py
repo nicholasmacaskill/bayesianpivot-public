@@ -128,9 +128,9 @@ class JudasInducementEngine:
         # 6. Session Timing Context (Quarantine Asian Session from Live Capital)
         ts = curr_bar.get('timestamp')
         if isinstance(ts, str):
-            dt = pd.to_datetime(ts)
+            dt = pd.to_datetime(ts, utc=True)
         elif isinstance(ts, (pd.Timestamp, datetime)):
-            dt = ts
+            dt = ts.tz_convert('UTC') if hasattr(ts, 'tz_convert') and ts.tzinfo else ts.replace(tzinfo=timezone.utc) if getattr(ts, 'tzinfo', None) else ts
         else:
             dt = datetime.now(timezone.utc)
 
@@ -142,7 +142,7 @@ class JudasInducementEngine:
             return None
         elif 7 <= utc_hour <= 10:
             session_tag = "LONDON_KILLZONE"
-        elif 13 <= utc_hour <= 17:
+        elif 12 <= utc_hour <= 17:
             session_tag = "NY_KILLZONE"
         else:
             logger.info(f"🚫 [STRATEGY 9] Hour {utc_hour:02d}:00 UTC outside prime London/NY killzones.")
