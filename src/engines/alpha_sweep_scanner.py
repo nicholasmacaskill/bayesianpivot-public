@@ -1084,13 +1084,14 @@ class AlphaSweepScanner(SMCScanner):
             except Exception as mlx_boost_err:
                 logger.debug(f"Local MLX LoRA confluence boost fallback: {mlx_boost_err}")
 
-            # ── BAYESIAN VISUAL VECTOR CONFLUENCE INTEGRATION (ADVISORY ONLY) ──
+            # ── 👻 SHADOW VISUAL VECTOR TELEMETRY (100% ZERO CAPITAL RISK) ──
+            # Relegated to pure shadow telemetry. Does NOT mutate live shadow_score.
             vec_rec = vec_result.get('recommendation', 'NEUTRAL')
             vec_mod = float(vec_result.get('score_modifier', 0.0))
-
+            setup['shadow_visual_vector'] = vec_result
+            setup['shadow_vec_mod'] = vec_mod
             if vec_mod != 0.0:
-                shadow_score = max(0.0, min(10.0, round(shadow_score + vec_mod, 1)))
-                logger.info(f"🔮 [Visual Vector Confluence] {symbol} {setup['direction']}: Modifier {vec_mod:+.1f} applied -> Adjusted Score: {shadow_score:.1f}/10 ({vec_rec})")
+                logger.info(f"👻 [Shadow Visual Vector Telemetry] {symbol} {setup['direction']}: Advisory modifier {vec_mod:+.1f} ({vec_rec}) logged to shadow telemetry (0% live impact).")
 
             passed_ai_validator = (shadow_score >= ai_validator_threshold) and ai_approved
             

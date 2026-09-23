@@ -596,7 +596,8 @@ class AIValidator:
                 print("⚠️ AI returned incomplete dual-track structure. Using fallback.")
                 result = self.hard_logic_audit(setup, df)
             
-            # ── 🛡️ PRODUCTION VISUAL VECTOR SAFETY SHIELD ──
+            # ── 👻 SHADOW VISUAL VECTOR OBSERVATION (ZERO LIVE CAPITAL RISK) ──
+            # Relegated to 100% shadow observation telemetry. Does NOT modify live execution score or verdict.
             try:
                 from src.engines.visual_vector_engine import VisualVectorEngine
                 v_engine = VisualVectorEngine()
@@ -609,19 +610,14 @@ class AIValidator:
                     regime_type=active_regime
                 )
                 
+                result['shadow_visual_vector'] = v_eval
+                if 'shadow_optimizer' in result and isinstance(result['shadow_optimizer'], dict):
+                    result['shadow_optimizer']['visual_vector'] = v_eval
+                    
                 rec = v_eval.get('recommendation', 'NEUTRAL')
-                live_res = result.get('live_execution', result)
-                orig_score = float(live_res.get('score', 7.5))
-                
-                if rec == 'REJECT_TRAP':
-                    live_res['score'] = max(4.0, round(orig_score - 1.5, 1))
-                    live_res['reasoning'] = f"{live_res.get('reasoning', '')} | ⚠️ {v_eval.get('key_reason', '')}"
-                    live_res['verdict'] = 'SHADOW_OBSERVATION' if live_res['score'] < getattr(Config, 'AI_VALIDATOR_MIN_SCORE', 7.5) else live_res.get('verdict')
-                    print(f"🛡️ [VISUAL VECTOR SHIELD] Score adjusted {orig_score} -> {live_res['score']} (Matched historical loss trap).")
-                elif rec == 'PASS_CONFIRMED':
-                    live_res['reasoning'] = f"{live_res.get('reasoning', '')} | 🏆 {v_eval.get('key_reason', '')}"
+                print(f"👻 [SHADOW VISUAL VECTOR OBSERVATION] {setup.get('symbol', 'BTC/USD')} {setup.get('direction', 'LONG')}: {v_eval.get('key_reason', '')} | Rec: {rec} (Telemetry only / 0% live impact).")
             except Exception as _vec_err:
-                logger.debug(f"Visual Vector Safety Shield fallback: {_vec_err}")
+                logger.debug(f"Visual Vector Shadow Telemetry fallback: {_vec_err}")
 
             return result
                 

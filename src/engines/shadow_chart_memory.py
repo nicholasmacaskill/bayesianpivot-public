@@ -49,33 +49,9 @@ class ShadowChartMemory:
         winners = []
         losers = []
 
-        # 0. Query Visual Vector Precedent Library (Fast Cosine Similarity conditioned on regime)
-        try:
-            from src.engines.visual_vector_engine import VisualVectorEngine
-            v_eng = VisualVectorEngine()
-            q_vec = v_eng.extract_geometric_features(df, setup=setup or {'direction': direction, 'pattern': pattern})
-            active_regime = regime_type or (setup.get('regime') if setup else None) or (setup.get('regime_type') if setup else None) or 'UNKNOWN'
-            v_analogs = v_eng.find_visual_analogs(q_vec, symbol=symbol, direction=direction, top_k=4, regime_type=active_regime)
-            for a in v_analogs:
-                is_win = (a.get('outcome') == 'WIN' or a.get('realized_r', 0) > 0)
-                sim_pct = a.get('similarity', 0.0) * 100.0
-                case_item = {
-                    'provenance': f"[🎨 VISUAL TWIN ({sim_pct:.1f}% Match)]",
-                    'id': str(a.get('signal_id')),
-                    'timestamp': str(a.get('timestamp'))[:16],
-                    'symbol': str(a.get('symbol')),
-                    'direction': str(a.get('direction')),
-                    'outcome': f"{a.get('outcome')} ({a.get('realized_r', 0):+.1f}R)",
-                    'is_win': is_win,
-                    'simulated_r': float(a.get('realized_r', 0)),
-                    'key_lesson': f"Visual candlestick twin ({sim_pct:.1f}% similarity) resulted in {a.get('outcome')} ({a.get('notes', '')})."
-                }
-                if is_win:
-                    winners.append(case_item)
-                else:
-                    losers.append(case_item)
-        except Exception as _v_err:
-            logger.debug(f"Visual Vector retrieval in Shadow Memory: {_v_err}")
+        # Note: Visual vector twins have been decoupled from live prompt injection to eliminate
+        # geometric overfitting. Precedents are populated exclusively by authentic causal ledger data:
+        # Tier 1 (Live Production Wins), Tier 2 (Shadow Wins), Tier 3 (Avoided Traps), Tier 4 (Human Alpha).
         try:
             conn = get_db_connection()
             cursor = conn.cursor()

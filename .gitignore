@@ -10,6 +10,8 @@ secrets.json
 *.db-shm
 *.db-wal
 data/charts/
+data/raw_fleet_trades_parsed.json
+data/watchdog_state.json
 public_export/
 *.out
 *.log
