@@ -1136,14 +1136,22 @@ class AlphaSweepScanner(SMCScanner):
                 tag_label = "shadow asset quarantine ($0 live risk)"
                 pattern_str = f"[👻 SHADOW LAB - {symbol}] {base_pattern_str}"
                 ai_reasoning = f"[👻 SHADOW LAB ({symbol} $0 RISK)] {pattern_type.replace('_', ' ')} of HTF level {setup['level']:.2f}. Hurst: {setup['hurst']:.3f} ({setup['regime']}). AI Score: {shadow_score:.1f}/10. Tracking shadow expectancy..."
-            elif setup.get('is_shadow_only', False):
-                tag_label = "shadow session quarantine"
-                pattern_str = f"[👻 SHADOW - SESSION RESTRICTED] {base_pattern_str}"
-                ai_reasoning = f"[👻 SHADOW LAB (SESSION RESTRICTED)] {pattern_type.replace('_', ' ')} on {symbol} is shadow-only during {killzone} (Live execution restricted to London/NY). AI Score: {shadow_score:.1f}/10."
+            elif pattern_type not in authorized_live_patterns:
+                tag_label = "shadow archetype quarantine"
+                pattern_str = f"[👻 SHADOW LAB - UNGRADUATED ARCHETYPE] {base_pattern_str}"
+                ai_reasoning = f"[👻 SHADOW LAB (UNGRADUATED ARCHETYPE)] {pattern_type.replace('_', ' ')} on {symbol} is an ungraduated shadow archetype ($0 live capital risk). AI Score: {shadow_score:.1f}/10."
             elif is_low_density_sweep:
                 tag_label = "shadow trade, low-density noise sweep"
                 pattern_str = f"[👻 SHADOW - LOW DENSITY SWEEP ({liq_density:.1f}/10)] {base_pattern_str}"
                 ai_reasoning = f"[👻 SHADOW LAB (LOW DENSITY SWEEP)] {pattern_type.replace('_', ' ')} of level {setup['level']:.2f} has insufficient stop cluster density ({liq_density:.1f}/10 < 6.0). Not a verified institutional POI. Quarantined to $0 risk."
+            elif killzone == "NY_AFTERNOON_SHADOW" or killzone not in ["LONDON_OPEN", "NEW_YORK_AM", "LONDON_CLOSE"]:
+                tag_label = "shadow session quarantine"
+                pattern_str = f"[👻 SHADOW - SESSION RESTRICTED] {base_pattern_str}"
+                ai_reasoning = f"[👻 SHADOW LAB (SESSION RESTRICTED)] {pattern_type.replace('_', ' ')} on {symbol} is shadow-only during {killzone} (Live execution restricted to London/NY). AI Score: {shadow_score:.1f}/10."
+            elif setup.get('is_shadow_only', False):
+                tag_label = "shadow lab quarantine"
+                pattern_str = f"[👻 SHADOW LAB] {base_pattern_str}"
+                ai_reasoning = f"[👻 SHADOW LAB ($0 RISK)] {pattern_type.replace('_', ' ')} on {symbol} is quarantined in Shadow Lab ($0 live capital risk). AI Score: {shadow_score:.1f}/10."
             elif is_archetype_shadow:
                 tag_label = "shadow archetype quarantine"
                 pattern_str = f"[👻 SHADOW LAB] {base_pattern_str}"
