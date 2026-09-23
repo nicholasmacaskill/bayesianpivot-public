@@ -76,7 +76,6 @@ REMOVE_FILES=(
   "docs/BAYESIAN_PIVOT_ALPHA_SPECIFICATION.md"
   "docs/BAYESIAN_PIVOT_ALPHA_SCANNER.md"
   "docs/SOVEREIGN_EXECUTION_PLAN.md"
-  "docs/ALL_TIME_PERFORMANCE_REPORT.md"
   "docs/PROP_FIRM_SCALING_PLAN.md"
   "docs/edge_discovery_results.json"
   "docs/ict_oracle_kb.json"
