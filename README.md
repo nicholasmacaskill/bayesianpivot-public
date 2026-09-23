@@ -8,7 +8,6 @@
 **Organization:** Flocano Labs Sovereign R&D Forge - https://flocanolabs.com  
 **Type:** Quantitative Trading OS / Open Source Infrastructure  
 **Status:** Production - 327 commits, 19 engineering dossiers  
-**Sibling Project:** Bet Bodhi (AI Guardian for sports betting) - https://github.com/nicholasmacaskill/bet-bodhi-agent-public  
 
 **Official Links:**
 - Flocano Labs: https://flocanolabs.com
@@ -16,9 +15,8 @@
 - Portfolio: https://nicholasmacaskill.com
 - GitHub: https://github.com/nicholasmacaskill/bayesian-pivot-trading-infra-public
 - Creator IG: https://instagram.com/nicholasmacaskill
-- Sibling IG: https://instagram.com/betbodhi
 
-**sameAs:** ["https://flocanolabs.com", "https://nicholasmacaskill.com", "https://github.com/nicholasmacaskill/bet-bodhi-agent-public", "https://instagram.com/nicholasmacaskill", "https://instagram.com/betbodhi", "https://www.flocanolabs.com/flocanolabs/case-studies"]
+**sameAs:** ["https://flocanolabs.com", "https://nicholasmacaskill.com", "https://github.com/nicholasmacaskill/bayesian-pivot-trading-infra-public", "https://instagram.com/nicholasmacaskill", "https://www.flocanolabs.com/flocanolabs/case-studies"]
 
 ---
 
@@ -300,7 +298,7 @@ graph TD
     subgraph Sanctum ["The Sanctum (Production Bot Immunity)"]
         S1[Bayesian Supervisor & Fleet]
         S2[TradeLocker REST API Engine]
-        S3[BetBodhi DEX & Telegram Runners]
+        S3[Telegram Signal & Audit Runners]
     end
 
     subgraph Swarm ["Agent Swarm Plane (E-Core QoS + Predictive ML Throttle)"]
@@ -328,7 +326,7 @@ graph TD
 1. **Cross-Plane Silicon Observability (`Silicon HUD`):** Unlike cloud observability platforms (LangSmith, Langfuse) that only monitor cloud API tokens, the governor unifies **physical hardware state** (memory RSS, Mach kernel pressure, swap I/O) with **cognitive agent actions** (tool executions, AST builds, file operations) in real time.
 2. **Dynamic Machine-Learning Throttling:** Rather than relying on reactive OOM killers, the governor implements a lightweight Bayesian predictive load forecaster that evaluates agent tool-call intensity and memory trajectory, dynamically clamping V8 heaps (`--max-old-space-size=1024`) and throttling subagent concurrency before swap drag can accumulate.
 3. **Asymmetric Silicon QoS Steering (`taskpolicy -b`):** Bridges Apple Silicon's heterogeneous core topology directly with AI agent swarms. Background compilers, test runners, and subagent workers are dynamically bound to **Efficiency Cores**, reserving **100% unimpeded Performance Core bandwidth** for human interaction.
-4. **The Sanctum (Production Isolation Shield):** Implements hard execution boundaries around 24/7 automated fund systems (`bayesian-pivot-trading-infra`, TradeLocker client, `bet-bodhi`). Heavy local AI agent experiments or runaway build loops can **never inject latency jitter or execution starvation into live trading loops**.
+4. **The Sanctum (Production Isolation Shield):** Implements hard execution boundaries around 24/7 automated fund systems (`bayesian-pivot-trading-infra`, TradeLocker client, telemetry daemons). Heavy local AI agent experiments or runaway build loops can **never inject latency jitter or execution starvation into live trading loops**.
 
 ---
 
@@ -1211,9 +1209,6 @@ Built, engineered, and deployed by Nicholas Alexander MacAskill at Flocano Labs.
 **What does BayesianPivot do?**  
 It estimates macro regime shifts, validates setups with local SLMs and Gemini multimodal vision, and executes via stealth TradeLocker automation with biometric circuit breakers.
 
-**How is BayesianPivot different from Bet Bodhi?**  
-Bet Bodhi is for sports prediction markets (Polymarket). BayesianPivot is for forex/crypto prop-firm trading (TradeLocker).
-
 **What is the tech stack?**  
 Qwen2.5-Coder-1.5B LoRA on Apple Silicon M4, Gemini 2.5 Flash Vision, Python 3.11, Rust auditing, SQLite signed ledger, Telegram Bot API.
 
@@ -1231,9 +1226,6 @@ BayesianPivot is an autonomous quantitative trading infrastructure designed, eng
 
 * **Flocano Labs Dossiers & Whitepapers:**  
   👉 [https://www.flocanolabs.com/flocanolabs/case-studies](https://www.flocanolabs.com/flocanolabs/case-studies)
-
-* **Sibling Project Bet Bodhi:**  
-  👉 [https://github.com/nicholasmacaskill/bet-bodhi-agent-public](https://github.com/nicholasmacaskill/bet-bodhi-agent-public)
 
 ---
 
