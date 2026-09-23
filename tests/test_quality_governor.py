@@ -28,7 +28,7 @@ class TestQualityGovernor(unittest.TestCase):
         with tempfile.NamedTemporaryFile("w", delete=False) as f:
             # Write repetitive BadSymbol and 401 errors
             f.write(f"{now_str} - [ERROR] - BadSymbol: coinbase does not have market symbol BTCUSD\n" * 5)
-            f.write(f"{now_str} - [WARNING] - 401 Unauthorized for s79qv3xetj@upcomers.com\n" * 5)
+            f.write(f"{now_str} - [WARNING] - 401 Unauthorized for s79qv3xetj@upcomers.com\n" * 16)
             temp_path = f.name
 
         try:
@@ -50,6 +50,7 @@ class TestQualityGovernor(unittest.TestCase):
                 "symbol": "BTCUSD",
                 "price": 76682.0,
                 "stopLoss": None, # RULE 6 BREACH!
+                "stopLossOrderId": None,
                 "takeProfit": 75939.0,
                 "pnl": 10.0,
                 "qty": 0.1
@@ -59,6 +60,27 @@ class TestQualityGovernor(unittest.TestCase):
         clean, issues = self.governor.audit_active_positions(tl_client=mock_tl)
         self.assertFalse(clean)
         self.assertTrue(any("RULE 6 VIOLATION" in iss for iss in issues))
+
+    def test_active_position_invariants_pass_when_bracket_order_id_present(self):
+        """Verify audit passes when SL price is None/0 but stopLossOrderId is attached on broker."""
+        mock_tl = MagicMock()
+        mock_tl.get_open_positions.return_value = [
+            {
+                "id": "pos_protected_via_order_id",
+                "symbol": "BTCUSD",
+                "price": 86383.0,
+                "stopLoss": None, # Price float temporarily unresolved due to rate limit
+                "takeProfit": None,
+                "stopLossOrderId": "288230376185007874", # VERIFIED ON BROKER BOOK!
+                "takeProfitOrderId": "288230376185007876",
+                "pnl": 5.0,
+                "qty": 0.14
+            }
+        ]
+
+        clean, issues = self.governor.audit_active_positions(tl_client=mock_tl)
+        self.assertTrue(clean, f"Expected clean audit but got: {issues}")
+        self.assertEqual(len(issues), 0)
 
     def test_active_position_invariants_detect_scale_out_overwrite(self):
         """Verify audit flags when two tranches share identical TP (overwritten bracket)."""

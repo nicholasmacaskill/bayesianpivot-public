@@ -254,12 +254,14 @@ class QualityGovernor:
                 tp = float(pos.get("takeProfit") or 0.0)
                 side = str(pos.get("side", "")).upper()
 
-                # Invariant 1: Mandatory attached Stop Loss
-                if sl <= 0:
+                # Invariant 1: Mandatory attached Stop Loss (verified via price or attached broker order ID)
+                sl_ord_id = pos.get("stopLossOrderId")
+                if sl <= 0 and not sl_ord_id:
                     issues.append(f"🚨 [RULE 6 VIOLATION] Position {p_id} ({sym}) has NO protective Stop Loss on broker book!")
 
-                # Invariant 2: Mandatory Take Profit
-                if tp <= 0:
+                # Invariant 2: Mandatory Take Profit (verified via price or attached broker order ID)
+                tp_ord_id = pos.get("takeProfitOrderId")
+                if tp <= 0 and not tp_ord_id:
                     issues.append(f"⚠️ Position {p_id} ({sym}) has NO Take Profit attached on broker book.")
 
                 # Invariant 3: Floating R-Multiple Break-Even Lock Check

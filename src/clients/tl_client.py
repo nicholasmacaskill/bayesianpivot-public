@@ -30,6 +30,7 @@ class TradeLockerHelper:
         self.status = "ACTIVE"
         self._instruments_cache = dict(TradeLockerHelper._shared_instruments_cache)
         self._symbol_cache = dict(TradeLockerHelper._shared_symbol_cache)
+        self._bracket_cache = {}
         
     def sync_instruments(self):
         """Discovers and caches all tradable instruments and routes directly from the broker API."""
@@ -253,14 +254,24 @@ class TradeLockerHelper:
                     except Exception as ord_err:
                         logger.debug(f"Orders lookup for SL/TP enrichment skipped: {ord_err}")
 
+                active_pos_ids = set()
                 for p in positions:
                     # Parse Active Position
                     if isinstance(p, list) and len(p) >= 10:
                         try:
                             # Upcomers List Format: p[0]=id, p[1]=instrumentId, p[2]=routeId, p[3]=side, p[4]=qty, p[5]=price, p[6]=slOrderId, p[7]=tpOrderId, p[8]=entry_ms, p[9]=pnl
                             pos_id_str = str(p[0])
-                            pos_sl = orders_map.get(pos_id_str, {}).get('stopLoss') or orders_by_id.get(str(p[6]))
-                            pos_tp = orders_map.get(pos_id_str, {}).get('takeProfit') or orders_by_id.get(str(p[7]))
+                            active_pos_ids.add(pos_id_str)
+                            cached_b = self._bracket_cache.get(pos_id_str, {})
+                            pos_sl = orders_map.get(pos_id_str, {}).get('stopLoss') or orders_by_id.get(str(p[6])) or cached_b.get('stopLoss')
+                            pos_tp = orders_map.get(pos_id_str, {}).get('takeProfit') or orders_by_id.get(str(p[7])) or cached_b.get('takeProfit')
+                            
+                            if pos_sl or pos_tp:
+                                if pos_id_str not in self._bracket_cache:
+                                    self._bracket_cache[pos_id_str] = {}
+                                if pos_sl: self._bracket_cache[pos_id_str]['stopLoss'] = pos_sl
+                                if pos_tp: self._bracket_cache[pos_id_str]['takeProfit'] = pos_tp
+
                             trades.append({
                                 'id': pos_id_str,
                                 'symbol': self.resolve_symbol(p[1]), 
@@ -280,8 +291,19 @@ class TradeLockerHelper:
                         except Exception as e:
                             logger.error(f"Failed to parse list position: {e}")
                     else:
+                        pos_id_str = str(p.get('id'))
+                        active_pos_ids.add(pos_id_str)
+                        cached_b = self._bracket_cache.get(pos_id_str, {})
+                        pos_sl = float(p.get('stopLoss') or 0.0) if p.get('stopLoss') else cached_b.get('stopLoss')
+                        pos_tp = float(p.get('takeProfit') or 0.0) if p.get('takeProfit') else cached_b.get('takeProfit')
+                        if pos_sl or pos_tp:
+                            if pos_id_str not in self._bracket_cache:
+                                self._bracket_cache[pos_id_str] = {}
+                            if pos_sl: self._bracket_cache[pos_id_str]['stopLoss'] = pos_sl
+                            if pos_tp: self._bracket_cache[pos_id_str]['takeProfit'] = pos_tp
+
                         trades.append({
-                            'id': str(p.get('id')),
+                            'id': pos_id_str,
                             'symbol': self.resolve_symbol(p.get('instrumentId')),
                             'tradableInstrumentId': str(p.get('tradableInstrumentId') or p.get('instrumentId') or ''),
                             'instrumentId': str(p.get('instrumentId') or p.get('tradableInstrumentId') or ''),
@@ -290,10 +312,14 @@ class TradeLockerHelper:
                             'entry_time': p.get('openDate') or p.get('created'),
                             'price': float(p.get('avgOpenPrice') or p.get('openPrice') or 0.0),
                             'qty': float(p.get('qty') or p.get('lotSize') or 0.0),
-                            'stopLoss': float(p.get('stopLoss') or 0.0) if p.get('stopLoss') else None,
-                            'takeProfit': float(p.get('takeProfit') or 0.0) if p.get('takeProfit') else None,
+                            'stopLoss': pos_sl,
+                            'takeProfit': pos_tp,
                             'status': 'OPEN'
                         })
+                # Evict closed positions from bracket cache
+                stale_keys = [k for k in self._bracket_cache if k not in active_pos_ids]
+                for sk in stale_keys:
+                    self._bracket_cache.pop(sk, None)
                 return trades
             elif resp.status_code == 401:
                 logger.warning(f"401 Unauthorized for {self.email} on positions. Re-authenticating...")
@@ -501,14 +527,15 @@ class TradeLockerHelper:
         except Exception:
             pass
 
-        for attempt in range(2):
+        for attempt in range(4):
             try:
                 resp = requests.post(url, json=payload, headers=self._get_headers(auth=True), timeout=8)
                 
                 # Dynamic Rate Limiting (HTTP 429)
                 if resp.status_code == 429:
-                    retry_after = max(float(resp.headers.get("Retry-After") or 2.5), 2.5)
-                    logger.warning(f"⚠️ Rate limited (HTTP 429). Sleeping {retry_after}s...")
+                    base_delay = 2.5 * (attempt + 1)
+                    retry_after = max(float(resp.headers.get("Retry-After") or base_delay), base_delay)
+                    logger.warning(f"⚠️ Rate limited (HTTP 429) on attempt {attempt+1}/4. Sleeping {retry_after}s...")
                     time.sleep(retry_after)
                     continue
 
@@ -621,6 +648,10 @@ class TradeLockerHelper:
                 resp = requests.patch(url, json=payload, headers=self._get_headers(auth=True), timeout=10)
                 if resp.status_code in [200, 201, 204]:
                     logger.info(f"✅ Position {position_id} updated: SL={stop_loss}, TP={take_profit}")
+                    pos_k = str(position_id)
+                    if pos_k not in self._bracket_cache: self._bracket_cache[pos_k] = {}
+                    if stop_loss is not None: self._bracket_cache[pos_k]['stopLoss'] = float(stop_loss)
+                    if take_profit is not None: self._bracket_cache[pos_k]['takeProfit'] = float(take_profit)
                     return True
                 elif resp.status_code == 401 and attempt == 0:
                     logger.warning(f"⚠️ 401 Unauthorized on position patch for {position_id}. Refreshing token...")
@@ -645,6 +676,10 @@ class TradeLockerHelper:
                         fb_resp = requests.patch(fallback_url, json=payload, headers=self._get_headers(auth=True), timeout=10)
                         if fb_resp.status_code in [200, 201, 204]:
                             logger.info(f"✅ Position {position_id} updated via alternate endpoint: SL={stop_loss}, TP={take_profit}")
+                            pos_k = str(position_id)
+                            if pos_k not in self._bracket_cache: self._bracket_cache[pos_k] = {}
+                            if stop_loss is not None: self._bracket_cache[pos_k]['stopLoss'] = float(stop_loss)
+                            if take_profit is not None: self._bracket_cache[pos_k]['takeProfit'] = float(take_profit)
                             return True
                     logger.error(f"❌ Failed to patch position {position_id}: {resp.status_code} - {resp.text}")
                     return False
@@ -781,7 +816,7 @@ class TradeLockerClient:
         all_trades = []
         for i, helper in enumerate(self.helpers):
             if i > 0:
-                time.sleep(0.05) # 50ms pacing between account queries
+                time.sleep(0.25) # 250ms pacing between account queries to avoid Cloudflare 429 burst pressure
             trades = helper.get_open_positions()
             if trades:
                 all_trades.extend(trades)
