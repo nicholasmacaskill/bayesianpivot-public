@@ -57,7 +57,7 @@ def run_tier(suite_module_name: str, tier_title: str) -> dict:
 
 def main():
     print(f"\n{BOLD}{CYAN}╔══════════════════════════════════════════════════════════════════════════════════╗{RESET}")
-    print(f"{BOLD}{CYAN}║     🏛️  SOVEREIGN MASTER INVARIANT & QUANT EXECUTION CRUCIBLE HARNESS         ║{RESET}")
+    print(f"{BOLD}{CYAN}║         ⚡ SOVEREIGN 3D CRUCIBLE // TRI-AXIAL ADVERSARIAL MATRIX ⚡             ║{RESET}")
     print(f"{BOLD}{CYAN}╚══════════════════════════════════════════════════════════════════════════════════╝{RESET}\n")
 
     test_tiers = [
@@ -90,7 +90,7 @@ def main():
 
     # Print Institutional Summary Card
     print(f"{BOLD}{CYAN}──────────────────────────────────────────────────────────────────────────────────{RESET}")
-    print(f"{BOLD}📊 BULLETPROOF HARNESS AUDIT SCORECARD:{RESET}")
+    print(f"{BOLD}📊 SOVEREIGN 3D CRUCIBLE AUDIT SCORECARD:{RESET}")
     print(f"{BOLD}{CYAN}──────────────────────────────────────────────────────────────────────────────────{RESET}")
     
     for r in tier_results:
