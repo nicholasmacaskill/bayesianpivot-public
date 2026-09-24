@@ -394,9 +394,9 @@ class UnifiedSovereignSupervisor:
             except Exception as e:
                 logger.debug(f"Maintenance error: {e}")
 
-            # Run broker sync and maintenance every 3 minutes (180s) to maintain healthy API pacing
+            # Run broker history sync every 10 minutes (600s) to eliminate unnecessary API load & HTTP 429s
             slept = 0
-            while slept < 180 and self.running:
+            while slept < 600 and self.running:
                 time.sleep(5)
                 slept += 5
 
