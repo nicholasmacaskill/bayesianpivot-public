@@ -440,8 +440,8 @@ class SMCScanner:
             return main_df
         except Exception as e:
             err_str = str(e).lower()
-            if any(term in err_str for term in ["timed out", "timeout", "connection reset", "connection refused", "name resolution", "temporary failure"]):
-                logger.warning(f"📡 [DATA NETWORK GLITCH] Fetch timeout/network jitter on {symbol} ({timeframe}): {e}")
+            if any(term in err_str for term in ["timed out", "timeout", "connection reset", "connection refused", "name resolution", "temporary failure", "rate limit", "ratelimit", "too many visits", "429"]):
+                logger.warning(f"📡 [DATA NETWORK GLITCH] Fetch network/rate-limit jitter on {symbol} ({timeframe}): {e}")
             else:
                 import traceback
                 logger.error(f"Fetch error on {symbol}: {e}\n{traceback.format_exc()}")
