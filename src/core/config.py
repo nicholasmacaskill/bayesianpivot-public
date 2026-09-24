@@ -71,11 +71,11 @@ class Config:
     DAILY_DRAWDOWN_LIMIT = 0.015 # 1.5% Daily Drawdown Lockout (Ultra-Defensive)
 
     # ── Emergency Drawdown Protection & Quarantine ──
-    MIN_ACCOUNT_BUFFER_USD = 100.0  # Mandatory $100 minimum buffer above trailing floor to allow trading
+    # These accounts are already LIQUIDATION_ONLY at the broker level; listed here as a belt-and-suspenders guard.
     EMERGENCY_LOCKOUT_ACCOUNTS = [
-        "h4sj53tg4f@upcomers.com",  # Account 8: 4.90% DD (Limit $9,629.23, $10 buffer remaining) - FROZEN
-        "hnr10rtj4k@upcomers.com",  # Account 5: 4.80%+ DD (Near trailing limit) - FROZEN
-        "vkrbpwdprh@upcomers.com",  # Account 4: 4.70%+ DD (Near trailing limit) - FROZEN
+        "h4sj53tg4f@upcomers.com",  # Account 8: LIQUIDATION_ONLY
+        "hnr10rtj4k@upcomers.com",  # Account 5: LIQUIDATION_ONLY
+        "vkrbpwdprh@upcomers.com",  # Account 4: LIQUIDATION_ONLY
     ]
 
     # ── Tier-Specific Dollar Risk Ceilings (Distance-to-Default Protected) ──
@@ -87,15 +87,6 @@ class Config:
     DAILY_LOSS_UNIT_CIRCUIT_BREAKER = 2.0 # 2.0 Unit Cumulative Realized Loss Circuit Breaker (Locks fleet down 24h)
     MAX_SETUPS_PER_KILLZONE_SESSION = 1 # Session Anti-Clustering: Max 1 setup per killzone session (Asian, London, NY)
     JUDAS_PROBE_RISK_SCALE = 0.50       # Half-size probe risk scale (0.5 Units)
-
-    # ── Low-Buffer Account Session Restriction ──
-    # Empirical 2,546-trade session analysis (smc_alpha.db counterfactual_trades):
-    #   ASIAN_JUDAS (00-06 UTC): 922 trades, 50.9% WR, +729.2R  <- BEST window
-    #   LONDON_OPEN (07-10 UTC): 840 trades, 45.5% WR, +499.8R  <- 2nd best
-    #   NY_MORNING  (12-17 UTC): 589 trades, 36.2% WR, +156.5R  <- Blocked for thin-buffer accounts
-    # Accounts with buffer < $300 are permanently restricted to the top-2 windows only.
-    LOW_BUFFER_ACCOUNT_THRESHOLD_USD = 300.0
-    LOW_BUFFER_ALLOWED_SESSIONS = ["ASIAN_JUDAS", "LONDON_OPEN"]  # Best 2 windows by WR & R-multiple
     TARGET_RR = 2.5                     # 2.5R Target (Peak mathematical expectancy pocket: +0.75R/trade)
 
     # ── Strategy 9: Judas Inducement Hunter (GRADUATED CHAMPION: 80% WR / 10.0 PF) ───

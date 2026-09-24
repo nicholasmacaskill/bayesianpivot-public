@@ -95,32 +95,23 @@ class ExecutionFirewall:
         equity: float,
         hard_floor: float,
         open_positions_count: int = 0,
-        today_realized_profit: Optional[float] = None,
-        session: str = ""
+        today_realized_profit: Optional[float] = None
     ) -> Tuple[bool, str]:
         """
-        INVARIANT 9 & 10: Verifies individual account eligibility:
-        - Rejects LIQUIDATION_ONLY accounts
+        INVARIANT 9: Verifies individual account eligibility.
+        The prop firm's LIQUIDATION_ONLY status is the real floor — we trade until they stop us.
+        Checks:
+        - Rejects LIQUIDATION_ONLY accounts (broker-reported, not us being conservative)
         - Rejects accounts on EMERGENCY_LOCKOUT_ACCOUNTS list
-        - Rejects accounts where buffer above trailing drawdown floor < MIN_ACCOUNT_BUFFER_USD
         - Rejects accounts that already have >= MAX_POSITIONS_PER_ACCOUNT open positions
         - Rejects accounts that reached the 20% Consistency Rule Daily Profit Ceiling
-        - Gate 10: Rejects low-buffer accounts (buffer < LOW_BUFFER_ACCOUNT_THRESHOLD_USD)
-          outside their restricted high-alpha session windows (ASIAN_JUDAS, LONDON_OPEN).
-          Empirical basis: 2,546 counterfactual trades — ASIAN 51.0% WR, LONDON 45.5% WR,
-          NY MORNING 36.2% WR. Protecting thin-runway accounts from low-conviction macro chop.
         """
         if status and str(status).upper() == "LIQUIDATION_ONLY":
             return False, f"Account {email} status is LIQUIDATION_ONLY"
-        
+
         quarantined = getattr(Config, 'EMERGENCY_LOCKOUT_ACCOUNTS', [])
         if email in quarantined:
             return False, f"Account {email} is in emergency drawdown quarantine list"
-
-        remaining_buffer = max(0.0, equity - hard_floor)
-        min_buffer = getattr(Config, 'MIN_ACCOUNT_BUFFER_USD', 100.0)
-        if remaining_buffer < min_buffer:
-            return False, f"Account {email} buffer (${remaining_buffer:,.2f}) < safe margin (${min_buffer:.2f})"
 
         max_acct_pos = getattr(Config, 'MAX_POSITIONS_PER_ACCOUNT', 2)
         if open_positions_count >= max_acct_pos:
@@ -134,24 +125,6 @@ class ExecutionFirewall:
             )
             if today_realized_profit >= daily_cap:
                 return False, f"Account {email} reached 20% Consistency Daily Profit Ceiling (${today_realized_profit:,.2f} >= ${daily_cap:,.2f}). Trading locked to preserve payout compliance."
-
-        # ── GATE 10: Low-Buffer Account Session Restriction ──
-        # If this account's buffer is below the safe threshold, it is restricted to
-        # our highest-alpha windows only (Asian Judas + London Open).
-        # Empirical: ASIAN 51.0% WR / +729R, LONDON 45.5% WR / +500R, NY 36.2% WR / +156R.
-        # A session must be supplied by the caller for this check to activate.
-        if session:
-            low_buf_threshold = getattr(Config, 'LOW_BUFFER_ACCOUNT_THRESHOLD_USD', 300.0)
-            allowed_sessions = getattr(Config, 'LOW_BUFFER_ALLOWED_SESSIONS', ["ASIAN_JUDAS", "LONDON_OPEN"])
-            if remaining_buffer < low_buf_threshold:
-                canonical = ExecutionFirewall.get_canonical_killzone_session(session_hint=session)
-                if canonical not in allowed_sessions:
-                    return False, (
-                        f"FIREWALL REJECTION (Gate 10): Account {email} buffer (${remaining_buffer:,.2f}) "
-                        f"< ${low_buf_threshold:.0f} threshold. Low-buffer accounts are restricted to "
-                        f"{allowed_sessions} only. Current session '{canonical}' is blocked to protect "
-                        f"thin runway from {canonical} chop (36.2% WR vs 51.0% Asian WR)."
-                    )
 
         return True, "ELIGIBLE"
 

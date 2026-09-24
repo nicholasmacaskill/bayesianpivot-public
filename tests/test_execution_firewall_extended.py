@@ -117,16 +117,6 @@ class TestExecutionFirewallExtended(unittest.TestCase):
         self.assertFalse(eligible)
         self.assertIn("LIQUIDATION_ONLY", reason)
 
-        # Test account below emergency buffer
-        eligible_dd, reason_dd = ExecutionFirewall.is_account_eligible(
-            email="active@upcomers.com",
-            status="ACTIVE",
-            equity=9550.0,
-            hard_floor=9500.0 # Buffer is $50 < $100 min safe margin
-        )
-        self.assertFalse(eligible_dd)
-        self.assertIn("safe margin", reason_dd)
-
         # Test account exceeding max open positions (>= 2)
         eligible_pos_cap, reason_pos_cap = ExecutionFirewall.is_account_eligible(
             email="busy@upcomers.com",
@@ -138,7 +128,7 @@ class TestExecutionFirewallExtended(unittest.TestCase):
         self.assertFalse(eligible_pos_cap)
         self.assertIn("already has 2 open positions", reason_pos_cap)
 
-        # Test fully eligible account (0 open positions)
+        # Test fully eligible account (0 open positions, any buffer — we trade until prop firm stops us)
         eligible_ok, reason_ok = ExecutionFirewall.is_account_eligible(
             email="healthy@upcomers.com",
             status="ACTIVE",
@@ -148,6 +138,7 @@ class TestExecutionFirewallExtended(unittest.TestCase):
         )
         self.assertTrue(eligible_ok)
         self.assertEqual(reason_ok, "ELIGIBLE")
+
 
     def test_invariant_9_consistency_profit_ceiling(self):
         """Verify is_account_eligible blocks accounts that reached the 20% consistency daily profit cap."""
