@@ -439,8 +439,12 @@ class SMCScanner:
 
             return main_df
         except Exception as e:
-            import traceback
-            logger.error(f"Fetch error: {e}\n{traceback.format_exc()}")
+            err_str = str(e).lower()
+            if any(term in err_str for term in ["timed out", "timeout", "connection reset", "connection refused", "name resolution", "temporary failure"]):
+                logger.warning(f"📡 [DATA NETWORK GLITCH] Fetch timeout/network jitter on {symbol} ({timeframe}): {e}")
+            else:
+                import traceback
+                logger.error(f"Fetch error on {symbol}: {e}\n{traceback.format_exc()}")
             return None
 
     def calculate_volume_cluster(self, df, lookback=20):
