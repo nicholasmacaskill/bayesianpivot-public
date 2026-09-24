@@ -1,3 +1,5 @@
+import os
+import json
 import numpy as np
 import pandas as pd
 import logging
@@ -25,7 +27,7 @@ class AlphaSweepScanner(SMCScanner):
         self.retail_trap_engine = RetailStopTrapEngine()
         self.visual_vector_engine = VisualVectorEngine()
         self.tl = TradeLockerClient()
-        self._active_trade_brackets = {}
+        self._active_trade_brackets = self._load_active_trade_brackets()
         self._position_tiers = {}
         try:
             from src.engines.execution_shadow_engine import ExecutionShadowEngine
@@ -52,6 +54,36 @@ class AlphaSweepScanner(SMCScanner):
             logger.debug(f"JudasInducementEngine init error: {jie_err}")
             self.judas_engine = None
         logger.info("Bayesian Pivot Alpha Sweep Scanner Initialized with Live Orderflow Feed, Liquidity Heatmap, Judas Inducement Engine, Retail Trap Shadow Engine, Auction Market Engine & TradeLocker Fleet Client.")
+
+    def _load_active_trade_brackets(self) -> dict:
+        """Loads persisted trade bracket state across daemon restarts per AGENTS.md Rule 12."""
+        cache_path = os.path.join(os.path.dirname(__file__), "../../data/active_trade_brackets.json")
+        try:
+            if os.path.exists(cache_path):
+                with open(cache_path, "r") as f:
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        logger.info(f"💾 [STATE RESTORE] Recovered {len(data)} active trade brackets from persistent cache across daemon reboot.")
+                        return data
+        except Exception as e:
+            logger.debug(f"Failed to load active trade brackets cache: {e}")
+        return {}
+
+    def _save_active_trade_brackets(self):
+        """Persists active trade bracket state to disk to preserve the Ruler Invariant across reboots."""
+        cache_path = os.path.join(os.path.dirname(__file__), "../../data/active_trade_brackets.json")
+        try:
+            os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+            serializable = {}
+            for sym, info in getattr(self, '_active_trade_brackets', {}).items():
+                entry = dict(info)
+                if isinstance(entry.get('entry_time'), datetime):
+                    entry['entry_time'] = entry['entry_time'].isoformat()
+                serializable[sym] = entry
+            with open(cache_path, "w") as f:
+                json.dump(serializable, f, indent=2)
+        except Exception as e:
+            logger.debug(f"Failed to save active trade brackets cache: {e}")
 
     def is_premium_killzone(self, dt=None):
         """
@@ -1423,6 +1455,7 @@ class AlphaSweepScanner(SMCScanner):
                             'entry_time': datetime.now(timezone.utc),
                             'tier': 0
                         }
+                        self._save_active_trade_brackets()
                         # Register in Execution Strategy Shadow Tournament
                         if hasattr(self, 'exec_shadow_engine'):
                             self.exec_shadow_engine.register_trade(
@@ -1493,8 +1526,8 @@ class AlphaSweepScanner(SMCScanner):
             if not open_pos:
                 return
 
-            if not hasattr(self, '_active_trade_brackets'):
-                self._active_trade_brackets = {}
+            if not hasattr(self, '_active_trade_brackets') or not self._active_trade_brackets:
+                self._active_trade_brackets = self._load_active_trade_brackets()
             if not hasattr(self, '_position_tiers'):
                 self._position_tiers = {}
 
@@ -1589,6 +1622,7 @@ class AlphaSweepScanner(SMCScanner):
                     self._position_tiers[pos_id] = 2
                     if sym_clean in self._active_trade_brackets:
                         self._active_trade_brackets[sym_clean]['tier'] = 2
+                        self._save_active_trade_brackets()
 
                     try:
                         from src.clients.telegram_notifier import TelegramNotifier
@@ -1623,6 +1657,7 @@ class AlphaSweepScanner(SMCScanner):
                     self._position_tiers[pos_id] = 1
                     if sym_clean in self._active_trade_brackets:
                         self._active_trade_brackets[sym_clean]['tier'] = 1
+                        self._save_active_trade_brackets()
 
                     try:
                         from src.clients.telegram_notifier import TelegramNotifier
@@ -1657,6 +1692,7 @@ class AlphaSweepScanner(SMCScanner):
                         self._position_tiers[pos_id] = 1
                         if sym_clean in self._active_trade_brackets:
                             self._active_trade_brackets[sym_clean]['tier'] = 1
+                            self._save_active_trade_brackets()
 
                         try:
                             from src.clients.telegram_notifier import TelegramNotifier

@@ -97,14 +97,14 @@ class CalendarFilter:
                             logger.debug(f"CalendarFilter: Could not parse date '{date_str}': {parse_err}")
 
                 self._events = events
-                self._last_fetch = datetime.utcnow()
+                self._last_fetch = datetime.now(timezone.utc)
                 logger.info(f"[CalendarFilter] Loaded {len(events)} high-impact events for the week.")
         except Exception as e:
             logger.warning(f"[CalendarFilter] Failed to fetch calendar: {e}. Using cached/empty list.")
 
     def _check_crypto_blackout(self) -> tuple[bool, str]:
         """Check static crypto-specific blackout dates."""
-        today_key = datetime.utcnow().strftime('%m-%d')
+        today_key = datetime.now(timezone.utc).strftime('%m-%d')
         if today_key in CRYPTO_BLACKOUT_DATES:
             reason = f"Crypto blackout date: {CRYPTO_BLACKOUT_DATES[today_key]}"
             return False, reason
@@ -130,7 +130,7 @@ class CalendarFilter:
             return False, reason
 
         # 2. Check ForexFactory events
-        now_utc = datetime.utcnow()
+        now_utc = datetime.now(timezone.utc)
         window = timedelta(minutes=self.blackout_minutes)
 
         # Determine relevant currencies for the target asset (default USD)
