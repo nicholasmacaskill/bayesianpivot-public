@@ -184,7 +184,7 @@ class UnifiedSovereignSupervisor:
                         qty = float(pos.get('qty') or 0.0)
                         contract_size = Config.get_contract_size(symbol)
 
-                        # Establish and freeze true initial risk basis on first observation
+                        # Establish and freeze true initial stop loss level on first observation
                         # Prevents artificial R-multiple inflation after stepped defense or BE trails
                         if "initial_sl" not in sym_data or sym_data["initial_sl"] <= 0:
                             min_stop_pct = Config.MIN_STOP_PCT.get(symbol, 0.003)
@@ -196,16 +196,20 @@ class UnifiedSovereignSupervisor:
                                 else:
                                     sl = entry - (entry * min_stop_pct) if side.upper() == "BUY" else entry + (entry * min_stop_pct)
                             sym_data["initial_sl"] = sl
-                            sym_data["initial_risk_usd"] = abs(entry - sl) * qty * contract_size
                             self.watchdog.save_state()
 
                         initial_sl = sym_data.get("initial_sl", sl)
-                        risk_usd = sym_data.get("initial_risk_usd") or (abs(entry - initial_sl) * qty * contract_size)
-                        if risk_usd <= 0:
+                        stop_dist = abs(entry - initial_sl)
+                        if stop_dist <= 0:
                             continue
 
-                        r_multiple = pnl / risk_usd
-                        logger.info(f"📊 [OPEN POSITION] {symbol} PnL: ${pnl:.2f} | R: {r_multiple:.2f}R")
+                        # Per-Position Risk Basis (IMMUNE TO CROSS-ACCOUNT LOT SIZE CONTAMINATION)
+                        pos_risk_usd = stop_dist * qty * contract_size
+                        if pos_risk_usd <= 0:
+                            continue
+
+                        r_multiple = pnl / pos_risk_usd
+                        logger.info(f"📊 [OPEN POSITION] {symbol} (Qty: {qty}) PnL: ${pnl:.2f} | Risk: ${pos_risk_usd:.2f} | R: {r_multiple:.2f}R")
 
                         # 1. Peak R Tracking & Immediate State Persistence
                         peak_r = max(

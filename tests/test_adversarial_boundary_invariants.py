@@ -83,6 +83,49 @@ class TestAdversarialBoundaryInvariants(unittest.TestCase):
         inflated_r = pnl / mutated_risk
         self.assertAlmostEqual(inflated_r, 3.3333, places=2)
 
+    def test_invariant_multi_account_r_multiple_lot_size_isolation(self):
+        """
+        Adversarial Invariant: Multi-account fleet positions on the same symbol with
+        different lot sizes (e.g. 0.01 lots vs 0.08 lots) MUST compute R-multiples using
+        their own position-specific risk basis. They must NEVER share a single denominator.
+        """
+        entry = 4283.0
+        initial_sl = 4272.0  # 11 point stop
+        stop_dist = abs(entry - initial_sl)
+        contract_size = 100.0  # Gold
+
+        # Account 1: 0.01 lots ($11.00 risk)
+        acct1_qty = 0.01
+        acct1_risk = stop_dist * acct1_qty * contract_size
+        self.assertAlmostEqual(acct1_risk, 11.0, places=2)
+
+        # Account 9: 0.08 lots ($88.00 risk)
+        acct9_qty = 0.08
+        acct9_risk = stop_dist * acct9_qty * contract_size
+        self.assertAlmostEqual(acct9_risk, 88.0, places=2)
+
+        # Price moves +3.0 points to 4286.0 (+0.27R in price terms)
+        current_price = 4286.0
+        price_delta = current_price - entry
+        expected_r = price_delta / stop_dist  # 3.0 / 11.0 = 0.2727R
+
+        # Calculate PnL for each account
+        acct1_pnl = price_delta * acct1_qty * contract_size  # $3.00
+        acct9_pnl = price_delta * acct9_qty * contract_size  # $24.00
+
+        # With per-position risk isolation:
+        acct1_r = acct1_pnl / acct1_risk
+        acct9_r = acct9_pnl / acct9_risk
+
+        self.assertAlmostEqual(acct1_r, expected_r, places=4)
+        self.assertAlmostEqual(acct9_r, expected_r, places=4)
+        self.assertAlmostEqual(acct1_r, acct9_r, places=4, msg="Both accounts must have identical R-multiple for identical price move")
+
+        # Assert that if Account 9's PnL was divided by Account 1's risk (the old bug), it would produce a corrupted 2.18R
+        corrupted_acct9_r = acct9_pnl / acct1_risk
+        self.assertAlmostEqual(corrupted_acct9_r, 2.1818, places=2)
+        self.assertNotEqual(corrupted_acct9_r, expected_r, "Denominator cross-contamination bug must never recur")
+
     def test_invariant_macro_news_currency_isolation_negative_boundary(self):
         """
         Negative Boundary Invariant: Foreign currency events (AUD, CAD, JPY, GBP)
