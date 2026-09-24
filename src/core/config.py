@@ -272,7 +272,7 @@ class Config:
     TP_FRONT_RUN_CUSHION_USD = {"BTC": 15.0, "ETH": 1.0, "SOL": 0.10, "XAU": 0.50}
     
     # ── Max Favorable Excursion (MFE) Peak Retracement Ratchet ──
-    MFE_PEAK_RATCHET_ENABLED = False       # ❌ DISABLED: Never panic market-dump trades on normal wicks. Let protective SL / TP limits work.
+    MFE_PEAK_RATCHET_ENABLED = True        # ✅ ENABLED: Position-isolated R-multiple guarantees MFE only triggers if genuine peak >= +2.0R
     MFE_MIN_PEAK_R = 2.0            # Minimum peak R required to arm the ratchet
     MFE_MAX_RETRACEMENT_R = 0.75    # Giving back 0.75R from peak triggers defensive scale-out
     

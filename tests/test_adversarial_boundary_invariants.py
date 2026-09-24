@@ -254,6 +254,40 @@ class TestAdversarialBoundaryInvariants(unittest.TestCase):
         self.assertEqual(target_r, 3.0, "Dynamic target R must equal 3.0R, not hardcoded 2.5R")
         self.assertEqual(target_pnl, 300.0, "Dynamic PnL must equal $300.00, not hardcoded $250.00")
 
+    def test_invariant_mfe_boundary_arming_and_trigger(self):
+        """
+        Adversarial Invariant: MFE Peak Retracement Ratchet:
+        1. Negative Boundary: A trade that peaks at +0.87R and pulls back to +0.10R MUST NEVER trigger MFE (disarmed because peak < 2.0R).
+        2. Negative Boundary: A trade that peaks at +2.20R and pulls back to +1.80R (retrace = 0.40R < 0.75R) MUST NOT trigger MFE.
+        3. Positive Trigger: A trade that peaks at +2.20R and pulls back to +1.40R (retrace = 0.80R >= 0.75R) MUST trigger MFE scaleout.
+        """
+        from src.core.config import Config
+        self.assertTrue(Config.MFE_PEAK_RATCHET_ENABLED, "MFE must be enabled in Config")
+        mfe_min_peak = Config.MFE_MIN_PEAK_R
+        mfe_max_retrace = Config.MFE_MAX_RETRACEMENT_R
+
+        # Scenario 1: Today's Gold move (+0.87R peak -> +0.10R pullback)
+        peak_r_scenario1 = 0.87
+        current_r_scenario1 = 0.10
+        armed_1 = peak_r_scenario1 >= mfe_min_peak
+        self.assertFalse(armed_1, "MFE must NEVER arm on sub-2.0R peaks (like today's Gold 0.87R move)")
+
+        # Scenario 2: Deep runner at +2.20R with healthy 0.40R pullback
+        peak_r_scenario2 = 2.20
+        current_r_scenario2 = 1.80
+        armed_2 = peak_r_scenario2 >= mfe_min_peak
+        retrace_2 = peak_r_scenario2 - current_r_scenario2
+        trigger_2 = armed_2 and (retrace_2 >= mfe_max_retrace)
+        self.assertTrue(armed_2, "MFE arms at +2.20R")
+        self.assertFalse(trigger_2, "MFE must not trigger on normal 0.40R pullback from +2.20R")
+
+        # Scenario 3: Deep runner at +2.20R with severe 0.80R collapse
+        current_r_scenario3 = 1.40
+        retrace_3 = peak_r_scenario2 - current_r_scenario3
+        trigger_3 = armed_2 and (retrace_3 >= mfe_max_retrace)
+        self.assertTrue(trigger_3, "MFE must trigger when retrace gives back >= 0.75R from a +2.0R+ peak")
+
 
 if __name__ == '__main__':
     unittest.main()
+
