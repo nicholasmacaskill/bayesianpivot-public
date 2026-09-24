@@ -66,6 +66,7 @@ def main():
         ("tests.test_prop_compliance_invariants", "TIER 3: PROP COMPLIANCE & RETRAINING INVARIANTS"),
         ("tests.test_live_orderflow_feed", "TIER 4: LIVE ORDERFLOW & ICEBERG ABSORPTION FEED"),
         ("tests.test_pipeline_e2e_invariants", "TIER 5: SIGNAL PIPELINE & GRADUATED ARCHETYPE INVARIANTS"),
+        ("tests.test_adversarial_boundary_invariants", "TIER 6: ADVERSARIAL NEGATIVE BOUNDARY & STATE INVARIANTS"),
     ]
 
     tier_results = []
