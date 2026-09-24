@@ -10,16 +10,17 @@ def get_db_connection():
     if not os.path.exists(db_dir):
         os.makedirs(db_dir, exist_ok=True)
     
-    conn = sqlite3.connect(Config.DB_PATH, timeout=30.0)
+    conn = sqlite3.connect(Config.DB_PATH, timeout=60.0)
     conn.row_factory = sqlite3.Row
     try:
         conn.execute("PRAGMA journal_mode=WAL;")
-        conn.execute("PRAGMA busy_timeout=30000;")
+        conn.execute("PRAGMA busy_timeout=60000;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
     except Exception:
         pass
     return conn
 
-def execute_db_write_with_retry(query: str, params: tuple = (), max_retries: int = 5):
+def execute_db_write_with_retry(query: str, params: tuple = (), max_retries: int = 10):
     """
     Executes a database write transaction with exponential backoff and jitter
     to guarantee zero sqlite3.OperationalError: database is locked failures during concurrent bursts.
@@ -33,11 +34,12 @@ def execute_db_write_with_retry(query: str, params: tuple = (), max_retries: int
             conn = get_db_connection()
             c = conn.cursor()
             c.execute(query, params)
+            last_id = c.lastrowid
             conn.commit()
-            return True
+            return last_id if last_id else True
         except sqlite3.OperationalError as e:
             if "locked" in str(e).lower() and attempt < max_retries - 1:
-                sleep_sec = (0.05 * (2 ** attempt)) + random.uniform(0.01, 0.05)
+                sleep_sec = min(2.0, (0.05 * (1.5 ** attempt)) + random.uniform(0.02, 0.08))
                 time.sleep(sleep_sec)
                 continue
             raise e
@@ -276,22 +278,20 @@ def init_db():
         conn.close()
 
 def log_scan(scan_data, ai_result):
-    conn = get_db_connection()
-    c = conn.cursor()
-    
     # Extract shadow data safely
     shadow_regime = scan_data.get('shadow_regime', 'N/A')
     shadow_multiplier = scan_data.get('shadow_multiplier', 1.0)
     verdict = scan_data.get('verdict', 'N/A')
     
-    c.execute('''
+    query = '''
         INSERT INTO scans (
             timestamp, symbol, timeframe, pattern, bias, direction,
             ai_score, ai_reasoning, verdict, shadow_regime, shadow_multiplier,
             session, killzone, hurst, adf_p, daily_pnl, total_pnl, smt, formations, bias_conflict
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
+    '''
+    params = (
         scan_data.get('timestamp', datetime.now(timezone.utc).isoformat()),
         scan_data['symbol'],
         Config.TIMEFRAME,
@@ -312,10 +312,8 @@ def log_scan(scan_data, ai_result):
         scan_data.get('smt_strength', 0.0),
         scan_data.get('formations', ''),
         1 if scan_data.get('bias_conflict') else 0
-    ))
-    scan_id = c.lastrowid
-    conn.commit()
-    conn.close()
+    )
+    scan_id = execute_db_write_with_retry(query, params)
     
     # Sync to Supabase
     try:

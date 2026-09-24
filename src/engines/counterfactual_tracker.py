@@ -76,19 +76,19 @@ class CounterfactualTracker:
         """
         try:
             conn = get_db_connection()
-            open_trades = conn.execute(
+            rows = conn.execute(
                 "SELECT * FROM counterfactual_trades WHERE status = 'OPEN'"
             ).fetchall()
+            open_trades = [dict(r) for r in rows]
+            conn.close()
 
             if not open_trades:
-                conn.close()
                 return 0
 
             resolved_count = 0
             now_utc = datetime.now(timezone.utc)
 
-            for row in open_trades:
-                t = dict(row)
+            for t in open_trades:
                 t_id = t["id"]
                 symbol = t["symbol"]
                 direction = t["direction"]
@@ -189,12 +189,13 @@ class CounterfactualTracker:
                 if outcome:
                     resolved_count += 1
                     closed_iso = now_utc.isoformat()
-                    conn.execute(
-                        """
+                    update_query = """
                         UPDATE counterfactual_trades
                         SET status = 'CLOSED', outcome = ?, simulated_pnl = ?, simulated_r = ?, closed_at = ?
                         WHERE id = ?
-                        """,
+                    """
+                    execute_db_write_with_retry(
+                        update_query,
                         (outcome, pnl, r_mult, closed_iso, t_id)
                     )
                     logger.info(f"🏁 Counterfactual Trade #{t_id} [{t.get('account_key', 'SHADOW')}] Resolved: {outcome} (${pnl:+.2f}, {r_mult:+.1f}R)")
@@ -210,17 +211,10 @@ class CounterfactualTracker:
                         except Exception as _tourn_err:
                             logger.debug(f"Tournament record error: {_tourn_err}")
 
-            conn.commit()
             return resolved_count
         except Exception as e:
             logger.error(f"Error evaluating open shadow trades: {e}")
             return 0
-        finally:
-            if 'conn' in locals() and conn:
-                try:
-                    conn.close()
-                except Exception:
-                    pass
 
     def _update_bayesian_weight_realtime(self, pattern: str, outcome: str, r_mult: float):
         """Instant per-trade Bayesian posterior weight update."""
