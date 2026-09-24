@@ -26,7 +26,7 @@ echo "Log file:   ${LOG_FILE}"
 nohup "${PYTHON_BIN}" -m mlx_lm server \
     --model "${MODEL}" \
     --adapter-path "${ADAPTER}" \
-    --port "${PORT}" > "${LOG_FILE}" 2>&1 &
+    --port "${PORT}" >> "${LOG_FILE}" 2>&1 &
 
 PID=$!
 echo "Server spawned with PID ${PID}. Awaiting health check..."
