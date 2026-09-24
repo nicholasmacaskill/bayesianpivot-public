@@ -81,7 +81,7 @@ class Config:
     # ── Tier-Specific Dollar Risk Ceilings (Distance-to-Default Protected) ──
     TIER_CAPS_ENABLED = True
 
-    MAX_CONSECUTIVE_DAILY_LOSSES = 2  # Hard Circuit Breaker: Max 2 consecutive full losses per day before 24h lockout
+    MAX_CONSECUTIVE_DAILY_LOSSES = 3    # Hard Circuit Breaker: Max 3 consecutive full losses (3.0 units) per day before 24h lockout
     DAILY_TRADE_LIMIT = 3.0             # Upgraded to 3.0 Risk Units per day (Fractional Risk-Budgeted Accounting)
     DAILY_RISK_UNIT_CAP = 3.0           # Total Daily Capacity: 3.0 Risk Units per day (allows 2 probes + 2 full trades)
     DAILY_LOSS_UNIT_CIRCUIT_BREAKER = 3.0 # 3.0 Unit Cumulative Realized Loss Circuit Breaker (3 full losses or 6 probe losses)

@@ -358,11 +358,13 @@ class ExecutionFirewall:
                         return 0.5
                     # 3. Fallback: single account test heuristic (Account 1 risk = $35, probe risk = $17.50)
                     cluster_loss = abs(sum(item['pnl'] for item in cluster))
+                    if cluster_loss < 2.0:
+                        return 0.0  # Breakeven trailing defense scratch -> 0.0 loss units
                     if 10.0 <= cluster_loss <= 22.0:
                         return 0.5
                     return 1.0
 
-                max_loss_streak = getattr(Config, 'MAX_CONSECUTIVE_DAILY_LOSSES', 2)
+                max_loss_streak = int(getattr(Config, 'MAX_CONSECUTIVE_DAILY_LOSSES', 3))
                 max_loss_units = float(getattr(Config, 'DAILY_LOSS_UNIT_CIRCUIT_BREAKER', 3.0))
                 
                 loss_streak = 0
@@ -372,26 +374,25 @@ class ExecutionFirewall:
                 # Compute cumulative loss units across all losing setups today
                 for cluster in setup_clusters:
                     cluster_net_pnl = sum(item['pnl'] for item in cluster)
-                    if cluster_net_pnl < 0:
+                    if cluster_net_pnl <= -2.0:
                         unit_weight = get_cluster_risk_units(cluster)
                         cumulative_loss_units += unit_weight
 
                 # Compute consecutive loss streak (ordered DESC: stop at first non-loss)
                 for cluster in setup_clusters:
                     cluster_net_pnl = sum(item['pnl'] for item in cluster)
-                    if cluster_net_pnl < 0:
+                    if cluster_net_pnl <= -2.0:
                         loss_streak += 1
                         consecutive_loss_units += get_cluster_risk_units(cluster)
-                    else:
+                    elif cluster_net_pnl > 2.0:
                         break
 
-                # 2.0 Unit Cumulative Loss Circuit Breaker
+                # Cumulative / Consecutive Loss Circuit Breaker
                 if cumulative_loss_units >= max_loss_units - 1e-4:
                     return False, f"Daily consecutive loss ceiling hit / cumulative loss limit reached ({cumulative_loss_units:.1f}/{max_loss_units:.1f} Units lost today). Trading locked for 24h to preserve prop equity."
 
-                # Consecutive loss streak (only triggers if units >= 1.5, protecting two 0.5x probe losses)
-                if loss_streak >= max_loss_streak:
-                    if consecutive_loss_units >= 1.5 or cumulative_loss_units >= 1.5:
+                if loss_streak >= max_loss_streak or consecutive_loss_units >= max_loss_units - 1e-4:
+                    if consecutive_loss_units >= max_loss_units - 1e-4 or cumulative_loss_units >= max_loss_units - 1e-4:
                         return False, f"Daily consecutive loss ceiling hit ({loss_streak}/{max_loss_streak} distinct setups lost today, {cumulative_loss_units:.1f} units). Trading locked for 24h to preserve prop equity."
 
         except Exception as e:
