@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-🏛️ BAYESIAN PIVOT TRADING INFRASTRUCTURE // BULLETPROOF TESTING HARNESS
+🏛️ BAYESIAN PIVOT // SOVEREIGN MASTER INVARIANT & CRUCIBLE HARNESS
 ================================================================================
 Master Invariant Verification & Regression Prevention Test Suite.
 Verifies Broker Safety (AGENTS.md), Quantitative Physics, Prop Compliance, and
@@ -57,7 +57,7 @@ def run_tier(suite_module_name: str, tier_title: str) -> dict:
 
 def main():
     print(f"\n{BOLD}{CYAN}╔══════════════════════════════════════════════════════════════════════════════════╗{RESET}")
-    print(f"{BOLD}{CYAN}║     🏛️  BAYESIAN PIVOT // BULLETPROOF QUANT & BROKER INVARIANT HARNESS       ║{RESET}")
+    print(f"{BOLD}{CYAN}║     🏛️  SOVEREIGN MASTER INVARIANT & QUANT EXECUTION CRUCIBLE HARNESS         ║{RESET}")
     print(f"{BOLD}{CYAN}╚══════════════════════════════════════════════════════════════════════════════════╝{RESET}\n")
 
     test_tiers = [
@@ -67,7 +67,7 @@ def main():
         ("tests.test_live_orderflow_feed", "TIER 4: LIVE ORDERFLOW & ICEBERG ABSORPTION FEED"),
         ("tests.test_pipeline_e2e_invariants", "TIER 5: SIGNAL PIPELINE & GRADUATED ARCHETYPE INVARIANTS"),
         ("tests.test_adversarial_boundary_invariants", "TIER 6: ADVERSARIAL NEGATIVE BOUNDARY & STATE INVARIANTS"),
-        ("tests.test_autonomous_adversarial_quality_loop", "TIER 7: AUTONOMOUS ADVERSARIAL QUALITY LOOP (CRUCIBLE FUZZING)"),
+        ("tests.test_autonomous_adversarial_quality_loop", "TIER 7: AUTONOMOUS QUANT EXECUTION CRUCIBLE (AQEC FUZZ)"),
         ("tests.test_crucible_mutations", "TIER 8: 3D MUTATION META-TESTING (TESTING THE TEST)"),
     ]
 
