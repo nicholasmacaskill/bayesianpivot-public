@@ -87,6 +87,15 @@ class Config:
     DAILY_LOSS_UNIT_CIRCUIT_BREAKER = 2.0 # 2.0 Unit Cumulative Realized Loss Circuit Breaker (Locks fleet down 24h)
     MAX_SETUPS_PER_KILLZONE_SESSION = 1 # Session Anti-Clustering: Max 1 setup per killzone session (Asian, London, NY)
     JUDAS_PROBE_RISK_SCALE = 0.50       # Half-size probe risk scale (0.5 Units)
+
+    # ── Low-Buffer Account Session Restriction ──
+    # Empirical 2,546-trade session analysis (smc_alpha.db counterfactual_trades):
+    #   ASIAN_JUDAS (00-06 UTC): 922 trades, 50.9% WR, +729.2R  <- BEST window
+    #   LONDON_OPEN (07-10 UTC): 840 trades, 45.5% WR, +499.8R  <- 2nd best
+    #   NY_MORNING  (12-17 UTC): 589 trades, 36.2% WR, +156.5R  <- Blocked for thin-buffer accounts
+    # Accounts with buffer < $300 are permanently restricted to the top-2 windows only.
+    LOW_BUFFER_ACCOUNT_THRESHOLD_USD = 300.0
+    LOW_BUFFER_ALLOWED_SESSIONS = ["ASIAN_JUDAS", "LONDON_OPEN"]  # Best 2 windows by WR & R-multiple
     TARGET_RR = 2.5                     # 2.5R Target (Peak mathematical expectancy pocket: +0.75R/trade)
 
     # ── Strategy 9: Judas Inducement Hunter (GRADUATED CHAMPION: 80% WR / 10.0 PF) ───

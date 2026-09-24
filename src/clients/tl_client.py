@@ -1233,7 +1233,8 @@ class TradeLockerClient:
                     equity=equity,
                     hard_floor=hard_floor,
                     open_positions_count=acct_pos_count,
-                    today_realized_profit=acct_today_profit
+                    today_realized_profit=acct_today_profit,
+                    session=session  # Gate 10: low-buffer accounts restricted to top-alpha sessions only
                 )
                 if not is_eligible:
                     logger.critical(f"🛡️ [ACCOUNT EXCLUDED] Account {i+1} ({helper.email}): {ineligibility_reason}. Zero risk permitted.")
