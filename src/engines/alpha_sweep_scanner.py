@@ -777,7 +777,7 @@ class AlphaSweepScanner(SMCScanner):
         if not setup:
             setup = self.check_strong_smt_sweep_shadow(symbol, df_5m, df_1h, killzone)
 
-        # 8. Octonary Hunt: Non-ICT Quantitative Microstructure Contenders (100% Zero-Risk Shadow Tracking)
+        # 8. Octonary Hunt: Non-ICT Quantitative Microstructure Contenders (Graduated Live Probes & Shadow Tracking)
         if not setup and getattr(self, 'auction_engine', None):
             try:
                 non_ict_setups = self.auction_engine.evaluate_all_shadow_contenders(
@@ -789,6 +789,22 @@ class AlphaSweepScanner(SMCScanner):
                 if non_ict_setups:
                     best_non_ict = non_ict_setups[0]
                     atr_calc = float((df_5m['high'] - df_5m['low']).rolling(14).mean().iloc[-1])
+
+                    graduated_auction_patterns = [
+                        "AVWAP_2SIGMA_BEARISH_SNAPBACK",
+                        "AVWAP_2SIGMA_BULLISH_SNAPBACK",
+                        "WYCKOFF_VSA_SPRING",
+                        "WYCKOFF_VSA_UPTHRUST",
+                        "AMT_VALUE_AREA_HIGH_REJECTION",
+                        "AMT_VALUE_AREA_LOW_REJECTION"
+                    ]
+                    is_live_symbol = symbol in getattr(Config, 'SYMBOLS', ['BTC/USD', 'XAU/USD'])
+                    is_graduated = (
+                        best_non_ict['pattern'] in graduated_auction_patterns
+                        and is_live_symbol
+                        and getattr(Config, 'AUCTION_MARKET_AUTO_EXECUTE', True)
+                    )
+
                     setup = {
                         'pattern_type': best_non_ict['pattern'],
                         'strategy_id': best_non_ict['strategy_id'],
@@ -800,10 +816,11 @@ class AlphaSweepScanner(SMCScanner):
                         'atr': atr_calc,
                         'regime': 'AUCTION_DISCOVERY',
                         'hurst': 0.40,
-                        'is_shadow_only': True
+                        'is_shadow_only': not is_graduated,
+                        'is_probe_sizing': is_graduated
                     }
             except Exception as non_ict_err:
-                logger.debug(f"Non-ICT shadow hunt error: {non_ict_err}")
+                logger.debug(f"Non-ICT hunt error: {non_ict_err}")
             
         if setup:
             pattern_type = setup.get('pattern_type', 'TURTLE_SOUP_LIQUIDITY_SWEEP')
@@ -1140,8 +1157,15 @@ class AlphaSweepScanner(SMCScanner):
             )
             is_symbol_shadow = (is_shadow or (symbol in getattr(Config, 'SHADOW_SYMBOLS', []))) and not is_strat_5_gold_live
 
-            is_fvg_ce = ("FVG" in pattern_type or "50PCT" in pattern_type or "STRAT_5" in pattern_type)
-            is_low_density_sweep = (not is_dense_liq) and (not is_fvg_ce)
+            is_auction_or_ce = (
+                "FVG" in pattern_type 
+                or "50PCT" in pattern_type 
+                or "STRAT_5" in pattern_type
+                or "AVWAP" in pattern_type
+                or "WYCKOFF" in pattern_type
+                or "AMT" in pattern_type
+            )
+            is_low_density_sweep = (not is_dense_liq) and (not is_auction_or_ce)
 
             authorized_live_patterns = ["TURTLE_SOUP_LIQUIDITY_SWEEP", "LONDON_CLOSE_SILVER_BULLET"]
             if getattr(Config, 'STRATEGY_9_AUTO_EXECUTE', False):
@@ -1153,6 +1177,15 @@ class AlphaSweepScanner(SMCScanner):
                     "FVG_50PCT_CE_REVERSAL",
                     "FVG_CONSEQUENT_ENCROACHMENT",
                     "FVG_50PCT_CE_REVERSAL_SHADOW"
+                ])
+            if getattr(Config, 'AUCTION_MARKET_AUTO_EXECUTE', True):
+                authorized_live_patterns.extend([
+                    "AVWAP_2SIGMA_BEARISH_SNAPBACK",
+                    "AVWAP_2SIGMA_BULLISH_SNAPBACK",
+                    "WYCKOFF_VSA_SPRING",
+                    "WYCKOFF_VSA_UPTHRUST",
+                    "AMT_VALUE_AREA_HIGH_REJECTION",
+                    "AMT_VALUE_AREA_LOW_REJECTION"
                 ])
 
             is_archetype_shadow = (
@@ -1357,7 +1390,10 @@ class AlphaSweepScanner(SMCScanner):
                     logger.info(f"⚡ [PROBE & SCALE] Active position already open for {symbol}. Skipping duplicate auto-execution.")
                 else:
                     exec_side = "buy" if setup['direction'].upper() == "LONG" else "sell"
-                    logger.info(f"⚡ [AUTO-EXECUTION] Auto-executing 100% Full Sized Trade on {symbol} {exec_side.upper()} @ {entry_price}...")
+                    is_probe = setup.get('is_probe_sizing', False)
+                    probe_scale = getattr(Config, 'AUCTION_MARKET_PROBE_RISK_SCALE', 0.50) if is_probe else getattr(Config, 'AUTO_PROBE_RISK_SCALE', 1.00)
+                    tranche_tag = "AUCTION_PROBE_ENTRY" if is_probe else "FULL_SIZE_ENTRY"
+                    logger.info(f"⚡ [AUTO-EXECUTION] Auto-executing {tranche_tag} (scale: {probe_scale:.2f}x) on {symbol} {exec_side.upper()} @ {entry_price}...")
                     try:
                         exec_result = self.tl.execute_trade_across_all_accounts(
                             symbol=symbol,
@@ -1365,8 +1401,8 @@ class AlphaSweepScanner(SMCScanner):
                             entry_price=entry_price,
                             stop_loss=sl_price,
                             take_profit=tp_price,
-                            risk_scale=getattr(Config, 'AUTO_PROBE_RISK_SCALE', 1.00),
-                            tranche_label="FULL_SIZE_ENTRY",
+                            risk_scale=probe_scale,
+                            tranche_label=tranche_tag,
                             ai_score=ai_score_val,
                             has_smt=bool(setup.get('smt_strength', 0.0) > 0 or setup.get('has_smt_divergence', False)),
                             session=killzone,

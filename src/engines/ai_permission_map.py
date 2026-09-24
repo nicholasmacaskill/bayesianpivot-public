@@ -85,7 +85,13 @@ class AIPermissionMap:
                     "FVG_50PCT_CE_REVERSAL_LONG",
                     "FVG_50PCT_CE_REVERSAL",
                     "FVG_CONSEQUENT_ENCROACHMENT",
-                    "FVG_50PCT_CE_REVERSAL_SHADOW"
+                    "FVG_50PCT_CE_REVERSAL_SHADOW",
+                    "AVWAP_2SIGMA_BEARISH_SNAPBACK",
+                    "AVWAP_2SIGMA_BULLISH_SNAPBACK",
+                    "WYCKOFF_VSA_SPRING",
+                    "WYCKOFF_VSA_UPTHRUST",
+                    "AMT_VALUE_AREA_HIGH_REJECTION",
+                    "AMT_VALUE_AREA_LOW_REJECTION"
                 ],
                 "notes": "Default baseline permission"
             }
@@ -119,7 +125,10 @@ class AIPermissionMap:
         is_auth = (pattern_type in auth_archetypes) or (pattern_clean in auth_clean) or any(
             ("FVG" in pattern_clean and ("FVG" in a or "50PCT" in a or "STRAT_5" in a)) or
             ("TURTLE_SOUP" in pattern_clean and "TURTLE_SOUP" in a) or
-            ("JUDAS" in pattern_clean and "JUDAS" in a)
+            ("JUDAS" in pattern_clean and "JUDAS" in a) or
+            ("AVWAP" in pattern_clean and "AVWAP" in a) or
+            ("WYCKOFF" in pattern_clean and "WYCKOFF" in a) or
+            ("AMT" in pattern_clean and "AMT" in a)
             for a in auth_clean
         )
         if not is_auth:
@@ -139,7 +148,10 @@ class AIPermissionMap:
 
         # Mean-reversion sweep archetypes are designed to fade manipulation extremes
         is_mean_reversion_sweep = any(
-            k in pattern_clean for k in ["TURTLE_SOUP", "JUDAS", "SILVER_BULLET", "FVG", "50PCT", "STRAT_5", "SWEEP", "REVERSAL"]
+            k in pattern_clean for k in [
+                "TURTLE_SOUP", "JUDAS", "SILVER_BULLET", "FVG", "50PCT", "STRAT_5", 
+                "SWEEP", "REVERSAL", "AVWAP", "WYCKOFF", "AMT"
+            ]
         )
 
         # Enforce Hard Counter-Trend Ban ONLY on generic breakout / trend-continuation setups
