@@ -360,11 +360,12 @@ class AuctionMarketEngine:
     # ──────────────────────────────────────────────────────────────────────────
     # 4. WYCKOFF METHOD: VOLUME SPREAD ANALYSIS (VSA) SPRINGS & UPTHRUSTS
     # ──────────────────────────────────────────────────────────────────────────
-    def check_wyckoff_vsa_spring(self, df_5m: pd.DataFrame, df_1h: pd.DataFrame) -> Optional[Dict[str, Any]]:
+    def check_wyckoff_vsa_spring(self, df_5m: pd.DataFrame, df_1h: pd.DataFrame, symbol: str = "BTC/USD") -> Optional[Dict[str, Any]]:
         """
         Detects true Wyckoff Springs / Upthrusts (UTAD) validated by Effort vs. Result.
         - Spring: Sweeps support, but testing volume drops sharply (proving zero remaining supply).
         - Upthrust: Sweeps resistance, but testing volume drops sharply (no demand).
+        Enforces MIN_STOP_PCT volatility buffer so institutional wicks don't prematurely clip stops.
         """
         if df_5m is None or len(df_5m) < 25:
             return None
@@ -383,11 +384,16 @@ class AuctionMarketEngine:
             recovery_vol = float(last["volume"])
             if recovery_vol < 1.4 * avg_vol:
                 close = float(last["close"])
-                stop_loss = float(prev["low"]) - (recent_resistance - recent_support) * 0.05
+                min_stop_pct = getattr(Config, 'MIN_STOP_PCT', {}).get(symbol, 0.003)
+                min_stop_dist = close * min_stop_pct
+                buffer = max((recent_resistance - recent_support) * 0.08, min_stop_dist)
+                stop_loss = float(prev["low"]) - buffer
+                if (close - stop_loss) < min_stop_dist:
+                    stop_loss = close - min_stop_dist
                 target = recent_resistance
                 risk = close - stop_loss
                 reward = target - close
-                if risk > 0 and reward / risk >= 2.0:
+                if risk > 0 and reward / risk >= 1.8:
                     return {
                         "strategy_id": "STRAT_WYCKOFF_VSA_SPRING",
                         "pattern": "WYCKOFF_VSA_SPRING_NO_SUPPLY",
@@ -404,11 +410,16 @@ class AuctionMarketEngine:
             recovery_vol = float(last["volume"])
             if recovery_vol < 1.4 * avg_vol:
                 close = float(last["close"])
-                stop_loss = float(prev["high"]) + (recent_resistance - recent_support) * 0.05
+                min_stop_pct = getattr(Config, 'MIN_STOP_PCT', {}).get(symbol, 0.003)
+                min_stop_dist = close * min_stop_pct
+                buffer = max((recent_resistance - recent_support) * 0.08, min_stop_dist)
+                stop_loss = float(prev["high"]) + buffer
+                if (stop_loss - close) < min_stop_dist:
+                    stop_loss = close + min_stop_dist
                 target = recent_support
                 risk = stop_loss - close
                 reward = close - target
-                if risk > 0 and reward / risk >= 2.0:
+                if risk > 0 and reward / risk >= 1.8:
                     return {
                         "strategy_id": "STRAT_WYCKOFF_VSA_SPRING",
                         "pattern": "WYCKOFF_VSA_UPTHRUST_NO_DEMAND",
@@ -452,7 +463,7 @@ class AuctionMarketEngine:
             delta_setup["symbol"] = symbol
             candidates.append(delta_setup)
 
-        wyckoff_setup = self.check_wyckoff_vsa_spring(df_5m, df_1h)
+        wyckoff_setup = self.check_wyckoff_vsa_spring(df_5m, df_1h, symbol=symbol)
         if wyckoff_setup:
             wyckoff_setup["symbol"] = symbol
             candidates.append(wyckoff_setup)
