@@ -226,7 +226,7 @@ class SovereignAIHub:
         return self._parse_json_response(response.choices[0].message.content, provider="GPT")
 
     def _analyze_with_local(self, prompt: str, image_path: Optional[str]) -> Dict[str, Any]:
-        """Local SLM (Ollama) Implementation."""
+        """Local SLM (MLX LoRA) Implementation."""
         if self.local_handler.is_available():
              text = self.local_handler.analyze(prompt, image_path)
              return self._parse_json_response(text, provider="Local-LLM")

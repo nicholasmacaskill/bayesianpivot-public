@@ -24,47 +24,33 @@ Scoring Rubric:
 
 class LocalLLMHandler:
     """
-    Offline & Redundant Local AI Engine for Bayesian Pivot.
-    Primary: Local MLX server running fine-tuned LoRA on Apple Silicon GPU (port 8080).
-    Secondary: Local Ollama server (port 11434).
-    Provides structured 5-Pillar orderflow validation at $0 API cost and zero live risk.
+    Local Apple Silicon MLX LoRA inference engine for Bayesian Pivot.
+    Primary: Fine-tuned LoRA model served on port 8080 via mlx-lm.
+    If MLX is unavailable, scoring is skipped cleanly — no Ollama fallback.
+    Ollama was removed: pre-LoRA legacy model, demonstrated 22% WR vs 84% WR for MLX.
     """
     def __init__(
         self,
         model: str = "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit",
         mlx_url: str = "http://127.0.0.1:8080/v1",
-        ollama_url: str = "http://localhost:11434/api",
         timeout: int = 15
     ):
         self.model = model
         self.mlx_url = mlx_url.rstrip("/")
-        self.ollama_url = ollama_url.rstrip("/")
         self._timeout = timeout
         self.active_backend: Optional[str] = None
-        self.active_provider: str = "Local-LLM"
+        self.active_provider: str = "MLX-LoRA-Local-M4"
 
     def is_available(self) -> bool:
         """
-        Checks local AI availability:
-        1. Checks MLX local server on port 8080 (Primary M4 LoRA).
-        2. Falls back to Ollama on port 11434.
+        Checks if the MLX LoRA server is running on port 8080.
+        Returns False cleanly if not — no Ollama fallback.
         """
-        # Priority 1: MLX Local Server (Apple Silicon LoRA)
         try:
             resp = requests.get(f"{self.mlx_url}/models", timeout=1.5)
             if resp.status_code == 200:
                 self.active_backend = "mlx"
                 self.active_provider = "MLX-LoRA-Local-M4"
-                return True
-        except Exception:
-            pass
-
-        # Priority 2: Ollama Local Server
-        try:
-            resp = requests.get(f"{self.ollama_url}/tags", timeout=1.5)
-            if resp.status_code == 200:
-                self.active_backend = "ollama"
-                self.active_provider = "Ollama-Local"
                 return True
         except Exception:
             pass
@@ -183,16 +169,17 @@ class LocalLLMHandler:
         session_info: Optional[Dict] = None
     ) -> Dict[str, Any]:
         """
-        Scores candidate trade setup using local Apple Silicon MLX LoRA or Ollama.
-        Returns unified schema: {score, verdict, reasoning, risk_multiplier, risk_level, provider}.
+        Scores candidate trade setup using the local MLX LoRA model.
+        If MLX is unavailable, returns a neutral skip response (score=0, verdict=SHADOW_OBSERVATION)
+        so the trade proceeds through the base system without MLX influence.
         """
         if not self.is_available():
             return {
                 "score": 0.0,
-                "verdict": "REJECTED",
-                "reasoning": "Local LLM server is offline.",
+                "verdict": "SHADOW_OBSERVATION",
+                "reasoning": "MLX LoRA server offline — skipping local scoring, no Ollama fallback.",
                 "risk_multiplier": 0.0,
-                "risk_level": "HIGH",
+                "risk_level": "MEDIUM",
                 "provider": "Offline"
             }
 
@@ -204,103 +191,65 @@ class LocalLLMHandler:
         )
 
         try:
-            if self.active_backend == "mlx":
-                # MLX HTTP Chat Completions (OpenAI Compatible)
-                payload = {
-                    "model": self.model,
-                    "messages": [
-                        {"role": "system", "content": SYSTEM_PROMPT + "\nKeep reasoning under 30 words so the JSON object closes cleanly."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    "temperature": 0.1,
-                    "max_tokens": 350
-                }
-                resp = requests.post(
-                    f"{self.mlx_url}/chat/completions",
-                    json=payload,
-                    timeout=self._timeout
-                )
-                resp.raise_for_status()
-                data = resp.json()
-                raw_text = data["choices"][0]["message"]["content"]
-                result = self._parse_score(raw_text)
-                result["provider"] = "MLX-LoRA-Local-M4"
-                result["backend"] = "mlx"
-                return result
-
-            elif self.active_backend == "ollama":
-                # Ollama Generate endpoint
-                payload = {
-                    "model": "bayesian-pivot",
-                    "prompt": f"{SYSTEM_PROMPT}\n\n{prompt}",
-                    "stream": False,
-                    "format": "json",
-                    "options": {"temperature": 0.1, "num_predict": 300}
-                }
-                resp = requests.post(
-                    f"{self.ollama_url}/generate",
-                    json=payload,
-                    timeout=self._timeout
-                )
-                resp.raise_for_status()
-                raw_text = resp.json().get("response", "{}")
-                result = self._parse_score(raw_text)
-                result["provider"] = "Ollama-Local"
-                result["backend"] = "ollama"
-                return result
+            payload = {
+                "model": self.model,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT + "\nKeep reasoning under 30 words so the JSON object closes cleanly."},
+                    {"role": "user", "content": prompt}
+                ],
+                "temperature": 0.1,
+                "max_tokens": 350
+            }
+            resp = requests.post(
+                f"{self.mlx_url}/chat/completions",
+                json=payload,
+                timeout=self._timeout
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            raw_text = data["choices"][0]["message"]["content"]
+            result = self._parse_score(raw_text)
+            result["provider"] = "MLX-LoRA-Local-M4"
+            result["backend"] = "mlx"
+            return result
 
         except Exception as e:
-            logger.warning(f"Local LLM inference error: {e}")
+            logger.warning(f"MLX LoRA inference error: {e}")
 
-        # Safe fallback — never crash production
+        # Safe fallback — MLX errored mid-inference, skip cleanly
         return {
             "score": 0.0,
-            "verdict": "REJECTED",
-            "reasoning": "Local LLM inference fallback triggered.",
+            "verdict": "SHADOW_OBSERVATION",
+            "reasoning": "MLX LoRA inference error — skipping boost, no Ollama fallback.",
             "risk_multiplier": 0.0,
-            "risk_level": "HIGH",
-            "provider": self.active_provider
+            "risk_level": "MEDIUM",
+            "provider": "MLX-LoRA-Local-M4"
         }
 
     def analyze(self, prompt: str, image_path: Optional[str] = None) -> str:
         """
         Generic text inference method for ai_hub fallback compatibility.
+        MLX only — raises RuntimeError if unavailable (no Ollama fallback).
         """
         if not self.is_available():
-            raise RuntimeError("Local LLM server is not available.")
+            raise RuntimeError("MLX LoRA server is not available. No Ollama fallback.")
 
         try:
-            if self.active_backend == "mlx":
-                payload = {
-                    "model": self.model,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.1,
-                    "max_tokens": 350
-                }
-                resp = requests.post(
-                    f"{self.mlx_url}/chat/completions",
-                    json=payload,
-                    timeout=self._timeout
-                )
-                resp.raise_for_status()
-                return resp.json()["choices"][0]["message"]["content"]
-            else:
-                payload = {
-                    "model": "bayesian-pivot",
-                    "prompt": prompt,
-                    "stream": False,
-                    "format": "json",
-                    "options": {"temperature": 0.1, "num_predict": 300}
-                }
-                resp = requests.post(
-                    f"{self.ollama_url}/generate",
-                    json=payload,
-                    timeout=self._timeout
-                )
-                resp.raise_for_status()
-                return resp.json().get("response", "{}")
+            payload = {
+                "model": self.model,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.1,
+                "max_tokens": 350
+            }
+            resp = requests.post(
+                f"{self.mlx_url}/chat/completions",
+                json=payload,
+                timeout=self._timeout
+            )
+            resp.raise_for_status()
+            return resp.json()["choices"][0]["message"]["content"]
         except Exception as e:
-            logger.error(f"Local LLM analyze error: {e}")
+            logger.error(f"MLX LoRA analyze error: {e}")
             raise e
 
     def _parse_score(self, raw: str) -> Dict[str, Any]:
@@ -372,8 +321,8 @@ class LocalLLMHandler:
 
         return {
             "score": 0.0,
-            "verdict": "REJECTED",
+            "verdict": "SHADOW_OBSERVATION",
             "reasoning": "Output parsing fallback.",
             "risk_multiplier": 0.0,
-            "risk_level": "HIGH"
+            "risk_level": "MEDIUM"
         }

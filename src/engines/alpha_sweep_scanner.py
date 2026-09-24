@@ -1319,8 +1319,8 @@ class AlphaSweepScanner(SMCScanner):
                 from src.engines.local_llm_handler import LocalLLMHandler
                 local_llm = LocalLLMHandler()
                 if local_llm.is_available():
-                    provider_tag = "MLX" if local_llm.active_backend == "mlx" else "OLLAMA"
-                    variant_key = f"CHALLENGER_LOCAL_{provider_tag}"
+                    provider_tag = "MLX"
+                    variant_key = "CHALLENGER_LOCAL_MLX"
 
                     if local_llm_result is not None:
                         local_scoring = local_llm_result

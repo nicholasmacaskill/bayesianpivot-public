@@ -75,6 +75,7 @@ data/smc_alpha.db.bak
 data/smc_scanner.lock
 data/daily_setup_lock.json*
 data/live_fleet_balances.json
+data/active_trade_brackets.json
 data/trade_cooldowns.json
 
 # Proprietary IP: DO NOT REMOVE

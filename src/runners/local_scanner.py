@@ -205,12 +205,12 @@ class LocalScannerRunner:
         logger.info("🛡️  Bayesian Pivot Guard active — securing your edge.")
         # ────────────────────────────────────────────────────────────────────
 
-        # ── Llama3 Local Fallback Validator ───────────────────────────────────
-        self.local_llm = LocalLLMHandler(model="llama3")
+        # ── MLX LoRA Local Fallback Validator ─────────────────────────────────
+        self.local_llm = LocalLLMHandler()
         if self.local_llm.is_available():
-            logger.info("🦙 Llama3 local validator: ONLINE")
+            logger.info("🤖 MLX LoRA local validator: ONLINE")
         else:
-            logger.warning("🦙 Llama3 local validator: OFFLINE (Ollama not running)")
+            logger.warning("🤖 MLX LoRA local validator: OFFLINE (Port 8080)")
         # ─────────────────────────────────────────────────────────────────────
 
         self.last_market_pulse = 0
@@ -1092,7 +1092,7 @@ class LocalScannerRunner:
                             live = ai_result.get('live_execution', ai_result)
                             live_score = live.get('score', 0)
                         except Exception as _cloud_err:
-                            logger.warning(f"☁️ Cloud AI failed for {symbol}: {_cloud_err} — trying Llama3...")
+                            logger.warning(f"☁️ Cloud AI failed for {symbol}: {_cloud_err} — trying MLX LoRA...")
                             if self.local_llm.is_available():
                                 try:
                                     local_result = self.local_llm.score_setup(
@@ -1101,9 +1101,9 @@ class LocalScannerRunner:
                                     )
                                     live = local_result
                                     live_score = local_result.get('score', 0)
-                                    logger.info(f"🦙 Llama3 fallback score for {symbol}: {live_score}")
+                                    logger.info(f"🤖 MLX LoRA fallback score for {symbol}: {live_score}")
                                 except Exception as _llm_err:
-                                    logger.error(f"🦙 Llama3 also failed: {_llm_err}")
+                                    logger.error(f"🤖 MLX LoRA also failed: {_llm_err}")
                                     continue
                             else:
                                 continue
