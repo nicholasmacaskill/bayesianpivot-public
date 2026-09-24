@@ -841,6 +841,35 @@ class AlphaSweepScanner(SMCScanner):
                 else:
                     sl_price = entry_price + stop_distance
                     tp_price = entry_price - (stop_distance * target_rr)
+
+            # ── UNIFIED MASTER VOLATILITY & MINIMUM STOP FLOOR ──
+            # Enforces that EVERY trade type has sufficient breathing room outside market noise
+            min_stop_pct = getattr(Config, 'MIN_STOP_PCT', {}).get(symbol, 0.003)
+            min_stop_dist = entry_price * min_stop_pct
+            min_atr_dist = atr_val * getattr(Config, 'MIN_STOP_LOSS_ATR', 1.8)
+            effective_min_stop = max(min_stop_dist, min_atr_dist)
+
+            if stop_distance < effective_min_stop:
+                orig_sl = sl_price
+                orig_dist = stop_distance
+                stop_distance = effective_min_stop
+                if setup['direction'] == 'LONG':
+                    sl_price = round(entry_price - stop_distance, 2)
+                else:
+                    sl_price = round(entry_price + stop_distance, 2)
+                # Recalculate target to maintain the intended R:R ratio
+                target_rr = round(abs(tp_price - entry_price) / max(orig_dist, 1e-4), 2)
+                if target_rr < 2.0:
+                    target_rr = 2.5
+                if setup['direction'] == 'LONG':
+                    tp_price = round(entry_price + (stop_distance * target_rr), 2)
+                else:
+                    tp_price = round(entry_price - (stop_distance * target_rr), 2)
+                logger.info(f"🛡️ [MASTER VOLATILITY GUARD] Widened {symbol} stop distance from ${orig_dist:.2f} to ${stop_distance:.2f} (Floor: {min_stop_pct*100:.2f}% / 1.8x ATR). Position size scaled down proportionally.")
+
+            # Update setup dictionary with volatility-protected levels
+            setup['stop_loss'] = sl_price
+            setup['take_profit'] = tp_price
                 
             # Base risk amount
             risk_amt = getattr(Config, 'FIXED_RISK_USD', 100.0)
