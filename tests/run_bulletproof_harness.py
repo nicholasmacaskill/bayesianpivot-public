@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-🏛️ BAYESIAN PIVOT // SOVEREIGN MASTER INVARIANT & CRUCIBLE HARNESS
+🏛️ BAYESIAN PIVOT // SOVEREIGN 3D CRUCIBLE MATRIX
 ================================================================================
-Master Invariant Verification & Regression Prevention Test Suite.
-Verifies Broker Safety (AGENTS.md), Quantitative Physics, Prop Compliance, and
-Live WebSocket Orderflow Feeds.
+Master Multi-Dimensional Invariant Verification & Fault-Injection Matrix.
+Verifies Broker Safety (AGENTS.md), Quantitative Physics, Prop Compliance,
+Live WebSocket Orderflow Feeds, and Mutation Sensitivity.
 """
 
 import sys
@@ -57,7 +57,7 @@ def run_tier(suite_module_name: str, tier_title: str) -> dict:
 
 def main():
     print(f"\n{BOLD}{CYAN}╔══════════════════════════════════════════════════════════════════════════════════╗{RESET}")
-    print(f"{BOLD}{CYAN}║         ⚡ SOVEREIGN 3D CRUCIBLE // TRI-AXIAL ADVERSARIAL MATRIX ⚡             ║{RESET}")
+    print(f"{BOLD}{CYAN}║              ⚡ SOVEREIGN 3D CRUCIBLE MATRIX // MULTI-AXIS ENGINE ⚡             ║{RESET}")
     print(f"{BOLD}{CYAN}╚══════════════════════════════════════════════════════════════════════════════════╝{RESET}\n")
 
     test_tiers = [
@@ -90,7 +90,7 @@ def main():
 
     # Print Institutional Summary Card
     print(f"{BOLD}{CYAN}──────────────────────────────────────────────────────────────────────────────────{RESET}")
-    print(f"{BOLD}📊 SOVEREIGN 3D CRUCIBLE AUDIT SCORECARD:{RESET}")
+    print(f"{BOLD}📊 SOVEREIGN 3D CRUCIBLE MATRIX SCORECARD:{RESET}")
     print(f"{BOLD}{CYAN}──────────────────────────────────────────────────────────────────────────────────{RESET}")
     
     for r in tier_results:

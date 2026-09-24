@@ -84,7 +84,7 @@
 
 ### 9. Mandatory Adversarial Quality Process & Git Synchronization Protocol
 * **RULE:** Any time a change is made to the working live codebase, it **MUST** be run through the full adversarial quality verification process to ensure zero regressions and guarantee the code works correctly in production as intended:
-  1. **Automated Invariant & Regression Testing:** Run targeted unit tests and the Sovereign 3D Crucible (`tests/run_3d_crucible.py` / `tests/run_bulletproof_harness.py` / `PYTHONPATH=. ./venv/bin/pytest`) to mathematically verify all broker, risk, sizing, and firewall constraints pass.
+  1. **Automated Invariant & Regression Testing:** Run targeted unit tests and the Sovereign 3D Crucible Matrix (`tests/run_3d_crucible.py` / `tests/run_bulletproof_harness.py` / `PYTHONPATH=. ./venv/bin/pytest`) to mathematically verify all broker, risk, sizing, and firewall constraints pass.
   2. **Production Integrity Check:** Confirm runtime daemon status, log outputs, and invariant sentry health to ensure production stability.
   3. **Immediate Commit & Remote Push:** Once each change passes the adversarial quality verification, immediately commit with a clean, descriptive message and push the updated code to the private repository (`gitlab main`).
 

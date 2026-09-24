@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-⚡ SOVEREIGN 3D CRUCIBLE // TRI-AXIAL ADVERSARIAL EXECUTION MATRIX
+⚡ SOVEREIGN 3D CRUCIBLE MATRIX // MULTI-AXIS ADVERSARIAL ENGINE
 ================================================================================
 Entrypoint for the 8-tier multi-dimensional invariant, fuzzing, and mutation
 meta-testing engine.
