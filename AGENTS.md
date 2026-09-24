@@ -95,9 +95,54 @@
   - Code: `from scripts.get_fleet_vitals import get_live_fleet_vitals` or `TradeLockerClient.get_account_details()`
 * `AGENTS.md` strictly documents immutable architectural rules, formulas, tiers, and floor logic—NOT decaying snapshot numbers.
 
+### 11. Asset Multiplier & Contract Size Invariant (No Crypto-Only Assumptions)
+* **RULE:** Never compute lot sizing, position value, or projected profit using naive unit formulas (`lots = risk / stop_dist` or `pnl = lots * (exit - entry)`).
+* **MANDATORY EXECUTION:** Every lot calculation, notional cap check, and PnL calculation across all scripts, scanners, and runners **MUST** incorporate `Config.get_contract_size(symbol)`:
+  - Crypto (BTC, ETH, SOL): `contract_size = 1.0` (1 lot = 1 coin)
+  - Gold (XAU/USD): `contract_size = 100.0` (1 lot = 100 troy ounces)
+  - Silver (XAG/USD): `contract_size = 5000.0` (1 lot = 5,000 troy ounces)
+  - Forex pairs (EUR, GBP, etc.): `contract_size = 100000.0` (1 lot = 100k units)
+* **STRICT PROHIBITION:** Omitting `contract_size` on Gold distorts lot sizing by 100x and produces 100x errors in the Upcomers 20% consistency ceiling check.
+
+### 12. Immutable Trade Measurement Basis (The Ruler Invariant)
+* **RULE:** Stop Loss defense mechanisms (Stepped Defense at +1.0R, Break-Even trail at +1.5R) tighten the live position's Stop Loss level over time. Agents and watchdogs **MUST NEVER** recompute the trade's risk denominator using the current mutated Stop Loss.
+* **MANDATORY EXECUTION:** The initial risk basis (`initial_sl`, `initial_risk_usd`, `initial_r_dist`) **MUST** be captured and persisted on the very first observation of the trade.
+* All downstream R-multiples, MFE peak calculations, and defense triggers must strictly divide by `initial_risk_usd`. Tightening a Stop Loss must never artificially inflate the trade's reported R-multiple.
+
+### 13. End-to-End String & Enum Contract Synchronization
+* **RULE:** When adding, renaming, or expanding session identifiers, pattern names, or trade verdicts in any module, the agent **MUST** grep and synchronize all downstream consumer lookup tables in the same atomic commit.
+* **MANDATORY PRACTICES:**
+  - If a session is added (e.g. `LONDON_CLOSE_NY_MORNING` or `ASIAN_SESSION_JUDAS`), verify that `is_gold_liquid_session`, `session_restriction` allowed lists, and firewall killzone gates all recognize the exact string.
+  - If a scanner verdict is stored (e.g. `CONFIRMED`, `FLOW_GO`), verify that the watchdog or recovery queries look for the matching string (`.in_("verdict", ["CONFIRMED", "ACCEPTED", "FLOW_GO"])`), not a stale assumption like `ACCEPTED`.
+  - All string comparisons on symbols, sessions, and sides must be normalized: `sym.replace("/", "").replace("_", "").upper()`.
+
+### 14. Strict Asset-Scoped News Filtering (Zero Foreign Currency Blackouts)
+* **RULE:** Macroeconomic calendar filters must only block trades if the high-impact event currency matches the target asset's base or quote currency, or is a verified global macro event (FOMC, Fed Decisions, Jerome Powell speeches, Global Interest Rate decisions).
+* **STRICT PROHIBITION:** Foreign currency events (AUD, CAD, JPY, GBP, NZD) must **NEVER** lock out USD-denominated trades (`BTC/USD`, `XAU/USD`).
+* Any wrapper method (e.g. `ExecutionFirewall.check_news_calendar()`) **MUST** accept and pass `symbol` down to `CalendarFilter.is_safe_to_trade(symbol=symbol)`.
+
+### 15. Broker ID Resiliency & Bidirectional Position Matching
+* **RULE:** TradeLocker position lookups and watchdog position defense must **NEVER** rely solely on string symbol matching (`symbol in pos['symbol']`).
+* If an instrument ID mapping is delayed or unmapped by the broker API, TradeLocker returns raw numeric IDs (e.g. `"19915"`).
+* **MANDATORY EXECUTION:** Position matching must always evaluate both symbol and tradable instrument ID:
+  `is_match = (target_sym in pos_sym or pos['tradableInstrumentId'] == target_inst_id)`
+* In dictionary lookups (e.g. `resolve_instrument_id`), exact dictionary key match (`norm in cache`) **MUST** be checked first before running substring comparisons. Fall back to `TradeLockerHelper._shared_instruments_cache` if instance cache is uninitialized.
+
+### 16. Zero Silent Exception Swallowing & Clean Network Logging
+* **RULE:** Never use bare `except Exception: pass` or `except: return False` on core business logic without structured logging, and never reference unimported packages (e.g. `logger` without `import logging`) inside exception handlers.
+* Transient network timeouts (`ReadTimeout`, `ConnectTimeout`, `ConnectionReset`) from public exchanges or broker REST endpoints **MUST** be logged as clean warnings without dumping raw 15-line stack traces so that the `QualityGovernor` silent error sentry does not trigger false alarm escalations.
+
+### 17. Adversarial Negative-Boundary Testing Protocol
+* **RULE:** When adding unit or integration tests for new features, agents must NOT only test the "happy path" or positive trigger. Every test suite **MUST** include negative boundary tests:
+  - Macro News: Test that FOMC blocks USD trades, AND assert that AUD news does NOT block BTC/USD.
+  - Killzones: Test that off-hours are blocked, AND assert that `LONDON_CLOSE_NY_MORNING` passes for Gold.
+  - Dynamic Defense: Test that moving SL from -1.0R to -0.3R at +1.0R keeps the risk denominator invariant.
+  - Multi-Asset Multipliers: Run the same lot sizing test across BTC (`contract_size = 1.0`) and Gold (`contract_size = 100.0`) to catch 100x discrepancies.
+
 ---
 
 ### Incident Post-Mortem Reference
 * Full forensic documentation: `docs/INCIDENT_2026-08-26_TRADELOCKER_STOP_ORDER_DUPLICATION.md`
+* 24-Bug Adversarial Forensic Audit: `.gemini/antigravity-ide/brain/4da29527-d048-4245-855c-efbf1b90edc7/walkthrough.md`
 
 
