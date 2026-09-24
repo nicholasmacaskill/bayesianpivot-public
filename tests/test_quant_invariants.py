@@ -88,6 +88,31 @@ class TestQuantInvariants(unittest.TestCase):
             self.assertIn("hurst", setup)
             self.assertIn("atr", setup)
 
+    def test_invariant_mlx_lora_lifecycle_and_governor_sentry(self):
+        """
+        Invariant: The Quality Governor and Unified Supervisor must monitor and
+        maintain the Apple Silicon MLX LoRA daemon lifecycle without silent dropouts.
+        """
+        from src.core.quality_governor import QualityGovernor
+        from unittest.mock import patch, MagicMock
+
+        gov = QualityGovernor()
+
+        # 1. When port 8080 responds with 200, check_mlx_lora_health must report healthy
+        mock_resp_ok = MagicMock()
+        mock_resp_ok.status_code = 200
+        with patch("requests.get", return_value=mock_resp_ok):
+            is_healthy, issues = gov.check_mlx_lora_health(auto_revive=False)
+            self.assertTrue(is_healthy)
+            self.assertEqual(len(issues), 0)
+
+        # 2. When port 8080 fails and auto_revive is False, it must flag the offline issue
+        with patch("requests.get", side_effect=ConnectionError("Offline")):
+            is_healthy, issues = gov.check_mlx_lora_health(auto_revive=False)
+            self.assertFalse(is_healthy)
+            self.assertTrue(any("offline" in iss.lower() for iss in issues))
+
 
 if __name__ == "__main__":
     unittest.main()
+

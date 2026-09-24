@@ -424,11 +424,59 @@ class UnifiedSovereignSupervisor:
                 time.sleep(2)
                 slept += 2
 
+    def ensure_mlx_lora_daemon(self):
+        """
+        Guarantees that the local Apple Silicon MLX LoRA inference server (port 8080)
+        is online and responding. If offline on macOS, auto-spawns scripts/start_mlx_server.sh.
+        """
+        if sys.platform != "darwin":
+            return
+
+        url = "http://127.0.0.1:8080/v1/models"
+        try:
+            import requests
+            res = requests.get(url, timeout=1.0)
+            if res.status_code == 200:
+                logger.info("🤖 [MLX LoRA Lifecycle] Apple Silicon MLX LoRA server verified healthy on port 8080.")
+                return
+        except Exception:
+            pass
+
+        logger.info("🤖 [MLX LoRA Lifecycle] Server offline on port 8080. Spawning daemon via scripts/start_mlx_server.sh...")
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../scripts/start_mlx_server.sh"))
+        if os.path.exists(script_path):
+            try:
+                import subprocess
+                subprocess.Popen(
+                    ["/bin/bash", script_path],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+                )
+                import requests
+                for _ in range(8):
+                    time.sleep(1)
+                    try:
+                        r = requests.get(url, timeout=1.0)
+                        if r.status_code == 200:
+                            logger.info("🤖 [MLX LoRA Lifecycle] MLX LoRA server successfully auto-spawned and verified on port 8080.")
+                            return
+                    except Exception:
+                        pass
+                logger.warning("🤖 [MLX LoRA Lifecycle] Spawned MLX LoRA script, awaiting initialization...")
+            except Exception as e:
+                logger.error(f"Failed to auto-spawn MLX LoRA server: {e}")
+        else:
+            logger.warning(f"MLX startup script not found at {script_path}")
+
     def start(self):
         logger.info("👑 =========================================================")
         logger.info("👑 SOVEREIGN UNIFIED SUPERVISOR STARTING")
         logger.info(f"👑 PID: {os.getpid()} | Adaptive Pacing: Active | Memory Cap: ~120 MB")
         logger.info("👑 =========================================================")
+
+        # 0. Ensure Apple Silicon MLX LoRA Inference Server is Active
+        self.ensure_mlx_lora_daemon()
 
         # Run Pre-Flight Invariant Audit before launching workers
         try:

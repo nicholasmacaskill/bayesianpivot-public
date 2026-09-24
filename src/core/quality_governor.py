@@ -300,6 +300,43 @@ class QualityGovernor:
 
         return len(issues) == 0, issues
 
+    # ── CHECK 5: APPLE SILICON MLX LORA SERVER SENTRY ────────────────────────
+    def check_mlx_lora_health(self, auto_revive: bool = True) -> Tuple[bool, List[str]]:
+        """
+        Audits health of local Apple Silicon MLX LoRA inference server on port 8080.
+        If offline on macOS and auto_revive is True, attempts automatic revival.
+        """
+        if sys.platform != "darwin":
+            return True, []
+
+        issues = []
+        url = "http://127.0.0.1:8080/v1/models"
+        try:
+            import requests
+            res = requests.get(url, timeout=1.0)
+            if res.status_code == 200:
+                return True, []
+        except Exception:
+            pass
+
+        issues.append("🤖 MLX LoRA inference server offline on port 8080")
+        if auto_revive:
+            script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../scripts/start_mlx_server.sh"))
+            if os.path.exists(script_path):
+                try:
+                    import subprocess
+                    subprocess.Popen(
+                        ["/bin/bash", script_path],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        cwd=os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+                    )
+                    logger.info("🤖 [Quality Governor] Initiated auto-revival of MLX LoRA server daemon.")
+                except Exception as revive_err:
+                    issues.append(f"MLX LoRA auto-revival failed: {revive_err}")
+
+        return False, issues
+
     # ── COMPREHENSIVE PRE-FLIGHT AUDIT ───────────────────────────────────────
     def run_preflight_audit(self) -> Dict[str, Any]:
         """
@@ -327,6 +364,13 @@ class QualityGovernor:
         passed_fleet, fleet_issues = self.check_fleet_invariants()
         report["checks"]["fleet_invariants"] = {"pass": passed_fleet, "issues": fleet_issues}
         if not passed_fleet: report["all_issues"].extend(fleet_issues)
+
+        # 4. MLX LoRA Server Health (macOS)
+        if sys.platform == "darwin":
+            passed_mlx, mlx_issues = self.check_mlx_lora_health(auto_revive=True)
+            report["checks"]["mlx_lora_health"] = {"pass": passed_mlx, "issues": mlx_issues}
+            if not passed_mlx:
+                logger.warning(f"⚠️ [Quality Governor] MLX LoRA server pre-flight notice: {mlx_issues}")
 
         if report["all_issues"]:
             report["status"] = "FAIL"
@@ -358,6 +402,14 @@ class QualityGovernor:
         if not clean_pos:
             report["violations"].extend(pos_issues)
             report["status"] = "CRITICAL"
+
+        # 3. MLX LoRA Sentry
+        if sys.platform == "darwin":
+            clean_mlx, mlx_issues = self.check_mlx_lora_health(auto_revive=True)
+            if not clean_mlx:
+                report["violations"].extend(mlx_issues)
+                if report["status"] == "HEALTHY":
+                    report["status"] = "DEGRADED"
 
         if report["violations"]:
             logger.warning(f"⚠️ [Quality Governor] Runtime Audit detected {len(report['violations'])} issue(s):")
