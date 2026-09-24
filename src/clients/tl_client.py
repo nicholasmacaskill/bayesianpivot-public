@@ -593,7 +593,17 @@ class TradeLockerHelper:
                                                 continue
 
                                             pos_id = p.get("id")
-                                            if self.modify_position_bracket(pos_id, stop_loss=stop_loss, take_profit=take_profit):
+                                            fill_price = float(p.get("avgPrice") or p.get("price") or 0.0)
+                                            safe_sl = stop_loss
+                                            if fill_price > 0 and stop_loss is not None:
+                                                if side.lower() == "buy" and fill_price <= float(stop_loss):
+                                                    logger.critical(f"🚨 [INVERTED BRACKET DETECTED] BUY filled at {fill_price} <= SL {stop_loss}! Adjusting SL below fill.")
+                                                    safe_sl = round(fill_price * 0.998, 2)
+                                                elif side.lower() == "sell" and fill_price >= float(stop_loss):
+                                                    logger.critical(f"🚨 [INVERTED BRACKET DETECTED] SELL filled at {fill_price} >= SL {stop_loss}! Adjusting SL above fill.")
+                                                    safe_sl = round(fill_price * 1.002, 2)
+
+                                            if self.modify_position_bracket(pos_id, stop_loss=safe_sl, take_profit=take_profit):
                                                 settled = True
                                                 pre_existing_pos_ids.add(str(pos_id))
                                                 break
@@ -1250,6 +1260,16 @@ class TradeLockerClient:
                 exact_lots = target_risk_usd / (stop_dist * contract_size)
                 scaled_lot = round(exact_lots * risk_scale, 2)
                 
+                # ── MINIMUM VIABLE RISK FLOOR INVARIANT ──
+                # Prevents sub-viable $6 risk allocations on $25k/$50k accounts during probe/widened stop scenarios
+                min_viable_risk = 25.0 if equity <= 35000.0 else 50.0
+                implied_risk = scaled_lot * stop_dist * contract_size
+                if implied_risk < min_viable_risk and target_risk_usd >= min_viable_risk:
+                    needed_lots = round(min_viable_risk / (stop_dist * contract_size), 2)
+                    if needed_lots > scaled_lot:
+                        logger.info(f"🛡️ [RISK FLOOR GUARD] Account {i+1} adjusted lot size from {scaled_lot} to {needed_lots} lots to maintain minimum viable risk floor (${min_viable_risk:.2f}).")
+                        scaled_lot = needed_lots
+
                 # Enforce Hard Per-Order Maximum Lot Size Ceiling (Normalized for Slashed & Unslashed Keys)
                 lot_caps = getattr(Config, 'MAX_LOT_SIZE_PER_ORDER', {})
                 clean_sym = symbol.replace("/", "").replace("_", "").upper()
@@ -1287,6 +1307,17 @@ class TradeLockerClient:
                     raw_tp1 = float(entry_price) + (tp1_r * stop_dist) if side == "buy" else float(entry_price) - (tp1_r * stop_dist)
                     tp1_price = round(raw_tp1 - tp_cushion, 2) if side == "buy" else round(raw_tp1 + tp_cushion, 2)
                     
+                    # ── TRANCHE DIFFERENTIATION INVARIANT ──
+                    # Ensure Tranche 2 is strictly separated from Tranche 1 by at least 0.75R
+                    tp2_target = take_profit
+                    if tp2_target is not None and stop_dist > 0:
+                        tranche_spread = abs(float(tp2_target) - float(tp1_price))
+                        min_tranche_spread = 0.75 * stop_dist
+                        if tranche_spread < min_tranche_spread:
+                            tp2_r = max(3.0, tp1_r + 1.0)
+                            tp2_target = round(float(entry_price) + (tp2_r * stop_dist), 2) if side == "buy" else round(float(entry_price) - (tp2_r * stop_dist), 2)
+                            logger.info(f"🎯 [TRANCHE DIFFERENTIATION] TP2 ({take_profit}) was within {tranche_spread:.2f} pts of TP1 ({tp1_price}). Expanded TP2 to {tp2_r}R ({tp2_target}) for macro runner expansion.")
+
                     # Place Tranche 1 (Cash Builder @ +2.0R)
                     res_t1 = helper.place_order(
                         instrument_id=instrument_id,
@@ -1304,13 +1335,13 @@ class TradeLockerClient:
                         side=side,
                         qty=lot_t2,
                         stop_loss=stop_loss,
-                        take_profit=take_profit,
+                        take_profit=tp2_target,
                         order_type="market",
                         symbol_hint=symbol
                     )
                     success = bool(res_t1 or res_t2)
                     if res_t1 and res_t2:
-                        logger.info(f"✅ Account {i+1} ({helper.email}) [SCALE-OUT SPLIT] Filled T1={lot_t1} lots (TP1: {tp1_price}) & T2={lot_t2} lots (TP2: {take_profit}) on {symbol}")
+                        logger.info(f"✅ Account {i+1} ({helper.email}) [SCALE-OUT SPLIT] Filled T1={lot_t1} lots (TP1: {tp1_price}) & T2={lot_t2} lots (TP2: {tp2_target}) on {symbol}")
                         results.append(True)
                     elif res_t1:
                         logger.warning(f"⚠️ Account {i+1} ({helper.email}) [SCALE-OUT PARTIAL] Filled T1={lot_t1} lots, but T2 failed on {symbol}")

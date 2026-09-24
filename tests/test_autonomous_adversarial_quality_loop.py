@@ -54,10 +54,35 @@ class TestAutonomousAdversarialQualityLoop(unittest.TestCase):
         res = self.crucible.test_scenario_10_pre_macro_blackout_currency_isolation()
         self.assertTrue(res["passed"])
 
+    def test_scenario_11_fill_slippage_and_bracket_reanchoring(self):
+        res = self.crucible.test_scenario_11_fill_slippage_and_bracket_reanchoring()
+        self.assertTrue(res["passed"])
+
+    def test_scenario_12_tranche_differentiation_minimum_spread(self):
+        res = self.crucible.test_scenario_12_tranche_differentiation_minimum_spread()
+        self.assertTrue(res["passed"])
+
+    def test_scenario_13_minimum_viable_dollar_risk_floor(self):
+        res = self.crucible.test_scenario_13_minimum_viable_dollar_risk_floor()
+        self.assertTrue(res["passed"])
+
+    def test_scenario_14_partial_tranche_asymmetry_resilience(self):
+        res = self.crucible.test_scenario_14_partial_tranche_asymmetry_resilience()
+        self.assertTrue(res["passed"])
+
+    def test_scenario_15_inverted_bracket_negative_slippage_shield(self):
+        res = self.crucible.test_scenario_15_inverted_bracket_negative_slippage_shield()
+        self.assertTrue(res["passed"])
+
+    def test_scenario_16_dynamic_room_under_ceiling_sizing(self):
+        res = self.crucible.test_scenario_16_dynamic_room_under_ceiling_sizing()
+        self.assertTrue(res["passed"])
+
     def test_full_crucible_run_all_summary(self):
         summary = self.crucible.run_all()
         self.assertEqual(summary["status"], "PASS")
-        self.assertEqual(summary["passed_scenarios"], summary["total_scenarios"])
+        self.assertEqual(summary["total_scenarios"], 16)
+        self.assertEqual(summary["passed_scenarios"], 16)
 
 
 if __name__ == "__main__":

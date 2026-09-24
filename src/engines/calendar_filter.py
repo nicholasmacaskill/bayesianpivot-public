@@ -14,7 +14,7 @@ Window: 30 minutes before → 30 minutes after each event.
 import logging
 import requests
 import pytz
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,11 @@ class CalendarFilter:
     def _should_refresh(self) -> bool:
         if not self._last_fetch:
             return True
-        return (datetime.utcnow() - self._last_fetch).total_seconds() > self._fetch_interval_hours * 3600
+        now = datetime.now(timezone.utc)
+        last_fetch = self._last_fetch
+        if last_fetch.tzinfo is None:
+            last_fetch = last_fetch.replace(tzinfo=timezone.utc)
+        return (now - last_fetch).total_seconds() > self._fetch_interval_hours * 3600
 
     def _fetch_events(self):
         """Fetch and cache high-impact events from ForexFactory."""
@@ -145,6 +149,10 @@ class CalendarFilter:
                 continue
 
             event_time = event['time_utc']
+            if event_time.tzinfo is not None and now_utc.tzinfo is None:
+                now_utc = datetime.now(timezone.utc)
+            elif event_time.tzinfo is None and now_utc.tzinfo is not None:
+                event_time = event_time.replace(tzinfo=timezone.utc)
             diff_minutes = (event_time - now_utc).total_seconds() / 60
 
             # Within blackout window (before OR after)
@@ -168,11 +176,15 @@ class CalendarFilter:
         if self._should_refresh():
             self._fetch_events()
 
-        now_utc = datetime.utcnow()
-        upcoming = [
-            e for e in self._events
-            if 0 < (e['time_utc'] - now_utc).total_seconds() / 3600 < 24
-        ]
+        now_utc = datetime.now(timezone.utc)
+        upcoming = []
+        for e in self._events:
+            ev_time = e['time_utc']
+            if ev_time.tzinfo is None:
+                ev_time = ev_time.replace(tzinfo=timezone.utc)
+            diff_hours = (ev_time - now_utc).total_seconds() / 3600
+            if 0 < diff_hours < 24:
+                upcoming.append(e)
         if not upcoming:
             return None
 
