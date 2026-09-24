@@ -133,14 +133,149 @@ class ExecutionFirewall:
         return True, "ELIGIBLE"
 
     @staticmethod
+    def get_canonical_killzone_session(utc_dt: Optional[datetime] = None, session_hint: Optional[str] = None) -> str:
+        """
+        Normalizes any session string or UTC timestamp into one of the canonical killzones:
+        - 'ASIAN_JUDAS' (00:00 - 06:00 UTC)
+        - 'LONDON_OPEN' (07:00 - 10:00 UTC)
+        - 'NY_MORNING'  (12:00 - 17:00 UTC)
+        """
+        hint_clean = str(session_hint or "").upper()
+        if "ASIA" in hint_clean or "JUDAS" in hint_clean:
+            return "ASIAN_JUDAS"
+        if "LONDON_OPEN" in hint_clean or (("LONDON" in hint_clean or "LDN" in hint_clean) and "CLOSE" not in hint_clean and "NY" not in hint_clean):
+            return "LONDON_OPEN"
+        if "NY" in hint_clean or "NEW_YORK" in hint_clean or "CLOSE" in hint_clean or "MORNING" in hint_clean:
+            return "NY_MORNING"
+
+        if utc_dt is None:
+            utc_dt = datetime.now(timezone.utc)
+        utc_float = utc_dt.hour + (utc_dt.minute / 60.0)
+
+        if 0.0 <= utc_float <= 6.0:
+            return "ASIAN_JUDAS"
+        elif 7.0 <= utc_float <= 10.0:
+            return "LONDON_OPEN"
+        elif 12.0 <= utc_float <= 17.0:
+            return "NY_MORNING"
+        elif 17.0 < utc_float <= 20.0:
+            return "NY_AFTERNOON"
+        return "OUTSIDE_KILLZONE"
+
+    @staticmethod
+    def check_session_setup_limit(session_hint: str = "", utc_dt: Optional[datetime] = None) -> Tuple[bool, str]:
+        """
+        INVARIANT 9: Session Anti-Clustering Gate.
+        Enforces maximum 1 setup per killzone session (Asian Judas, London Open, NY Morning).
+        """
+        import json
+        import os
+        import sqlite3
+        from datetime import datetime, timezone
+        
+        canonical_session = ExecutionFirewall.get_canonical_killzone_session(utc_dt=utc_dt, session_hint=session_hint)
+        if canonical_session in ("OUTSIDE_KILLZONE", "NY_AFTERNOON"):
+            return True, "OK"
+
+        max_allowed = getattr(Config, 'MAX_SETUPS_PER_KILLZONE_SESSION', 1)
+        today_str = (utc_dt or datetime.now(timezone.utc)).strftime("%Y-%m-%d")
+
+        # 1. Check Atomic Daily Setup Lock file
+        lock_file_path = "data/daily_setup_lock.json"
+        try:
+            if os.path.exists(lock_file_path):
+                with open(lock_file_path, "r") as f:
+                    data = json.load(f)
+                if data.get("date") == today_str:
+                    session_counts = data.get("session_counts", {})
+                    if isinstance(session_counts, dict) and canonical_session in session_counts:
+                        count = session_counts.get(canonical_session, 0)
+                        if count >= max_allowed:
+                            return False, f"FIREWALL REJECTION (Gate 9 - Session Anti-Clustering): Session '{canonical_session}' setup ceiling reached ({count}/{max_allowed}). Max 1 setup per killzone session."
+                    setups = data.get("setups", [])
+                    if isinstance(setups, list) and not session_counts:
+                        matching_setups = [s for s in setups if s.get("session") == canonical_session]
+                        if len(matching_setups) >= max_allowed:
+                            return False, f"FIREWALL REJECTION (Gate 9 - Session Anti-Clustering): Session '{canonical_session}' setup ceiling reached ({len(matching_setups)}/{max_allowed}). Max 1 setup per killzone session."
+        except Exception as e:
+            logger.debug(f"Note checking session lock file: {e}")
+
+        # 2. Corroborate with Journal database if available
+        try:
+            db_path = getattr(Config, 'DB_PATH', os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data", "smc_alpha.db"))
+            if os.path.exists(db_path):
+                conn = None
+                try:
+                    conn = sqlite3.connect(db_path, timeout=5.0)
+                    cur = conn.cursor()
+                    cur.execute("""
+                        SELECT timestamp, symbol FROM journal 
+                        WHERE timestamp LIKE ? AND status = 'CLOSED' AND strategy != 'ROGUE'
+                        ORDER BY id DESC LIMIT 50
+                    """, (f"{today_str}%",))
+                    rows = cur.fetchall()
+                finally:
+                    if conn:
+                        try:
+                            conn.close()
+                        except Exception:
+                            pass
+
+                if rows:
+                    def parse_time(ts_str):
+                        if not ts_str: return 0.0
+                        clean_ts = ts_str.replace("Z", "").split(".")[0]
+                        try: return datetime.fromisoformat(clean_ts).timestamp()
+                        except Exception: return 0.0
+
+                    setup_clusters = []
+                    current_cluster = []
+                    for r in rows:
+                        ts, sym = r[0], r[1]
+                        t_sec = parse_time(ts)
+                        if not current_cluster:
+                            current_cluster.append({'time': t_sec, 'symbol': sym, 'ts_str': ts})
+                        else:
+                            ref = current_cluster[0]
+                            if abs(t_sec - ref['time']) <= 2700 and sym == ref['symbol']:
+                                current_cluster.append({'time': t_sec, 'symbol': sym, 'ts_str': ts})
+                            else:
+                                setup_clusters.append(current_cluster)
+                                current_cluster = [{'time': t_sec, 'symbol': sym, 'ts_str': ts}]
+                    if current_cluster:
+                        setup_clusters.append(current_cluster)
+
+                    session_setup_count = 0
+                    for cluster in setup_clusters:
+                        first_ts = cluster[0]['ts_str']
+                        clean_ts = first_ts.replace("Z", "").split(".")[0]
+                        try:
+                            c_dt = datetime.fromisoformat(clean_ts).replace(tzinfo=timezone.utc)
+                            c_session = ExecutionFirewall.get_canonical_killzone_session(utc_dt=c_dt)
+                            if c_session == canonical_session:
+                                session_setup_count += 1
+                        except Exception:
+                            pass
+
+                    if session_setup_count >= max_allowed:
+                        return False, f"FIREWALL REJECTION (Gate 9 - Session Anti-Clustering): Session '{canonical_session}' setup ceiling reached ({session_setup_count}/{max_allowed} closed setups today). Max 1 setup per killzone session."
+        except Exception as e:
+            logger.debug(f"Note checking session journal records: {e}")
+
+        return True, "OK"
+
+    @staticmethod
     def check_daily_loss_circuit_breaker() -> Tuple[bool, str]:
         """
-        INVARIANT 10: Checks if today's closed setups hit consecutive loss limits.
+        INVARIANT 10: Checks if today's closed setups hit consecutive loss limits or cumulative 2.0 Risk Unit loss ceiling.
         Clusters multi-tranche and multi-account fleet tickets of the same setup into a single setup outcome.
-        If >= MAX_CONSECUTIVE_DAILY_LOSSES (2) consecutive setups lost today, halts trading for 24 hours.
+        - If cumulative realized loss hits -2.0 Units (e.g. 2 full losses at -1.0R, or 4 half-size probe losses at -0.5R),
+          the fleet locks down immediately for 24 hours.
+        - Preserves consecutive loss streak guard.
         """
         try:
             import sqlite3
+            import json
             from datetime import datetime, timezone
             db_path = getattr(Config, 'DB_PATH', os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data", "smc_alpha.db"))
             if os.path.exists(db_path):
@@ -150,7 +285,7 @@ class ExecutionFirewall:
                     cur = conn.cursor()
                     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
                     cur.execute("""
-                        SELECT timestamp, symbol, side, pnl FROM journal 
+                        SELECT timestamp, symbol, side, pnl, strategy FROM journal 
                         WHERE timestamp LIKE ? AND status = 'CLOSED' AND strategy != 'ROGUE'
                         ORDER BY id DESC LIMIT 50
                     """, (f"{today_str}%",))
@@ -174,48 +309,104 @@ class ExecutionFirewall:
                     except Exception:
                         return 0.0
 
-                # Group rows into distinct setup clusters (tickets within 15 mins on same symbol)
+                # Group rows into distinct setup clusters (tickets within 45 mins on same symbol)
                 # rows are ordered DESC (most recent first)
                 setup_clusters = []
                 current_cluster = []
                 
                 for r in rows:
                     ts, sym, side, pnl = r[0], r[1], r[2], float(r[3] or 0.0)
+                    strat = str(r[4] or "")
                     t_sec = parse_time(ts)
                     
+                    item = {'time': t_sec, 'symbol': sym, 'pnl': pnl, 'strategy': strat}
                     if not current_cluster:
-                        current_cluster.append({'time': t_sec, 'symbol': sym, 'pnl': pnl})
+                        current_cluster.append(item)
                     else:
                         ref = current_cluster[0]
                         # 45-minute window accounts for multi-account adaptive pacing and delayed broker syncs of the same setup
                         if abs(t_sec - ref['time']) <= 2700 and sym == ref['symbol']:
-                            current_cluster.append({'time': t_sec, 'symbol': sym, 'pnl': pnl})
+                            current_cluster.append(item)
                         else:
                             setup_clusters.append(current_cluster)
-                            current_cluster = [{'time': t_sec, 'symbol': sym, 'pnl': pnl}]
+                            current_cluster = [item]
                 if current_cluster:
                     setup_clusters.append(current_cluster)
 
+                # Try loading daily setup lock to correlate exact risk units if recorded
+                recorded_setups = []
+                lock_file_path = "data/daily_setup_lock.json"
+                if os.path.exists(lock_file_path):
+                    try:
+                        with open(lock_file_path, "r") as lf:
+                            lock_data = json.load(lf)
+                            if lock_data.get("date") == today_str:
+                                recorded_setups = lock_data.get("setups", [])
+                    except Exception:
+                        pass
+
+                def get_cluster_risk_units(cluster):
+                    ref_item = cluster[0]
+                    ref_sym = ref_item['symbol']
+                    ref_time = ref_item['time']
+                    # 1. Match from recorded setups in lock file
+                    for s in recorded_setups:
+                        if s.get("symbol") == ref_sym and abs(s.get("timestamp", 0) - ref_time) <= 3600:
+                            return float(s.get("units", 1.0))
+                    # 2. Check strategy / label for probe indicators
+                    is_probe = any(
+                        "PROBE" in item['strategy'].upper() or "AUCTION" in item['strategy'].upper()
+                        for item in cluster
+                    )
+                    if is_probe:
+                        return 0.5
+                    # 3. Fallback: single account test heuristic (Account 1 risk = $35, probe risk = $17.50)
+                    cluster_loss = abs(sum(item['pnl'] for item in cluster))
+                    if 10.0 <= cluster_loss <= 22.0:
+                        return 0.5
+                    return 1.0
+
                 max_loss_streak = getattr(Config, 'MAX_CONSECUTIVE_DAILY_LOSSES', 2)
+                max_loss_units = float(getattr(Config, 'DAILY_LOSS_UNIT_CIRCUIT_BREAKER', 2.0))
+                
                 loss_streak = 0
+                cumulative_loss_units = 0.0
+                consecutive_loss_units = 0.0
+
+                # Compute cumulative loss units across all losing setups today
+                for cluster in setup_clusters:
+                    cluster_net_pnl = sum(item['pnl'] for item in cluster)
+                    if cluster_net_pnl < 0:
+                        unit_weight = get_cluster_risk_units(cluster)
+                        cumulative_loss_units += unit_weight
+
+                # Compute consecutive loss streak (ordered DESC: stop at first non-loss)
                 for cluster in setup_clusters:
                     cluster_net_pnl = sum(item['pnl'] for item in cluster)
                     if cluster_net_pnl < 0:
                         loss_streak += 1
+                        consecutive_loss_units += get_cluster_risk_units(cluster)
                     else:
                         break
 
+                # 2.0 Unit Cumulative Loss Circuit Breaker
+                if cumulative_loss_units >= max_loss_units - 1e-4:
+                    return False, f"Daily consecutive loss ceiling hit / cumulative loss limit reached ({cumulative_loss_units:.1f}/{max_loss_units:.1f} Units lost today). Trading locked for 24h to preserve prop equity."
+
+                # Consecutive loss streak (only triggers if units >= 1.5, protecting two 0.5x probe losses)
                 if loss_streak >= max_loss_streak:
-                    return False, f"Daily consecutive loss ceiling hit ({loss_streak}/{max_loss_streak} distinct setups lost today). Trading locked for 24h to preserve prop equity."
+                    if consecutive_loss_units >= 1.5 or cumulative_loss_units >= 1.5:
+                        return False, f"Daily consecutive loss ceiling hit ({loss_streak}/{max_loss_streak} distinct setups lost today, {cumulative_loss_units:.1f} units). Trading locked for 24h to preserve prop equity."
+
         except Exception as e:
             logger.warning(f"Error checking daily loss circuit breaker: {e}")
         return True, "OK"
 
-
     @staticmethod
-    def check_global_daily_setup_limit() -> Tuple[bool, str]:
+    def check_global_daily_setup_limit(requested_units: float = 1.0) -> Tuple[bool, str]:
         """
-        INVARIANT 11: Global Daily Setup Limit (Max 1-2 Setups Per Day) via Atomic Lock.
+        INVARIANT 11: Global Daily Setup Limit (Risk-Budgeted Accounting via Atomic Lock).
+        Allows up to 3.0 Risk Units per day (e.g. two 0.50x probes + two 1.00x full trades).
         """
         import json
         import os
@@ -227,8 +418,11 @@ class ExecutionFirewall:
                 with open(lock_file_path, "r") as f:
                     data = json.load(f)
                 today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-                if data.get("date") == today_str and data.get("setups_fired", 0) >= 2:
-                    return False, f"Daily Setup Limit hit ({data.get('setups_fired')} setups locked in memory). Trading locked for 24h."
+                if data.get("date") == today_str:
+                    max_units = float(getattr(Config, 'DAILY_RISK_UNIT_CAP', 3.0))
+                    units_used = float(data.get("units_used", data.get("risk_units_used", data.get("setups_fired", 0))))
+                    if (units_used + requested_units) > max_units + 1e-4:
+                        return False, f"Daily Risk Unit Limit hit ({units_used:.1f}/{max_units:.1f} units consumed today, requested {requested_units:.1f}). Trading locked for 24h."
         except Exception as e:
             return False, f"Setup limit check failed: {e}"
         return True, "OK"
@@ -293,7 +487,9 @@ class ExecutionFirewall:
         bypass_cooldown: bool = False,
         bypass_circuit_breaker: bool = False,
         hurst_exponent: Optional[float] = None,
-        bypass_weekend: bool = False
+        bypass_weekend: bool = False,
+        risk_scale: float = 1.0,
+        session: str = ""
     ) -> Tuple[bool, str]:
         """
         Audits an incoming trade request against all 10 Ironclad Invariants.
@@ -384,6 +580,13 @@ class ExecutionFirewall:
                     logger.warning(f"🛡️ [FIREWALL BLOCKED] {err}")
                     return False, err
 
+        # ── INVARIANT 9: Session Anti-Clustering Gate (Max 1 Setup Per Killzone Session) ──
+        if not bypass_killzone and not bypass_circuit_breaker:
+            session_ok, session_reason = ExecutionFirewall.check_session_setup_limit(session_hint=session, utc_dt=now_utc)
+            if not session_ok:
+                logger.critical(f"🛡️ [FIREWALL BLOCKED] {session_reason}")
+                return False, session_reason
+
         # ── INVARIANT 10: Daily Consecutive Loss Circuit Breaker ──
         if not bypass_circuit_breaker:
             cb_ok, cb_reason = ExecutionFirewall.check_daily_loss_circuit_breaker()
@@ -392,9 +595,9 @@ class ExecutionFirewall:
                 logger.critical(f"🛡️ [FIREWALL BLOCKED] {err}")
                 return False, err
 
-        # ── INVARIANT 11: Global Daily Setup Limit ──
+        # ── INVARIANT 11: Global Daily Setup Limit (Risk-Budgeted Accounting) ──
         if not bypass_circuit_breaker:
-            limit_ok, limit_reason = ExecutionFirewall.check_global_daily_setup_limit()
+            limit_ok, limit_reason = ExecutionFirewall.check_global_daily_setup_limit(requested_units=risk_scale)
             if not limit_ok:
                 logger.critical(f"🛡️ [FIREWALL BLOCKED] {limit_reason}")
                 return False, limit_reason

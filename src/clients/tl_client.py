@@ -1026,9 +1026,9 @@ class TradeLockerClient:
             except ImportError:
                 has_filelock = False
 
-            def _check_setup_lock():
+            def _check_setup_lock(requested_units: float = 1.0):
                 today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-                data = {"date": today_str, "setups_fired": 0}
+                data = {"date": today_str, "setups_fired": 0, "units_used": 0.0}
                 if os.path.exists(lock_file_path):
                     try:
                         with open(lock_file_path, "r") as lf:
@@ -1036,15 +1036,25 @@ class TradeLockerClient:
                     except Exception:
                         pass
                 if data.get("date") != today_str:
-                    data = {"date": today_str, "setups_fired": 0}
-                if data.get("setups_fired", 0) >= 2:
-                    logger.critical("🛡️ [ATOMIC LOCK] Daily Setup Limit (2) reached. Rejecting fleet dispatch.")
+                    data = {"date": today_str, "setups_fired": 0, "units_used": 0.0}
+                max_units = float(getattr(Config, 'DAILY_RISK_UNIT_CAP', 3.0))
+                units_used = float(data.get("units_used", data.get("risk_units_used", data.get("setups_fired", 0))))
+                if units_used + requested_units > max_units + 1e-4:
+                    logger.critical(f"🛡️ [ATOMIC LOCK] Daily Risk Unit Limit ({units_used:.1f} + {requested_units:.1f} > {max_units:.1f}) reached. Rejecting fleet dispatch.")
                     return False
                 return True
 
-            def _increment_setup_lock():
+            def _increment_setup_lock(units: float = 1.0, session_name: str = "", symbol_str: str = "", tranche_tag: str = ""):
                 today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-                data = {"date": today_str, "setups_fired": 0}
+                data = {
+                    "date": today_str,
+                    "setups_fired": 0,
+                    "units_used": 0.0,
+                    "risk_units_used": 0.0,
+                    "session_counts": {},
+                    "sessions_fired": [],
+                    "setups": []
+                }
                 if os.path.exists(lock_file_path):
                     try:
                         with open(lock_file_path, "r") as lf:
@@ -1052,19 +1062,60 @@ class TradeLockerClient:
                     except Exception:
                         pass
                 if data.get("date") != today_str:
-                    data = {"date": today_str, "setups_fired": 0}
+                    data = {
+                        "date": today_str,
+                        "setups_fired": 0,
+                        "units_used": 0.0,
+                        "risk_units_used": 0.0,
+                        "session_counts": {},
+                        "sessions_fired": [],
+                        "setups": []
+                    }
                 data["setups_fired"] = data.get("setups_fired", 0) + 1
+                new_units = round(float(data.get("units_used", data.get("risk_units_used", 0.0))) + units, 2)
+                data["units_used"] = new_units
+                data["risk_units_used"] = new_units
+
+                # Update session anti-clustering counts
+                from src.core.execution_firewall import ExecutionFirewall
+                canonical_session = ExecutionFirewall.get_canonical_killzone_session(session_hint=session_name)
+                session_counts = data.get("session_counts", {})
+                if not isinstance(session_counts, dict):
+                    session_counts = {}
+                session_counts[canonical_session] = session_counts.get(canonical_session, 0) + 1
+                data["session_counts"] = session_counts
+
+                sessions_fired = data.get("sessions_fired", [])
+                if not isinstance(sessions_fired, list):
+                    sessions_fired = []
+                if canonical_session and canonical_session not in sessions_fired:
+                    sessions_fired.append(canonical_session)
+                data["sessions_fired"] = sessions_fired
+
+                setups_list = data.get("setups", [])
+                if not isinstance(setups_list, list):
+                    setups_list = []
+                setups_list.append({
+                    "timestamp": time.time(),
+                    "symbol": symbol_str,
+                    "units": units,
+                    "session": canonical_session,
+                    "tranche": tranche_tag
+                })
+                data["setups"] = setups_list
+
                 with open(lock_file_path, "w") as lf:
                     json.dump(data, lf)
 
             if not bypass_firewall:
+                requested_units = round(float(risk_scale), 2)
                 if has_filelock:
                     lock = FileLock("data/daily_setup_lock.json.lock")
                     with lock.acquire(timeout=5):
-                        if not _check_setup_lock():
+                        if not _check_setup_lock(requested_units):
                             return {"success": False, "filled_count": 0, "total_accounts": len(self.helpers) if hasattr(self, "helpers") and self.helpers else 0, "error": "ATOMIC_SETUP_LIMIT_REACHED"}
                 else:
-                    if not _check_setup_lock():
+                    if not _check_setup_lock(requested_units):
                         return {"success": False, "filled_count": 0, "total_accounts": len(self.helpers) if hasattr(self, "helpers") and self.helpers else 0, "error": "ATOMIC_SETUP_LIMIT_REACHED"}
         except Exception as e:
             logger.error(f"Failed to verify atomic setup lock: {e}")
@@ -1090,7 +1141,9 @@ class TradeLockerClient:
                 take_profit=take_profit,
                 ai_score=ai_score,
                 is_htf_confirmed=is_htf_confirmed,
-                open_positions=current_open_positions
+                open_positions=current_open_positions,
+                risk_scale=risk_scale,
+                session=session
             )
             if not is_approved:
                 logger.critical(f"🛡️ [EXECUTION FIREWALL INTERCEPTED] Blocked un-gated order on {symbol} {side.upper()}: {rejection_reason}")
@@ -1408,12 +1461,13 @@ class TradeLockerClient:
         if filled_count > 0 and not bypass_firewall:
             ExecutionFirewall.record_trade_execution(symbol)
             try:
+                requested_units = round(float(risk_scale), 2)
                 if has_filelock:
                     lock = FileLock("data/daily_setup_lock.json.lock")
                     with lock.acquire(timeout=5):
-                        _increment_setup_lock()
+                        _increment_setup_lock(units=requested_units, session_name=session, symbol_str=symbol, tranche_tag=tranche_label)
                 else:
-                    _increment_setup_lock()
+                    _increment_setup_lock(units=requested_units, session_name=session, symbol_str=symbol, tranche_tag=tranche_label)
             except Exception as _lock_inc_err:
                 logger.error(f"Failed to increment daily setup lock: {_lock_inc_err}")
 

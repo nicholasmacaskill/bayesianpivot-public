@@ -82,7 +82,11 @@ class Config:
     TIER_CAPS_ENABLED = True
 
     MAX_CONSECUTIVE_DAILY_LOSSES = 2  # Hard Circuit Breaker: Max 2 consecutive losses per day before 24h lockout
-    DAILY_TRADE_LIMIT = 2
+    DAILY_TRADE_LIMIT = 3.0             # Upgraded to 3.0 Risk Units per day (Fractional Risk-Budgeted Accounting)
+    DAILY_RISK_UNIT_CAP = 3.0           # Total Daily Capacity: 3.0 Risk Units per day (allows 2 probes + 2 full trades)
+    DAILY_LOSS_UNIT_CIRCUIT_BREAKER = 2.0 # 2.0 Unit Cumulative Realized Loss Circuit Breaker (Locks fleet down 24h)
+    MAX_SETUPS_PER_KILLZONE_SESSION = 1 # Session Anti-Clustering: Max 1 setup per killzone session (Asian, London, NY)
+    JUDAS_PROBE_RISK_SCALE = 0.50       # Half-size probe risk scale (0.5 Units)
     TARGET_RR = 2.5                     # 2.5R Target (Peak mathematical expectancy pocket: +0.75R/trade)
 
     # ── Strategy 9: Judas Inducement Hunter (GRADUATED CHAMPION: 80% WR / 10.0 PF) ───

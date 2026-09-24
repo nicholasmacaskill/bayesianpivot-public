@@ -287,7 +287,111 @@ class TestAdversarialBoundaryInvariants(unittest.TestCase):
         trigger_3 = armed_2 and (retrace_3 >= mfe_max_retrace)
         self.assertTrue(trigger_3, "MFE must trigger when retrace gives back >= 0.75R from a +2.0R+ peak")
 
+    def test_invariant_fractional_risk_accounting_boundary(self):
+        """
+        Adversarial Invariant: Fractional Risk Units Capacity Boundary:
+        1. Negative Boundary: With 2.5 units consumed today, a full 1.00x trade MUST be rejected (2.5 + 1.0 = 3.5 > 3.0).
+        2. Positive Trigger: With 2.5 units consumed today, a 0.50x probe MUST pass (2.5 + 0.5 = 3.0 <= 3.0).
+        """
+        import json
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        data = {"date": today_str, "setups_fired": 3, "units_used": 2.5}
+
+        with patch("builtins.open", unittest.mock.mock_open(read_data=json.dumps(data))), \
+             patch("os.path.exists", return_value=True), \
+             patch.object(Config, 'DAILY_RISK_UNIT_CAP', 3.0):
+            # 1. Full trade (1.0 unit) must be rejected
+            ok_full, reason_full = ExecutionFirewall.check_global_daily_setup_limit(requested_units=1.0)
+            self.assertFalse(ok_full, "Full trade at 2.5 units must be rejected")
+            self.assertIn("Daily Risk Unit Limit hit", reason_full)
+
+            # 2. Probe trade (0.5 unit) must be accepted
+            ok_probe, reason_probe = ExecutionFirewall.check_global_daily_setup_limit(requested_units=0.5)
+            self.assertTrue(ok_probe, f"Probe trade at 2.5 units must be approved, got: {reason_probe}")
+
+    def test_invariant_two_probe_loss_circuit_breaker_boundary(self):
+        """
+        Adversarial Invariant: 2.0 Unit Cumulative Loss Circuit Breaker:
+        1. Negative Boundary: 2 probe losses (-0.5R + -0.5R = -1.0 Unit) MUST NOT trigger 24h lockdown.
+        2. Positive Trigger: 4 probe losses (-0.5R * 4 = -2.0 Units) MUST trigger 24h lockdown.
+        """
+        import os
+        import sqlite3
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            test_db = os.path.join(tmp_dir, "test.db")
+            conn = sqlite3.connect(test_db)
+            cur = conn.cursor()
+            cur.execute("""
+                CREATE TABLE journal (
+                    id INTEGER PRIMARY KEY,
+                    timestamp TEXT,
+                    symbol TEXT,
+                    side TEXT,
+                    pnl REAL,
+                    status TEXT,
+                    strategy TEXT
+                )
+            """)
+            today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            # Insert 2 probe losses (-17.50 each)
+            cur.execute("INSERT INTO journal VALUES (1, ?, 'BTC/USD', 'BUY', -17.50, 'CLOSED', 'AUCTION_PROBE')", (f"{today_str}T02:00:00",))
+            cur.execute("INSERT INTO journal VALUES (2, ?, 'ETH/USD', 'BUY', -17.50, 'CLOSED', 'AUCTION_PROBE')", (f"{today_str}T04:00:00",))
+            conn.commit()
+
+            with patch.object(Config, 'DB_PATH', test_db), \
+                 patch.object(Config, 'DAILY_LOSS_UNIT_CIRCUIT_BREAKER', 2.0):
+                # 1. 2 probe losses must NOT trigger circuit breaker
+                cb_ok_2p, reason_2p = ExecutionFirewall.check_daily_loss_circuit_breaker()
+                self.assertTrue(cb_ok_2p, f"Two probe losses (-1.0 Unit) must NOT trigger circuit breaker: {reason_2p}")
+
+                # Insert 2 more probe losses (total 4 probe losses = -2.0 Units)
+                cur.execute("INSERT INTO journal VALUES (3, ?, 'SOL/USD', 'BUY', -17.50, 'CLOSED', 'AUCTION_PROBE')", (f"{today_str}T05:00:00",))
+                cur.execute("INSERT INTO journal VALUES (4, ?, 'BTC/USD', 'BUY', -17.50, 'CLOSED', 'AUCTION_PROBE')", (f"{today_str}T06:00:00",))
+                conn.commit()
+
+                # 2. 4 probe losses MUST trigger circuit breaker
+                cb_ok_4p, reason_4p = ExecutionFirewall.check_daily_loss_circuit_breaker()
+                self.assertFalse(cb_ok_4p, "Four probe losses (-2.0 Units) MUST trigger circuit breaker!")
+                self.assertTrue("cumulative loss limit reached" in reason_4p or "Daily consecutive loss ceiling hit" in reason_4p)
+            conn.close()
+
+    def test_invariant_session_anti_clustering_boundary(self):
+        """
+        Adversarial Invariant: Session Anti-Clustering Gate (Gate 9):
+        1. Negative Boundary: 2nd trade in same session (Asian Judas) MUST be rejected.
+        2. Positive Trigger: 1st trade in London Open MUST pass even after Asian Judas trade.
+        """
+        import os
+        import json
+        import tempfile
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        data = {
+            "date": today_str,
+            "setups_fired": 1,
+            "units_used": 0.5,
+            "session_counts": {"ASIAN_JUDAS": 1},
+            "sessions_fired": ["ASIAN_JUDAS"]
+        }
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            test_db = os.path.join(tmp_dir, "empty.db")
+            with patch("builtins.open", unittest.mock.mock_open(read_data=json.dumps(data))), \
+                 patch("os.path.exists", return_value=True), \
+                 patch.object(Config, 'DB_PATH', test_db), \
+                 patch.object(Config, 'MAX_SETUPS_PER_KILLZONE_SESSION', 1):
+                
+                # 1. Duplicate in Asian Judas must fail
+                ok_asian, reason_asian = ExecutionFirewall.check_session_setup_limit(session_hint="ASIAN_SESSION_JUDAS")
+                self.assertFalse(ok_asian)
+                self.assertIn("Gate 9", reason_asian)
+
+                # 2. Distinct London Open must pass
+                ok_london, reason_london = ExecutionFirewall.check_session_setup_limit(session_hint="LONDON_OPEN")
+                self.assertTrue(ok_london, f"Expected LONDON_OPEN to pass but got: {reason_london}")
+                self.assertEqual(reason_london, "OK")
+
 
 if __name__ == '__main__':
     unittest.main()
+
 
