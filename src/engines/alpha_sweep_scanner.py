@@ -1025,15 +1025,17 @@ class AlphaSweepScanner(SMCScanner):
             is_counter_regime = False
             regime_msg = "1H Neutral Structure"
 
-            # Strategy 5 (Gold 50% CE FVG) Longs are pullback entries into discount gaps.
-            # They are exempt from being penalized as counter-regime when price dips into discount during London/NY.
-            is_gold_fvg_long = (
-                symbol in ["XAU/USD", "XAUUSD", "GOLD"]
-                and setup.get('direction') == "LONG"
-                and any(p in pattern_type for p in ["FVG", "50PCT", "STRAT_5"])
+            # Strategy 5 (Gold 50% CE FVG) Longs and verified institutional sweep setups
+            # (Turtle Soup, Judas Sniper, Silver Bullet, FVG 50% CE) with orderflow absorption or SMT
+            # are designed to fade manipulation extremes and are exempt from counter-regime penalties.
+            is_institutional_sweep = (
+                any(p in pattern_type for p in ["TURTLE_SOUP", "JUDAS", "FVG", "50PCT", "STRAT_5", "SILVER_BULLET", "SWEEP", "REVERSAL"])
+                or setup.get('cvd_absorption', False)
+                or (setup.get('smt_divergence') is not None)
+                or (float(setup.get('smt_strength', 0.0)) >= 1.0)
             )
 
-            if not is_gold_fvg_long:
+            if not is_institutional_sweep:
                 try:
                     if df_1h is not None and len(df_1h) >= 20:
                         ema50_1h = df_1h['close'].ewm(span=min(50, len(df_1h))).mean().iloc[-1]
@@ -1055,7 +1057,7 @@ class AlphaSweepScanner(SMCScanner):
                 except Exception as htf_err:
                     logger.debug(f"HTF Trend alignment check fallback: {htf_err}")
             else:
-                regime_msg = "Gold FVG Discount Entry (Regime Exempt)"
+                regime_msg = f"Institutional Sweep / Absorption Entry (Regime Exempt: {pattern_type})"
 
             ai_validator_threshold = 8.5 if is_counter_regime else getattr(Config, 'AI_VALIDATOR_MIN_SCORE', 7.5)
             

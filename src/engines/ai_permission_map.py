@@ -137,12 +137,20 @@ class AIPermissionMap:
             (bias == "BEARISH" and direction in ("BUY", "LONG"))
         )
 
-        # Enforce Hard Counter-Trend Ban during active HTF directional bias
-        if is_counter_trend:
+        # Mean-reversion sweep archetypes are designed to fade manipulation extremes
+        is_mean_reversion_sweep = any(
+            k in pattern_clean for k in ["TURTLE_SOUP", "JUDAS", "SILVER_BULLET", "FVG", "50PCT", "STRAT_5", "SWEEP", "REVERSAL"]
+        )
+
+        # Enforce Hard Counter-Trend Ban ONLY on generic breakout / trend-continuation setups
+        if is_counter_trend and not is_mean_reversion_sweep:
             return False, 0.0, f"Hard Counter-Trend Block: {direction} prohibited during active 1H/4H {bias} bias (Conviction {conviction}/10)"
 
         # 3. Dynamic Sizing Multiplier (Asymmetric Risk)
-        if is_aligned and conviction >= 8.5 and rag_sim >= 70.0:
+        if is_counter_trend and is_mean_reversion_sweep:
+            risk_mult = 0.5  # Standard probe allocation for fading manipulation extremes
+            msg = f"Counter-Trend Liquidity Sweep Authorized (Fading {bias} manipulation extreme, Conviction: {conviction}/10)"
+        elif is_aligned and conviction >= 8.5 and rag_sim >= 70.0:
             risk_mult = 1.0  # High-conviction full allocation
             msg = f"Full High-Alpha Confluence (AI: {conviction}/10, RAG: {rag_sim}%, Bias: {bias})"
         else:
