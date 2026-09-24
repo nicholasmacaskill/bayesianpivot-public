@@ -1037,10 +1037,17 @@ class TradeLockerClient:
                         pass
                 if data.get("date") != today_str:
                     data = {"date": today_str, "setups_fired": 0, "units_used": 0.0}
-                max_units = float(getattr(Config, 'DAILY_RISK_UNIT_CAP', 3.0))
-                units_used = float(data.get("units_used", data.get("risk_units_used", data.get("setups_fired", 0))))
+                # Check realized daily loss units first:
+                from src.core.execution_firewall import ExecutionFirewall
+                cb_ok, cb_reason = ExecutionFirewall.check_daily_loss_circuit_breaker()
+                if not cb_ok:
+                    logger.critical(f"🛡️ [ATOMIC LOCK] Daily Loss Circuit Breaker Active ({cb_reason}). Rejecting fleet dispatch.")
+                    return False
+
+                max_units = float(getattr(Config, 'DAILY_LOSS_UNIT_CIRCUIT_BREAKER', getattr(Config, 'DAILY_RISK_UNIT_CAP', 3.0)))
+                units_used = float(data.get("units_used", data.get("risk_units_used", 0.0)))
                 if units_used + requested_units > max_units + 1e-4:
-                    logger.critical(f"🛡️ [ATOMIC LOCK] Daily Risk Unit Limit ({units_used:.1f} + {requested_units:.1f} > {max_units:.1f}) reached. Rejecting fleet dispatch.")
+                    logger.critical(f"🛡️ [ATOMIC LOCK] Daily Loss Unit Limit ({units_used:.1f} + {requested_units:.1f} > {max_units:.1f}) reached. Rejecting fleet dispatch.")
                     return False
                 return True
 
@@ -1072,9 +1079,29 @@ class TradeLockerClient:
                         "setups": []
                     }
                 data["setups_fired"] = data.get("setups_fired", 0) + 1
-                new_units = round(float(data.get("units_used", data.get("risk_units_used", 0.0))) + units, 2)
-                data["units_used"] = new_units
-                data["risk_units_used"] = new_units
+                
+                # units_used tracks cumulative realized loss units
+                # It does not burn capacity on trade entry; only closed losses consume units.
+                realized_losses = 0.0
+                try:
+                    import sqlite3
+                    db_path = getattr(Config, 'DB_PATH', "data/smc_alpha.db")
+                    if os.path.exists(db_path):
+                        with sqlite3.connect(db_path, timeout=3.0) as conn:
+                            cur = conn.cursor()
+                            cur.execute("""
+                                SELECT pnl FROM journal
+                                WHERE timestamp LIKE ? AND status = 'CLOSED' AND strategy != 'ROGUE' AND pnl < -10.0
+                            """, (f"{today_str}%",))
+                            for (p,) in cur.fetchall():
+                                if p <= -25.0:
+                                    realized_losses += 1.0
+                                elif p <= -10.0:
+                                    realized_losses += 0.5
+                except Exception:
+                    pass
+                data["units_used"] = round(realized_losses, 2)
+                data["risk_units_used"] = round(realized_losses, 2)
 
                 # Update session anti-clustering counts
                 from src.core.execution_firewall import ExecutionFirewall

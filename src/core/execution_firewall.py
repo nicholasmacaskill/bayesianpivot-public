@@ -363,7 +363,7 @@ class ExecutionFirewall:
                     return 1.0
 
                 max_loss_streak = getattr(Config, 'MAX_CONSECUTIVE_DAILY_LOSSES', 2)
-                max_loss_units = float(getattr(Config, 'DAILY_LOSS_UNIT_CIRCUIT_BREAKER', 2.0))
+                max_loss_units = float(getattr(Config, 'DAILY_LOSS_UNIT_CIRCUIT_BREAKER', 3.0))
                 
                 loss_streak = 0
                 cumulative_loss_units = 0.0
