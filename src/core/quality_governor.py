@@ -267,9 +267,12 @@ class QualityGovernor:
                 # Invariant 3: Floating R-Multiple Break-Even Lock Check
                 if sl > 0 and entry > 0 and qty > 0:
                     contract_size = Config.get_contract_size(sym)
-                    risk_usd = abs(entry - sl) * qty * contract_size
-                    if risk_usd > 0:
-                        r_mult = pnl / risk_usd
+                    initial_sl = float(pos.get("initial_sl") or sl)
+                    stop_dist = abs(entry - initial_sl)
+                    if stop_dist > 0:
+                        current_price = entry + (pnl / (qty * contract_size)) if side == "BUY" else entry - (pnl / (qty * contract_size))
+                        from src.core.adversarial_quality_loop import PriceGeometryGroundTruth
+                        r_mult = PriceGeometryGroundTruth.compute_geom_r(entry, initial_sl, current_price, side)
                         if r_mult >= 1.5:
                             # Verify if SL is at or better than entry price
                             is_be_locked = (sl >= entry) if side == "BUY" else (sl <= entry)

@@ -181,8 +181,21 @@ class PositionWatchdog:
                     pos_risk_usd = stop_dist * qty * contract_size
                     if not pos_risk_usd or pos_risk_usd <= 0:
                         continue
-                    
+
                     r_multiple = pnl / pos_risk_usd
+
+                    # Autonomous Adversarial Quality Invariant: Price-Geometry Ground Truth Cross-Validation
+                    try:
+                        from src.core.adversarial_quality_loop import PriceGeometryGroundTruth
+                        current_price = entry + (pnl / (qty * contract_size)) if side.upper() == "BUY" else entry - (pnl / (qty * contract_size))
+                        geom_r = PriceGeometryGroundTruth.compute_geom_r(entry, initial_sl, current_price, side)
+                        is_valid, authoritative_r, reason = PriceGeometryGroundTruth.validate_r_multiple_integrity(r_multiple, geom_r)
+                        if not is_valid:
+                            print(reason)
+                            r_multiple = authoritative_r
+                    except Exception:
+                        pass
+
                     print(f"[{symbol}] (Qty: {qty}) PnL: ${pnl:.2f} | Risk: ${pos_risk_usd:.2f} | R: {r_multiple:.2f}")
 
                     # 3. Peak R-Multiple Tracking & Immediate State Persistence

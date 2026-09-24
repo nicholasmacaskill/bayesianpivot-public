@@ -67,6 +67,7 @@ def main():
         ("tests.test_live_orderflow_feed", "TIER 4: LIVE ORDERFLOW & ICEBERG ABSORPTION FEED"),
         ("tests.test_pipeline_e2e_invariants", "TIER 5: SIGNAL PIPELINE & GRADUATED ARCHETYPE INVARIANTS"),
         ("tests.test_adversarial_boundary_invariants", "TIER 6: ADVERSARIAL NEGATIVE BOUNDARY & STATE INVARIANTS"),
+        ("tests.test_autonomous_adversarial_quality_loop", "TIER 7: AUTONOMOUS ADVERSARIAL QUALITY LOOP (CRUCIBLE FUZZING)"),
     ]
 
     tier_results = []
