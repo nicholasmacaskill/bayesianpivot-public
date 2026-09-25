@@ -78,11 +78,15 @@ class TestAutonomousAdversarialQualityLoop(unittest.TestCase):
         res = self.crucible.test_scenario_16_dynamic_room_under_ceiling_sizing()
         self.assertTrue(res["passed"])
 
+    def test_scenario_17_stepped_defense_and_slippage_ruler_invariance(self):
+        res = self.crucible.test_scenario_17_stepped_defense_and_slippage_ruler_invariance()
+        self.assertTrue(res["passed"])
+
     def test_full_crucible_run_all_summary(self):
         summary = self.crucible.run_all()
         self.assertEqual(summary["status"], "PASS")
-        self.assertEqual(summary["total_scenarios"], 16)
-        self.assertEqual(summary["passed_scenarios"], 16)
+        self.assertEqual(summary["total_scenarios"], 17)
+        self.assertEqual(summary["passed_scenarios"], 17)
 
 
 if __name__ == "__main__":

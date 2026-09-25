@@ -181,7 +181,7 @@ class UnifiedSovereignSupervisor:
                         qty = float(pos.get('qty') or 0.0)
                         contract_size = Config.get_contract_size(symbol)
 
-                        # Establish and freeze true initial stop loss level on first observation
+                        # Establish and freeze true initial stop loss level and master entry on first observation
                         # Prevents artificial R-multiple inflation after stepped defense or BE trails
                         if "initial_sl" not in sym_data or sym_data["initial_sl"] <= 0:
                             min_stop_pct = Config.MIN_STOP_PCT.get(symbol, 0.003)
@@ -193,10 +193,13 @@ class UnifiedSovereignSupervisor:
                                 else:
                                     sl = entry - (entry * min_stop_pct) if side.upper() == "BUY" else entry + (entry * min_stop_pct)
                             sym_data["initial_sl"] = sl
+                            scan_entry = float(scan.get('price') or 0.0) if scan else 0.0
+                            sym_data["initial_entry"] = scan_entry if scan_entry > 0 else entry
                             self.watchdog.save_state()
 
                         initial_sl = sym_data.get("initial_sl", sl)
-                        stop_dist = abs(entry - initial_sl)
+                        initial_entry = sym_data.get("initial_entry", entry)
+                        stop_dist = abs(initial_entry - initial_sl)
                         if stop_dist <= 0:
                             continue
 
@@ -211,7 +214,7 @@ class UnifiedSovereignSupervisor:
                         try:
                             from src.core.adversarial_quality_loop import PriceGeometryGroundTruth
                             current_price = entry + (pnl / (qty * contract_size)) if side.upper() == "BUY" else entry - (pnl / (qty * contract_size))
-                            geom_r = PriceGeometryGroundTruth.compute_geom_r(entry, initial_sl, current_price, side)
+                            geom_r = PriceGeometryGroundTruth.compute_geom_r(initial_entry, initial_sl, current_price, side)
                             is_valid, authoritative_r, reason = PriceGeometryGroundTruth.validate_r_multiple_integrity(r_multiple, geom_r)
                             if not is_valid:
                                 logger.warning(reason)

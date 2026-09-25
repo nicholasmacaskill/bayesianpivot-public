@@ -242,6 +242,18 @@ class QualityGovernor:
             if not positions:
                 return True, []  # Flat is clean
 
+            # Load true frozen trade basis from watchdog state if available (Ruler Invariant)
+            watchdog_sym_state = {}
+            try:
+                import json
+                state_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data", "watchdog_state.json")
+                if os.path.exists(state_path):
+                    with open(state_path, "r") as f:
+                        w_data = json.load(f)
+                        watchdog_sym_state = w_data.get("symbol_state", {})
+            except Exception:
+                pass
+
             # Group by account & symbol
             by_account_sym = {}
             for pos in positions:
@@ -264,23 +276,26 @@ class QualityGovernor:
                 if tp <= 0 and not tp_ord_id:
                     issues.append(f"⚠️ Position {p_id} ({sym}) has NO Take Profit attached on broker book.")
 
-                # Invariant 3: Floating R-Multiple Break-Even Lock Check
-                if sl > 0 and entry > 0 and qty > 0:
+                # Invariant 3: Floating R-Multiple Break-Even Lock Check (Ruler Invariant)
+                clean_sym = sym.replace("/", "").replace("_", "").upper()
+                sym_basis = watchdog_sym_state.get(clean_sym, {})
+                initial_sl = float(sym_basis.get("initial_sl") or pos.get("initial_sl") or sl)
+                initial_entry = float(sym_basis.get("initial_entry") or entry)
+                stop_dist = abs(initial_entry - initial_sl)
+
+                if sl > 0 and initial_entry > 0 and qty > 0 and stop_dist > 0:
                     contract_size = Config.get_contract_size(sym)
-                    initial_sl = float(pos.get("initial_sl") or sl)
-                    stop_dist = abs(entry - initial_sl)
-                    if stop_dist > 0:
-                        current_price = entry + (pnl / (qty * contract_size)) if side == "BUY" else entry - (pnl / (qty * contract_size))
-                        from src.core.adversarial_quality_loop import PriceGeometryGroundTruth
-                        r_mult = PriceGeometryGroundTruth.compute_geom_r(entry, initial_sl, current_price, side)
-                        if r_mult >= 1.5:
-                            # Verify if SL is at or better than entry price
-                            is_be_locked = (sl >= entry) if side == "BUY" else (sl <= entry)
-                            if not is_be_locked:
-                                issues.append(
-                                    f"🚨 [BREAK-EVEN INVARIANT BREACH] Position {p_id} ({sym}) reached +{r_mult:.2f}R "
-                                    f"but Stop Loss (${sl:.2f}) is NOT locked at Break-Even (${entry:.2f})!"
-                                )
+                    current_price = entry + (pnl / (qty * contract_size)) if side == "BUY" else entry - (pnl / (qty * contract_size))
+                    from src.core.adversarial_quality_loop import PriceGeometryGroundTruth
+                    r_mult = PriceGeometryGroundTruth.compute_geom_r(initial_entry, initial_sl, current_price, side)
+                    if r_mult >= 1.5:
+                        # Verify if SL is at or better than entry price
+                        is_be_locked = (sl >= initial_entry) if side == "BUY" else (sl <= initial_entry)
+                        if not is_be_locked:
+                            issues.append(
+                                f"🚨 [BREAK-EVEN INVARIANT BREACH] Position {p_id} ({sym}) reached +{r_mult:.2f}R "
+                                f"but Stop Loss (${sl:.2f}) is NOT locked at Break-Even (${initial_entry:.2f})!"
+                            )
 
                 acc_id = str(pos.get("account_id") or pos.get("accountId") or pos.get("account_email") or "")
                 key = (acc_id, sym, side)

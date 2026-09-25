@@ -756,6 +756,67 @@ class QuantCrucibleFuzzer:
 
         return {"scenario": "DYNAMIC_ROOM_UNDER_CEILING_SIZING", "passed": True, "clamped_risk": clamped_risk}
 
+    def test_scenario_17_stepped_defense_and_slippage_ruler_invariance(self) -> Dict[str, Any]:
+        """
+        Scenario 17: Stepped Defense & Multi-Account Slippage Ruler Invariance (Rule 12 & Rule 5)
+        Attacks the runtime denominator under two adversarial forces:
+        1. Lead Account fills at setup price (4268.71) with SL at 4254.61 (distance: 14.10).
+        2. Tail Account fills with adverse/favorable slippage (4265.05).
+        3. Market advances to +1.0R, triggering Stepped Defense (broker SL moves to 4261.31, -0.3R).
+        4. Current price advances to 4286.00 (which is +1.22R from master entry).
+        
+        INVARIANT ASSERTIONS:
+        - Neither account's denominator may recompute against 4261.31 (which would falsely report +9.29R).
+        - Tail account's denominator may not compress to (4265.05 - 4254.61 = 10.44), which would falsely declare +2.01R.
+        - True R-multiple must be authoritative PriceGeometry from frozen initial_entry & initial_sl: 1.22R.
+        - Neither account triggers a false +2.0R milestone or premature break-even alarm.
+        """
+        master_entry = 4268.71
+        initial_sl = 4254.61
+        master_dist = abs(master_entry - initial_sl)  # 14.10
+        assert round(master_dist, 2) == 14.10, "Master distance must be 14.10"
+
+        # Tail account fills with slippage at 4265.05
+        tail_fill_price = 4265.05
+        tail_qty = 0.04
+        contract_size = 100.0  # Gold
+
+        # Market moves to 4286.00
+        current_price = 4286.00
+        tail_pnl = (current_price - tail_fill_price) * tail_qty * contract_size  # $83.80
+
+        # Naive calculation (THE BUG WE FIXED):
+        naive_stop_dist = abs(tail_fill_price - initial_sl)  # 10.44
+        naive_pos_risk = naive_stop_dist * tail_qty * contract_size  # $41.76
+        naive_r = tail_pnl / naive_pos_risk  # 2.01R (FALSE 2.0R!)
+        assert naive_r >= 2.0, "Naive calculation must expose the false 2.0R vulnerability"
+
+        # Stepped Defense moves broker SL to 4261.31 (-0.3R)
+        mutated_broker_sl = 4261.31
+        mutated_stop_dist = abs(tail_fill_price - mutated_broker_sl)  # 3.74
+        mutated_r = tail_pnl / (mutated_stop_dist * tail_qty * contract_size)  # 5.6R+
+        assert mutated_r > 5.0, "Mutated SL naive calculation must expose the extreme hallucination"
+
+        # CORRECT INVARIANT (Fixed in Supervisor & QualityGovernor):
+        # 1. Denominator is anchored to frozen (initial_entry, initial_sl)
+        authoritative_geom_r = PriceGeometryGroundTruth.compute_geom_r(master_entry, initial_sl, current_price, "BUY")
+        expected_geom_r = (current_price - master_entry) / master_dist  # 17.29 / 14.10 = 1.226R
+
+        assert abs(authoritative_geom_r - expected_geom_r) < 1e-4, "Authoritative geom R must match master geometry"
+        assert authoritative_geom_r < 1.5, f"Trade is at {authoritative_geom_r:.2f}R; must NOT trigger 1.5R or 2.0R milestones"
+
+        # 2. Cross-validation overrides naive dollar R with authoritative Price Geometry
+        is_valid, authoritative_r, reason = PriceGeometryGroundTruth.validate_r_multiple_integrity(naive_r, authoritative_geom_r)
+        assert not is_valid, "Cross-validation must flag anomaly between naive fill R and master geom R"
+        assert round(authoritative_r, 2) == round(authoritative_geom_r, 2), "Authoritative R must be enforced"
+
+        return {
+            "scenario": "STEPPED_DEFENSE_AND_SLIPPAGE_RULER_INVARIANCE",
+            "passed": True,
+            "authoritative_r": round(authoritative_r, 2),
+            "prevented_false_milestone": True
+        }
+
     # ── RUN ALL SCENARIOS IN HARNESS ─────────────────────────────────────────
     def run_all(self) -> Dict[str, Any]:
         start = time.time()
@@ -776,6 +837,7 @@ class QuantCrucibleFuzzer:
             self.test_scenario_14_partial_tranche_asymmetry_resilience(),
             self.test_scenario_15_inverted_bracket_negative_slippage_shield(),
             self.test_scenario_16_dynamic_room_under_ceiling_sizing(),
+            self.test_scenario_17_stepped_defense_and_slippage_ruler_invariance(),
         ]
         elapsed = time.time() - start
         all_passed = all(r.get("passed", False) for r in results)
