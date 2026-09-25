@@ -275,6 +275,11 @@ class Config:
     TP_FRONT_RUN_CUSHION_ENABLED = True # Micro-buffer on limit TPs to front-run stop clusters
     TP_FRONT_RUN_CUSHION_USD = {"BTC": 15.0, "ETH": 1.0, "SOL": 0.10, "XAU": 0.50}
     
+    # ── Multi-Account Fleet Execution & Anti-Desynchronization ──
+    FLEET_PACING_SECONDS = 0.35         # 350ms nominal adaptive pacing across fleet accounts (<1.8s full fleet fill)
+    MAX_ENTRY_DISPERSION_PCT = 0.0010   # 0.10% (10 bps) maximum acceptable entry price drift between lead and tail accounts
+    MASTER_DEFENSE_ANCHORING = True     # Harmonize all R-multiples, Stepped Defense, and Break-Even trails to Master Lead Setup geometry
+
     # ── Max Favorable Excursion (MFE) Peak Retracement Ratchet ──
     MFE_PEAK_RATCHET_ENABLED = True        # ✅ ENABLED: Position-isolated R-multiple guarantees MFE only triggers if genuine peak >= +2.0R
     MFE_MIN_PEAK_R = 2.2            # Minimum peak R required to arm the ratchet (was 2.0)

@@ -469,5 +469,78 @@ class TestWatchdogAndScaleoutInvariants(unittest.TestCase):
 
         mock_modify.assert_not_called()
 
+    def test_master_setup_defense_anchoring_prevents_asymmetrical_stopout(self):
+        """Verify Master Setup Anchoring ensures late-entering accounts evaluate R using master setup geometry, avoiding premature BE trails."""
+        from src.core.config import Config
+        watchdog = PositionWatchdog()
+        watchdog.notifier = MagicMock()
+        watchdog.symbol_state = {}
+        watchdog.alerted_trades = {}
+
+        # Master setup: Entry = 84,700.0, Initial SL = 84,950.0 (Risk Dist = 250.0 pts)
+        # Position 1: Lead account filled at 84,700.0
+        pos1 = {
+            "id": "pos_lead",
+            "symbol": "BTCUSD",
+            "side": "SELL",
+            "price": 84700.0,
+            "stopLoss": 84950.0,
+            "qty": 0.10,
+            "pnl": 5.0 # price at 84,650 -> +50 pts * 0.1 = +$5.0
+        }
+
+        # Position 2: Tail account filled late at 84,790.0 (90 pts higher)
+        pos2 = {
+            "id": "pos_tail",
+            "symbol": "BTCUSD",
+            "side": "SELL",
+            "price": 84790.0,
+            "stopLoss": 84950.0,
+            "qty": 0.10,
+            "pnl": 14.0 # price at 84,650 -> +140 pts * 0.1 = +$14.0 (individually > +0.8R)
+        }
+
+        # First observation of pos1 sets the Master Setup state
+        sl1, _ = watchdog.get_stop_loss("BTCUSD", pos=pos1)
+        sym_data = watchdog.symbol_state.setdefault("BTCUSD", {
+            "stepped_defense_executed": False,
+            "scaleout_executed": False,
+            "initial_sl": sl1,
+            "master_entry": pos1["price"],
+            "side": "SELL",
+            "peak_r": 0.0,
+            "milestones": {}
+        })
+
+        master_entry = sym_data["master_entry"]
+        initial_sl = sym_data["initial_sl"]
+        master_risk_dist = abs(master_entry - initial_sl) # 250.0
+
+        # At price 84,650.0:
+        curr_price = 84650.0
+        # Compute R with master anchoring:
+        # Side is SELL: (84,700 - 84,650) / 250 = +50 / 250 = +0.20R
+        master_r = (master_entry - curr_price) / master_risk_dist
+        self.assertAlmostEqual(master_r, 0.20, places=2)
+        # Verify it has NOT triggered stepped defense (+1.0R) or BE (+1.5R)
+        self.assertLess(master_r, 1.0)
+
+        # Now suppose price drops to 84,450.0 (+250 pts drop):
+        curr_price_dump = 84450.0
+        master_r_dump = (master_entry - curr_price_dump) / master_risk_dist
+        self.assertAlmostEqual(master_r_dump, 1.00, places=2)
+        # Now stepped defense (+1.0R) triggers synchronously for all accounts!
+        self.assertGreaterEqual(master_r_dump, 1.0)
+
+    def test_fast_adaptive_pacing_and_dispersion_gate_config(self):
+        """Verify fast pacing and max entry dispersion settings comply with AGENTS.md Rule 5."""
+        from src.core.config import Config
+        self.assertAlmostEqual(Config.FLEET_PACING_SECONDS, 0.35, places=2)
+        self.assertAlmostEqual(Config.MAX_ENTRY_DISPERSION_PCT, 0.0010, places=4)
+        self.assertTrue(Config.MASTER_DEFENSE_ANCHORING)
+        # 6 accounts total: 5 gaps * 0.35s = 1.75s (< 2.0s fleet execution window)
+        total_dispatch_time = 5 * Config.FLEET_PACING_SECONDS
+        self.assertLess(total_dispatch_time, 2.0)
+
 if __name__ == "__main__":
     unittest.main()

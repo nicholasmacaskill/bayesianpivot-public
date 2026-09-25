@@ -170,9 +170,18 @@ class PositionWatchdog:
                             else:
                                 sl = entry - (entry * min_stop_pct) if side.upper() == "BUY" else entry + (entry * min_stop_pct)
                         sym_data["initial_sl"] = sl
+                        sym_data["master_entry"] = entry
+                        sym_data["side"] = side.upper()
                         self.save_state()
 
-                    initial_sl = sym_data.get("initial_sl", sl)
+                    if "master_entry" not in sym_data or sym_data.get("master_entry", 0) <= 0:
+                        sym_data["master_entry"] = entry
+                        sym_data["side"] = side.upper()
+                        self.save_state()
+
+                    master_entry = float(sym_data.get("master_entry", entry))
+                    initial_sl = float(sym_data.get("initial_sl", sl))
+                    master_risk_dist = abs(master_entry - initial_sl)
                     stop_dist = abs(entry - initial_sl)
                     if stop_dist <= 0:
                         continue
@@ -182,13 +191,25 @@ class PositionWatchdog:
                     if not pos_risk_usd or pos_risk_usd <= 0:
                         continue
 
-                    r_multiple = pnl / pos_risk_usd
+                    # Current market price evaluated from position PnL and geometry
+                    current_price = entry + (pnl / (qty * contract_size)) if side.upper() == "BUY" else entry - (pnl / (qty * contract_size))
+
+                    # ── MASTER SETUP DEFENSE ANCHORING INVARIANT ──
+                    # Harmonizes R-multiple calculation across all accounts to Master Lead Setup geometry
+                    # Prevents late-entering tail accounts from triggering early Break-Even and getting clipped
+                    if getattr(Config, 'MASTER_DEFENSE_ANCHORING', True) and master_risk_dist > 0:
+                        if side.upper() == "BUY":
+                            r_multiple = (current_price - master_entry) / master_risk_dist
+                        else:
+                            r_multiple = (master_entry - current_price) / master_risk_dist
+                    else:
+                        r_multiple = pnl / pos_risk_usd
 
                     # Autonomous Adversarial Quality Invariant: Price-Geometry Ground Truth Cross-Validation
                     try:
                         from src.core.adversarial_quality_loop import PriceGeometryGroundTruth
-                        current_price = entry + (pnl / (qty * contract_size)) if side.upper() == "BUY" else entry - (pnl / (qty * contract_size))
-                        geom_r = PriceGeometryGroundTruth.compute_geom_r(entry, initial_sl, current_price, side)
+                        geom_entry = master_entry if getattr(Config, 'MASTER_DEFENSE_ANCHORING', True) else entry
+                        geom_r = PriceGeometryGroundTruth.compute_geom_r(geom_entry, initial_sl, current_price, side)
                         is_valid, authoritative_r, reason = PriceGeometryGroundTruth.validate_r_multiple_integrity(r_multiple, geom_r)
                         if not is_valid:
                             print(reason)
@@ -217,7 +238,7 @@ class PositionWatchdog:
                     is_scaled_out = sym_data.get("scaleout_executed") or self.alerted_trades.get(t_id, {}).get("scaleout_executed")
                     if stepped_enabled and r_multiple >= stepped_trigger and not is_stepped and not is_scaled_out:
                         print(f"🛡️ [STEPPED DEFENSE] {symbol} hit {r_multiple:.2f}R (>= +{stepped_trigger:.1f}R)! Tightening Stop Loss to {stepped_locked_r:.1f}R across fleet...")
-                        self.execute_stepped_defense(symbol, entry, initial_sl, side=side, locked_r=stepped_locked_r)
+                        self.execute_stepped_defense(symbol, master_entry, initial_sl, side=side, locked_r=stepped_locked_r)
                         sym_data["stepped_defense_executed"] = True
                         self.alerted_trades[t_id]["stepped_defense_executed"] = True
                         self.save_state()
@@ -227,7 +248,7 @@ class PositionWatchdog:
                     is_scaled_out = sym_data.get("scaleout_executed") or self.alerted_trades.get(t_id, {}).get("scaleout_executed")
                     if r_multiple >= be_trigger and not is_scaled_out:
                         print(f"💰 [AUTO SCALE-OUT] {symbol} hit {r_multiple:.2f}R! Executing Fleet Break-Even & Scale-Out...")
-                        self.execute_fleet_scaleout(symbol, entry, reason=f"+{be_trigger:.1f}R Target Reached", side=side, initial_sl=initial_sl)
+                        self.execute_fleet_scaleout(symbol, master_entry, reason=f"+{be_trigger:.1f}R Target Reached", side=side, initial_sl=initial_sl)
                         sym_data["scaleout_executed"] = True
                         self.alerted_trades[t_id]["scaleout_executed"] = True
                         self.save_state()
@@ -316,9 +337,10 @@ class PositionWatchdog:
             last_net_be = float(entry_price)
             last_fee_buffer = 0.0
 
+            pacing = getattr(Config, 'FLEET_PACING_SECONDS', 0.35)
             for acc_idx, helper in enumerate(self.tl.helpers):
-                if acc_idx > 0:
-                    time.sleep(2.0) # Adaptive 2.0s pacing
+                if acc_idx > 0 and pacing > 0:
+                    time.sleep(pacing) # Fast adaptive pacing (Rule 5)
                 
                 # Skip decommissioned liquidation-only accounts
                 if getattr(helper, 'status', '') == 'LIQUIDATION_ONLY' or acc_idx in [3, 4, 7]:
@@ -452,9 +474,10 @@ class PositionWatchdog:
                     print(f"⚠️ [STEPPED DEFENSE] SELL invariant violated: initial_sl={initial_sl}, new_sl={new_sl}, entry={entry_price}")
                     return
 
+            pacing = getattr(Config, 'FLEET_PACING_SECONDS', 0.35)
             for acc_idx, helper in enumerate(self.tl.helpers):
-                if acc_idx > 0:
-                    time.sleep(2.0)  # Adaptive 2.0s pacing per AGENTS.md Rule 5
+                if acc_idx > 0 and pacing > 0:
+                    time.sleep(pacing)  # Fast adaptive pacing per AGENTS.md Rule 5
 
                 # Skip decommissioned liquidation-only accounts
                 if getattr(helper, 'status', '') == 'LIQUIDATION_ONLY' or acc_idx in [3, 4, 7]:

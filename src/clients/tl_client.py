@@ -807,9 +807,10 @@ class TradeLockerClient:
         Enforces 2.0s adaptive pacing between accounts per AGENTS.md Rule 5.
         """
         results = []
+        pacing = getattr(Config, 'FLEET_PACING_SECONDS', 0.35)
         for i, helper in enumerate(self.helpers):
-            if i > 0:
-                time.sleep(2.0)  # Adaptive 2.0s pacing between accounts to prevent 429
+            if i > 0 and pacing > 0:
+                time.sleep(pacing)  # Fast adaptive pacing between accounts (AGENTS.md Rule 5)
             try:
                 positions = helper.get_open_positions()
                 for p in positions:
@@ -840,9 +841,10 @@ class TradeLockerClient:
     def close_all_fleet_positions(self):
         """Safely closes all open positions across all accounts in the fleet with adaptive pacing."""
         total_closed = 0
+        pacing = getattr(Config, 'FLEET_PACING_SECONDS', 0.35)
         for i, helper in enumerate(self.helpers):
-            if i > 0:
-                time.sleep(2.0)  # Adaptive 2.0s pacing between accounts per AGENTS.md Rule 5
+            if i > 0 and pacing > 0:
+                time.sleep(pacing)  # Fast adaptive pacing between accounts per AGENTS.md Rule 5
             positions = helper.get_open_positions()
             for p in positions:
                 pos_id = p.get('id')
@@ -1221,9 +1223,13 @@ class TradeLockerClient:
         results = []
         logger.info(f"⚡ [PROBE & SCALE] Dispatching {tranche_label} ({target_risk_pct*100:.2f}% Risk Basis, {risk_scale*100:.0f}% Tranche Scale) across {len(self.helpers)} accounts for {symbol} {side.upper()}...")
         
+        fleet_pacing = getattr(Config, 'FLEET_PACING_SECONDS', 0.35)
+        max_dispersion_pct = getattr(Config, 'MAX_ENTRY_DISPERSION_PCT', 0.0010)
+        lead_fill_price = float(entry_price) if entry_price is not None else None
+
         for i, helper in enumerate(self.helpers):
-            if i > 0:
-                time.sleep(2.5)  # 2.5s adaptive pacing to avoid HTTP 429 rate limits
+            if i > 0 and fleet_pacing > 0:
+                time.sleep(fleet_pacing)  # Fast adaptive pacing to maintain cross-account synchronization
                 
             try:
                 if not helper.access_token:
@@ -1375,6 +1381,39 @@ class TradeLockerClient:
                     
                 if scaled_lot < 0.01:
                     scaled_lot = 0.01
+
+                # ── MAX PRICE DISPERSION CIRCUIT BREAKER (SOLUTION 3) ──
+                # If market price has drifted > 0.10% from lead fill, intercept to prevent out-of-bounds fills
+                if lead_fill_price is not None and i > 0 and max_dispersion_pct > 0:
+                    current_est_price = None
+                    try:
+                        # Probe first helper's live position mark price if available
+                        lead_helper = self.helpers[0]
+                        lead_positions = lead_helper.get_open_positions(max_age_seconds=1.0)
+                        if lead_positions:
+                            for lp in lead_positions:
+                                lp_sym = str(lp.get("symbol", "")).replace("/", "").replace("_", "").upper()
+                                if clean_sym in lp_sym or lp_sym in clean_sym:
+                                    lp_pnl = float(lp.get("pnl") or 0.0)
+                                    lp_qty = float(lp.get("qty") or 0.0)
+                                    lp_entry = float(lp.get("avgPrice") or lp.get("price") or lead_fill_price)
+                                    lp_side = str(lp.get("side", side)).lower()
+                                    c_size = Config.get_contract_size(symbol)
+                                    if lp_qty > 0 and c_size > 0:
+                                        current_est_price = lp_entry + (lp_pnl / (lp_qty * c_size)) if lp_side == "buy" else lp_entry - (lp_pnl / (lp_qty * c_size))
+                                        break
+                    except Exception:
+                        pass
+
+                    if current_est_price is not None and lead_fill_price > 0:
+                        drift_pct = abs(current_est_price - lead_fill_price) / lead_fill_price
+                        if drift_pct > max_dispersion_pct:
+                            # Check if drift is adverse (worse entry than lead fill)
+                            is_adverse = (side.lower() == "buy" and current_est_price > lead_fill_price) or (side.lower() == "sell" and current_est_price < lead_fill_price)
+                            if is_adverse:
+                                logger.critical(f"🛡️ [DISPERSION GATE] Account {i+1} ({helper.email}) entry intercepted! Market price drifted {drift_pct*100:.3f}% ({lead_fill_price:.2f} -> {current_est_price:.2f}), exceeding max safety ceiling ({max_dispersion_pct*100:.2f}%). Aborting dispatch to preserve fleet geometry.")
+                                results.append(False)
+                                continue
                     
                 is_scale_out_acc = getattr(Config, 'SPLIT_FLEET_SCALE_OUT_ENABLED', True) and (i in getattr(Config, 'SCALE_OUT_ACCOUNT_INDICES', [0, 2, 8]))
 
@@ -1458,6 +1497,18 @@ class TradeLockerClient:
                     else:
                         logger.warning(f"⚠️ Account {i+1} ({helper.email}) order placement failed or rejected.")
                         results.append(False)
+
+                if lead_fill_price is None and (results[-1] if results else False):
+                    try:
+                        new_pos = helper.get_open_positions(max_age_seconds=1.0)
+                        if new_pos:
+                            for np in new_pos:
+                                np_sym = str(np.get("symbol", "")).replace("/", "").replace("_", "").upper()
+                                if clean_sym in np_sym or np_sym in clean_sym:
+                                    lead_fill_price = float(np.get("avgPrice") or np.get("price") or 0.0)
+                                    break
+                    except Exception:
+                        pass
             except Exception as e:
                 logger.error(f"❌ Error dispatching to Account {i+1} ({helper.email}): {e}")
                 results.append(False)

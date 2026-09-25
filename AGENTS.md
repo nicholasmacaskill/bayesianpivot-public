@@ -36,9 +36,11 @@
   2. Zero stray or orphan pending stop/limit orders remain on any account book.
   3. Every active position has an attached, verified Stop Loss.
 
-### 5. Multi-Account Rate-Limit Pacing & Anti-Desynchronization
-* **RULE:** Multi-account fleet operations must enforce **2.0s to 2.5s adaptive pacing** between accounts.
-* If any single account fails or receives an HTTP 429, the system must retry or handle the specific failure without leaving partial, unmanaged positions or cross-account direction mismatches.
+### 5. Multi-Account Rate-Limit Pacing, Anti-Desynchronization & Master Defense Anchoring
+* **RULE:** Multi-account fleet operations must enforce **fast adaptive pacing (nominal 300ms to 500ms, default 350ms)** between accounts to achieve full fleet execution in under 2.0s and prevent entry price drift.
+* If any single account receives an HTTP 429, the system must automatically execute exponential backoff (per `Retry-After` header or 2.5s base delay) without desynchronizing the fleet.
+* **Max Entry Dispersion Gate:** The system must intercept and abort any tail account entry if market price has drifted > 0.10% (10 bps) adversely from the lead account fill.
+* **Master Setup Defense Anchoring:** All downstream R-multiple calculations, +1.0R Stepped Defense, and Break-Even trails must be harmonized to the Lead Master Setup geometry (`master_entry`, `initial_sl`), guaranteeing that late-entering accounts never trigger early break-even trails in a vacuum and get prematurely clipped on retracements.
 
 ### 6. Mandatory Protective Brackets on Entry (Zero Naked Trades)
 * **RULE:** No order may ever be submitted with `stop_loss=None`. Every trade entry must have a mathematically calculated Stop Loss attached at the exact moment of order placement.
