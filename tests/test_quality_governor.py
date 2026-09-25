@@ -150,5 +150,67 @@ class TestQualityGovernor(unittest.TestCase):
         self.assertEqual(Config.get_contract_size("EUR/USD"), 100000.0)
         self.assertEqual(Config.get_contract_size("GBP/USD"), 100000.0)
 
+    def test_active_position_invariants_allows_identical_tp_on_different_accounts(self):
+        """Negative boundary test: Positions on different accounts with identical TP must NOT trigger overwrite alert."""
+        mock_tl = MagicMock()
+        mock_tl.get_open_positions.return_value = [
+            {
+                "id": "pos_acc1",
+                "account_id": "acc_1",
+                "symbol": "BTCUSD",
+                "side": "SELL",
+                "price": 84706.32,
+                "stopLoss": 84672.22,
+                "takeProfit": 83107.27,
+                "pnl": 20.0,
+                "qty": 0.05
+            },
+            {
+                "id": "pos_acc2",
+                "account_id": "acc_2",
+                "symbol": "BTCUSD",
+                "side": "SELL",
+                "price": 84697.22,
+                "stopLoss": 84672.22,
+                "takeProfit": 83107.27,
+                "pnl": 80.0,
+                "qty": 0.20
+            }
+        ]
+
+        clean, issues = self.governor.audit_active_positions(tl_client=mock_tl)
+        self.assertTrue(clean)
+        self.assertEqual(issues, [])
+
+    def test_silent_error_sentry_rate_limit_threshold(self):
+        """Verify that rate limited alerts trigger only when reaching the threshold (8 occurrences)."""
+        import tempfile
+        from datetime import datetime
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with tempfile.NamedTemporaryFile("w+", delete=False) as tf:
+            # 4 occurrences (below threshold of 8)
+            for _ in range(4):
+                tf.write(f"{now_str} - [WARNING] - (Worker) - Rate limited (HTTP 429)\n")
+            temp_path = tf.name
+
+        gov = QualityGovernor(log_path=temp_path)
+        clean, issues = gov.scan_silent_error_rate()
+        os.unlink(temp_path)
+        self.assertTrue(clean)
+        self.assertEqual(issues, [])
+
+        with tempfile.NamedTemporaryFile("w+", delete=False) as tf:
+            # 8 occurrences (meets threshold)
+            for _ in range(8):
+                tf.write(f"{now_str} - [WARNING] - (Worker) - Rate limited (HTTP 429)\n")
+            temp_path = tf.name
+
+        gov = QualityGovernor(log_path=temp_path)
+        clean, issues = gov.scan_silent_error_rate()
+        os.unlink(temp_path)
+        self.assertFalse(clean)
+        self.assertTrue(any("Rate limited" in iss for iss in issues))
+
 if __name__ == "__main__":
     unittest.main()
+

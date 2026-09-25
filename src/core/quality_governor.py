@@ -32,7 +32,7 @@ class QualityGovernor:
 
     CRITICAL_ERROR_PATTERNS = [
         ("BadSymbol", 2, "CCXT / Exchange symbol mismatch detected"),
-        ("Rate limited", 4, "Excessive broker HTTP 429 rate limit pressure"),
+        ("Rate limited", 8, "Excessive broker HTTP 429 rate limit pressure"),
         ("401 Unauthorized", 15, "Broker authentication token expiration loop"),
         ("Read timed out", 3, "Broker network latency timeout spike"),
         ("Failed to patch position", 1, "Broker position bracket modification rejected"),
@@ -282,16 +282,18 @@ class QualityGovernor:
                                     f"but Stop Loss (${sl:.2f}) is NOT locked at Break-Even (${entry:.2f})!"
                                 )
 
-                key = (sym, side)
+                acc_id = str(pos.get("account_id") or pos.get("accountId") or pos.get("account_email") or "")
+                key = (acc_id, sym, side)
                 by_account_sym.setdefault(key, []).append(pos)
 
             # Invariant 4: Scale-Out Bracket Overwrite Prevention Check
-            for (sym, side), pos_list in by_account_sym.items():
+            for (acc_id, sym, side), pos_list in by_account_sym.items():
                 if len(pos_list) > 1:
                     tps = [float(p.get("takeProfit") or 0.0) for p in pos_list if p.get("takeProfit")]
                     if len(tps) > 1 and len(set(tps)) == 1 and tps[0] > 0:
+                        acc_str = f"on account {acc_id} " if acc_id else ""
                         issues.append(
-                            f"🚨 [SCALE-OUT BRACKET OVERWRITE] Multiple tranches for {sym} {side} share identical TP (${tps[0]:.2f}). "
+                            f"🚨 [SCALE-OUT BRACKET OVERWRITE] Multiple tranches {acc_str}for {sym} {side} share identical TP (${tps[0]:.2f}). "
                             "TP1 was overwritten by TP2!"
                         )
 

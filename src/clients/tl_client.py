@@ -283,6 +283,8 @@ class TradeLockerHelper:
 
                             trades.append({
                                 'id': pos_id_str,
+                                'account_id': str(self.account_id or ''),
+                                'account_email': str(self.email or ''),
                                 'symbol': self.resolve_symbol(p[1]), 
                                 'tradableInstrumentId': str(p[1]),
                                 'instrumentId': str(p[1]),
@@ -313,6 +315,8 @@ class TradeLockerHelper:
 
                         trades.append({
                             'id': pos_id_str,
+                            'account_id': str(self.account_id or ''),
+                            'account_email': str(self.email or ''),
                             'symbol': self.resolve_symbol(p.get('instrumentId')),
                             'tradableInstrumentId': str(p.get('tradableInstrumentId') or p.get('instrumentId') or ''),
                             'instrumentId': str(p.get('instrumentId') or p.get('tradableInstrumentId') or ''),
@@ -924,7 +928,7 @@ class TradeLockerClient:
             if getattr(helper, 'status', '') == 'LIQUIDATION_ONLY' or i in [3, 4, 7]:
                 continue
             if queried_count > 0:
-                time.sleep(2.0)
+                time.sleep(2.5) # Adaptive pacing between accounts (AGENTS.md Rule 5)
             queried_count += 1
             try:
                 trades = helper.get_recent_history(hours)
