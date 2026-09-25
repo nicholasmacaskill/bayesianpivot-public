@@ -235,11 +235,7 @@ class AlphaSweepScanner(SMCScanner):
                     # Wick rejection check (lower wick must be >= 30% of total candle range)
                     lower_wick = min(c_open, c_close) - c_low
                     if lower_wick / c_range >= 0.30:
-                        # Trend alignment if trending
-                        if is_trending and trend != "UP":
-                            logger.info(f"Long setup blocked due to trend mismatch (Hurst: {hurst:.3f}, Trend: {trend})")
-                            continue
-                        
+                        # Turtle Soup sweeps liquidity extremes. Retail 1H EMA blocking removed to preserve sweep edge.
                         sl = round(c_low - buffer, 2)
                         if (c_close - sl) < min_stop_dist:
                             sl = round(c_close - min_stop_dist, 2)
@@ -272,11 +268,7 @@ class AlphaSweepScanner(SMCScanner):
                     # Wick rejection check (upper wick must be >= 30% of total candle range)
                     upper_wick = c_high - max(c_open, c_close)
                     if upper_wick / c_range >= 0.30:
-                        # Trend alignment if trending
-                        if is_trending and trend != "DOWN":
-                            logger.info(f"Short setup blocked due to trend mismatch (Hurst: {hurst:.3f}, Trend: {trend})")
-                            continue
-                        
+                        # Turtle Soup sweeps liquidity extremes. Retail 1H EMA blocking removed to preserve sweep edge.
                         sl = round(c_high + buffer, 2)
                         if (sl - c_close) < min_stop_dist:
                             sl = round(c_close + min_stop_dist, 2)
@@ -655,10 +647,6 @@ class AlphaSweepScanner(SMCScanner):
             kz_str = str(killzone or "").upper()
             is_gold_liquid_session = any(k in kz_str for k in ["LONDON", "NY", "NEW_YORK", "CONTINUOUS", "ASIAN"])
             
-            # 1H HTF Trend Check (Mandatory Bullish Structure for Longs)
-            ema50_1h = df_1h['close'].ewm(span=min(50, len(df_1h))).mean().iloc[-1]
-            htf_bullish = df_1h['close'].iloc[-1] >= ema50_1h
-
             # Scan 1H for recent unmitigated Fair Value Gaps
             for i in range(len(df_1h) - 4, len(df_1h) - 1):
                 c1_high = float(df_1h.iloc[i-1]['high'])
@@ -681,12 +669,13 @@ class AlphaSweepScanner(SMCScanner):
                         tp_price = c_close_5m + (stop_dist * target_rr)
 
                         # Determine if qualified for Live Champion Execution
+                        # Institutional SMC Invariant: 50% CE FVG is an institutional discount/premium entry.
+                        # Retail 1H 50-EMA lagging filter removed (historically quarantined +35.0R in shadow).
                         strat_5_auto = getattr(Config, 'STRATEGY_5_AUTO_EXECUTE', False)
                         is_live_qualified = (
                             is_gold 
                             and is_weekday 
                             and is_gold_liquid_session 
-                            and htf_bullish 
                             and strat_5_auto
                         )
 
