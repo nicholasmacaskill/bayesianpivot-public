@@ -92,11 +92,8 @@ class UnifiedSovereignSupervisor:
                 shadow_symbols = list(getattr(Config, 'SHADOW_SYMBOLS', ['ETH/USD', 'SOL/USD']))
                 all_symbols = list(dict.fromkeys(live_symbols + shadow_symbols))
 
-                # 1. Check & trail open positions
-                try:
-                    self.scanner.check_and_trail_positions()
-                except Exception as e:
-                    logger.debug(f"Watchdog scan check: {e}")
+                # Trailing defense and profit protection are handled exclusively by the dedicated WatchdogThread
+                # to avoid duplicate polling, HTTP 429 rate limits, and conflicting Telegram notifications.
 
                 # 2. Scan all configured symbols (Live + Shadow Trackers)
                 for sym in all_symbols:
@@ -295,11 +292,11 @@ class UnifiedSovereignSupervisor:
                             is_target_alerted = sym_data.get("milestones", {}).get(target_key) or self.watchdog.alerted_trades.get(t_id, {}).get(target_key)
                             if r_multiple >= target and not is_target_alerted:
                                 msg = (
-                                    f"🚀 <b>BAYESIAN PIVOT TARGET REACHED!</b>\n"
+                                    f"🎯 <b>INTERMEDIATE MILESTONE: +{target:.1f}R REACHED</b>\n"
                                     f"Symbol: <code>{symbol}</code>\n"
-                                    f"Current R: <b>{r_multiple:.2f}R</b>\n\n"
-                                    f"🛡️ <b>DISCIPLINE CHECK:</b> Target {target}R reached.\n"
-                                    "Autonomous fleet scale-out and trailing stop active."
+                                    f"Current Floating Gain: <b>+{r_multiple:.2f}R</b> (Trade Still Active)\n\n"
+                                    f"🛡️ <b>DISCIPLINE CHECK:</b> Milestone +{target:.1f}R cleared.\n"
+                                    "Autonomous fleet scale-out and trailing stop active. Position running toward full TP."
                                 )
                                 self.watchdog.notifier._send_message(msg)
                                 sym_data.setdefault("milestones", {})[target_key] = True

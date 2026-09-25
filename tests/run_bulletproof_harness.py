@@ -69,6 +69,7 @@ def main():
         ("tests.test_adversarial_boundary_invariants", "TIER 6: ADVERSARIAL NEGATIVE BOUNDARY & STATE INVARIANTS"),
         ("tests.test_autonomous_adversarial_quality_loop", "TIER 7: AUTONOMOUS QUANT EXECUTION CRUCIBLE (AQEC FUZZ)"),
         ("tests.test_crucible_mutations", "TIER 8: 3D MUTATION META-TESTING (TESTING THE TEST)"),
+        ("tests.test_watchdog_and_scaleout_invariants", "TIER 9: WATCHDOG, SCALEOUT & TELEMETRY INVARIANTS"),
     ]
 
     tier_results = []
@@ -106,7 +107,8 @@ def main():
         print(f"{GREEN}• DELETE Position Termination: VERIFIED{RESET}")
         print(f"{GREEN}• Hurst Chaos Gate Rejection: VERIFIED{RESET}")
         print(f"{GREEN}• High-Impact News Lockout: VERIFIED{RESET}")
-        print(f"{GREEN}• Live Tick CVD Iceberg Detection: VERIFIED{RESET}\n")
+        print(f"{GREEN}• Live Tick CVD Iceberg Detection: VERIFIED{RESET}")
+        print(f"{GREEN}• Watchdog & Milestone Telemetry: VERIFIED{RESET}\n")
         sys.exit(0)
     else:
         print(f"\n{BOLD}{RED}🚨 CRITICAL REGRESSION ALERT — {total_failed}/{total_tests} CHECKS FAILED!{RESET}")

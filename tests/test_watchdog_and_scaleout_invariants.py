@@ -156,7 +156,7 @@ class TestWatchdogAndScaleoutInvariants(unittest.TestCase):
             "symbol": "BTCUSD",
             "price": 76682.0,
             "stopLoss": 76859.0, # risk = 177 pts * 0.42 = $74.34
-            "pnl": 118.94, # $118.94 / $74.34 = 1.60R (retraced 0.90R from 2.50R!)
+            "pnl": 111.51, # $111.51 / $74.34 = 1.50R (retraced 1.00R from 2.50R!)
             "qty": 0.42
         }
 
@@ -252,6 +252,8 @@ class TestWatchdogAndScaleoutInvariants(unittest.TestCase):
     def test_scaleout_deduplication_across_multi_account_positions(self, mock_scaleout):
         """Verify scale-out and Telegram alerts fire exactly ONCE per symbol even with 6 positions open across fleet."""
         watchdog = PositionWatchdog()
+        watchdog.symbol_state = {}
+        watchdog.alerted_trades = {}
         watchdog.notifier._send_message = MagicMock()
         watchdog.save_state = MagicMock()
 

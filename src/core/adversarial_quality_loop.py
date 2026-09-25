@@ -309,19 +309,19 @@ class QuantCrucibleFuzzer:
                 "contract_size": contract_size, "initial_sl": initial_sl
             }
 
-        # Step 1: Reach deep peak at 4309.40 (+2.40R)
-        peak_price = 4283.0 + (2.40 * stop_dist)
+        # Step 1: Reach deep peak at 4310.50 (+2.50R)
+        peak_price = 4283.0 + (2.50 * stop_dist)
         geom_peak = PriceGeometryGroundTruth.compute_geom_r(entry, initial_sl, peak_price, "BUY")
         is_armed = geom_peak >= Config.MFE_MIN_PEAK_R
 
-        # Step 2: Retrace to 4299.50 (+1.50R) (gave back 0.90R)
-        retrace_price = 4283.0 + (1.50 * stop_dist)
+        # Step 2: Retrace to 4298.40 (+1.40R) (gave back 1.10R >= 1.0R)
+        retrace_price = 4283.0 + (1.40 * stop_dist)
         geom_now = PriceGeometryGroundTruth.compute_geom_r(entry, initial_sl, retrace_price, "BUY")
         retrace_drop = geom_peak - geom_now
         mfe_trigger = is_armed and (retrace_drop >= Config.MFE_MAX_RETRACEMENT_R)
 
-        assert is_armed, "MFE must arm at +2.40R"
-        assert mfe_trigger, "MFE must trigger when giving back 0.90R (>= 0.75R)"
+        assert is_armed, "MFE must arm at +2.50R (>= 2.2R)"
+        assert mfe_trigger, "MFE must trigger when giving back 1.10R (>= 1.0R)"
 
         # Execute market dump on runner per MFE
         if mfe_trigger:

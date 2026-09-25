@@ -277,8 +277,8 @@ class Config:
     
     # ── Max Favorable Excursion (MFE) Peak Retracement Ratchet ──
     MFE_PEAK_RATCHET_ENABLED = True        # ✅ ENABLED: Position-isolated R-multiple guarantees MFE only triggers if genuine peak >= +2.0R
-    MFE_MIN_PEAK_R = 2.0            # Minimum peak R required to arm the ratchet
-    MFE_MAX_RETRACEMENT_R = 0.75    # Giving back 0.75R from peak triggers defensive scale-out
+    MFE_MIN_PEAK_R = 2.2            # Minimum peak R required to arm the ratchet (was 2.0)
+    MFE_MAX_RETRACEMENT_R = 1.0    # Giving back 1.0R from peak triggers defensive scale-out (was 0.75, widened to prevent 1-min noise false triggers)
     
     # ── Pre-Macro Event Defense ──
     MACRO_DEFENSE_ENABLED = True    # Front-run high-impact macro data if in profit

@@ -272,20 +272,20 @@ class TestAdversarialBoundaryInvariants(unittest.TestCase):
         armed_1 = peak_r_scenario1 >= mfe_min_peak
         self.assertFalse(armed_1, "MFE must NEVER arm on sub-2.0R peaks (like today's Gold 0.87R move)")
 
-        # Scenario 2: Deep runner at +2.20R with healthy 0.40R pullback
-        peak_r_scenario2 = 2.20
+        # Scenario 2: Deep runner at +2.50R with healthy 0.70R pullback (< 1.0R)
+        peak_r_scenario2 = 2.50
         current_r_scenario2 = 1.80
         armed_2 = peak_r_scenario2 >= mfe_min_peak
         retrace_2 = peak_r_scenario2 - current_r_scenario2
         trigger_2 = armed_2 and (retrace_2 >= mfe_max_retrace)
-        self.assertTrue(armed_2, "MFE arms at +2.20R")
-        self.assertFalse(trigger_2, "MFE must not trigger on normal 0.40R pullback from +2.20R")
+        self.assertTrue(armed_2, "MFE arms at +2.50R (>= 2.2R)")
+        self.assertFalse(trigger_2, "MFE must not trigger on normal 0.70R pullback from +2.50R when max_retrace is 1.0R")
 
-        # Scenario 3: Deep runner at +2.20R with severe 0.80R collapse
+        # Scenario 3: Deep runner at +2.50R with severe 1.10R collapse (>= 1.0R)
         current_r_scenario3 = 1.40
         retrace_3 = peak_r_scenario2 - current_r_scenario3
         trigger_3 = armed_2 and (retrace_3 >= mfe_max_retrace)
-        self.assertTrue(trigger_3, "MFE must trigger when retrace gives back >= 0.75R from a +2.0R+ peak")
+        self.assertTrue(trigger_3, "MFE must trigger when retrace gives back >= 1.0R from a +2.2R+ peak")
 
     def test_invariant_fractional_risk_accounting_boundary(self):
         """
@@ -389,6 +389,53 @@ class TestAdversarialBoundaryInvariants(unittest.TestCase):
                 ok_london, reason_london = ExecutionFirewall.check_session_setup_limit(session_hint="LONDON_OPEN")
                 self.assertTrue(ok_london, f"Expected LONDON_OPEN to pass but got: {reason_london}")
                 self.assertEqual(reason_london, "OK")
+
+    def test_invariant_telegram_milestone_copy_disambiguation(self):
+        """
+        Adversarial Invariant: Telegram Milestone Copy Disambiguation:
+        Asserts that milestone alerts (+1.5R, +2.0R) are explicitly tagged as intermediate
+        milestones and state that the trade is still running, preventing false alarm
+        confusion with final full Take Profit exits.
+        """
+        import inspect
+        from src.runners.unified_sovereign_supervisor import UnifiedSovereignSupervisor
+        src_code = inspect.getsource(UnifiedSovereignSupervisor.run_watchdog_worker)
+        
+        # Must contain explicit INTERMEDIATE MILESTONE tag
+        self.assertIn("INTERMEDIATE MILESTONE", src_code, 
+                      "Milestone alerts must be explicitly titled as INTERMEDIATE MILESTONE")
+        self.assertIn("Trade Still Active", src_code, 
+                      "Milestone alerts must clearly declare that the trade is still active")
+        # Must NOT contain confusing bare 'BAYESIAN PIVOT TARGET REACHED!'
+        self.assertNotIn("🚀 <b>BAYESIAN PIVOT TARGET REACHED!</b>", src_code,
+                         "Milestone alerts must NEVER use bare 'BAYESIAN PIVOT TARGET REACHED!' without intermediate qualifier")
+
+    def test_invariant_single_watchdog_authority_in_unified_supervisor(self):
+        """
+        Adversarial Invariant: Single Watchdog Authority:
+        Asserts that UnifiedSovereignSupervisor delegates all trailing defense and profit
+        locks exclusively to the dedicated WatchdogThread. The ScannerThread must NOT
+        run a concurrent, colliding check_and_trail_positions loop.
+        """
+        import inspect
+        from src.runners.unified_sovereign_supervisor import UnifiedSovereignSupervisor
+        scanner_worker_src = inspect.getsource(UnifiedSovereignSupervisor.run_scanner_worker)
+        
+        self.assertNotIn("self.scanner.check_and_trail_positions()", scanner_worker_src,
+                         "ScannerThread must not run a duplicate check_and_trail_positions loop")
+
+    def test_invariant_mfe_retracement_breathing_room(self):
+        """
+        Adversarial Invariant: MFE Retracement Volatility Breathing Room:
+        Asserts that MFE ratchet requires >= 2.2R peak and >= 1.0R retracement buffer,
+        preventing normal 1-minute market noise wiggles on tight stops from prematurely
+        killing winning trades.
+        """
+        from src.core.config import Config
+        self.assertGreaterEqual(Config.MFE_MIN_PEAK_R, 2.2, 
+                                "MFE ratchet must not arm before at least +2.2R expansion")
+        self.assertGreaterEqual(Config.MFE_MAX_RETRACEMENT_R, 1.0, 
+                                "MFE retracement threshold must allow at least 1.0R breathing room")
 
 
 if __name__ == '__main__':

@@ -401,7 +401,7 @@ class PositionWatchdog:
 
             if "MFE Peak Retracement" in str(reason):
                 scaleout_msg = (
-                    f"🛡️ <b>MFE PEAK RATCHET PROFIT LOCK</b>\n\n"
+                    f"🛡️ <b>MFE DEFENSIVE PROFIT LOCK (RETRACEMENT EXIT)</b>\n\n"
                     f"Symbol: <code>{symbol}</code>\n"
                     f"Trigger: <b>{reason}</b>\n\n"
                     f"🏦 <b>Realized Cash Profit:</b> Market-closed {closed_count} positions across fleet\n"
