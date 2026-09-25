@@ -727,7 +727,7 @@ class TradeLockerHelper:
             url = f"{self.base_url}/backend-api/trade/accounts/{self.account_id}/positions/{position_id}"
         else:
             url = f"{self.base_url}/backend-api/trade/positions/{position_id}"
-        for attempt in range(2):
+        for attempt in range(3):
             try:
                 resp = requests.delete(url, headers=self._get_headers(auth=True), timeout=10)
                 if resp.status_code in [200, 204]:
@@ -739,6 +739,11 @@ class TradeLockerHelper:
                     if self.login():
                         continue
                     return False
+                elif resp.status_code == 429:
+                    retry_after = max(float(resp.headers.get("Retry-After") or 15.0), 15.0)
+                    logger.warning(f"⚠️ Rate limited on close_position (HTTP 429) for {position_id}. Sleeping {retry_after}s...")
+                    time.sleep(retry_after)
+                    continue
                 elif resp.status_code == 404 and self.account_id and "accounts" in url:
                     fallback_url = f"{self.base_url}/backend-api/trade/positions/{position_id}"
                     fb_resp = requests.delete(fallback_url, headers=self._get_headers(auth=True), timeout=10)
@@ -749,7 +754,7 @@ class TradeLockerHelper:
                 return False
             except Exception as e:
                 logger.error(f"Error closing position {position_id}: {e}")
-                if attempt == 0:
+                if attempt < 2:
                     time.sleep(1.0)
                     continue
                 return False

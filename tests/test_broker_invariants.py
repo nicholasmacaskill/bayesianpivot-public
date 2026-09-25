@@ -110,6 +110,29 @@ class TestBrokerInvariants(unittest.TestCase):
         del_url = mock_patch_delete.call_args[0][0]
         self.assertIn("/positions/pos_8888", del_url)
 
+    @patch('requests.delete')
+    @patch('time.sleep')
+    def test_invariant_close_position_retries_on_429_rate_limit(self, mock_sleep, mock_delete):
+        """
+        Invariant: Position termination via DELETE must handle HTTP 429 rate limit backoff
+        and retry instead of immediately aborting and leaving orphaned unmanaged positions.
+        """
+        resp_429 = MagicMock()
+        resp_429.status_code = 429
+        resp_429.headers = {"Retry-After": "5"}
+        resp_429.text = "Rate limited"
+
+        resp_200 = MagicMock()
+        resp_200.status_code = 200
+        resp_200.json.return_value = {"success": True}
+
+        mock_delete.side_effect = [resp_429, resp_200]
+
+        res = self.helper.close_position(position_id="pos_429_test")
+        self.assertTrue(res, "close_position should succeed after 429 backoff")
+        self.assertEqual(mock_delete.call_count, 2, "Should attempt 2 DELETE requests (initial + retry)")
+        mock_sleep.assert_called_with(15.0)
+
 
 if __name__ == "__main__":
     unittest.main()
