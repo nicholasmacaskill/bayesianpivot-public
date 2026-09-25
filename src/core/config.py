@@ -111,8 +111,8 @@ class Config:
     STRATEGY_5_REQUIRE_HTF_BULLISH = True # Mandatory 4H/Daily macro structural alignment
 
     # ── Strategy Auction Market: Anchored VWAP 2-Sigma Snapbacks & Wyckoff VSA (GRADUATED PROBE) ──
-    AUCTION_MARKET_AUTO_EXECUTE = True          # ✅ GRADUATED: Live Fleet 0.5x Probe Auto-Execution
-    AUCTION_MARKET_PROBE_RISK_SCALE = 0.50      # 0.5x probe risk ($17.50 on $25k, $35.00 on $50k)
+    AUCTION_MARKET_AUTO_EXECUTE = True          # ✅ GRADUATED: Live Fleet 0.75x Probe Auto-Execution
+    AUCTION_MARKET_PROBE_RISK_SCALE = 0.75      # 0.75x probe risk ($26.25 on $25k, $52.50 to $75.00 on $50k)
 
     # Prop Firm Execution Profiles
     ACTIVE_FIRM = "UPCOMERS"

@@ -219,6 +219,12 @@ class UnifiedSovereignSupervisor:
                             if not is_valid:
                                 logger.warning(reason)
                                 r_multiple = authoritative_r
+                                # Invariant: Never allow peak_r to remain inflated above authoritative price geometry
+                                if sym_data.get("peak_r", 0.0) > authoritative_r:
+                                    sym_data["peak_r"] = authoritative_r
+                                    if t_id in self.watchdog.alerted_trades:
+                                        self.watchdog.alerted_trades[t_id]["peak_r"] = authoritative_r
+                                    self.watchdog.save_state()
                         except Exception as val_err:
                             pass
 
