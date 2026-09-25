@@ -286,22 +286,42 @@ class UnifiedSovereignSupervisor:
                             except Exception as cal_err:
                                 pass
 
-                        # 5. Milestone Telegram Alerts (Deduplicated per Symbol)
-                        for target in [1.5, 2.0, 2.5]:
-                            target_key = str(target)
-                            is_target_alerted = sym_data.get("milestones", {}).get(target_key) or self.watchdog.alerted_trades.get(t_id, {}).get(target_key)
-                            if r_multiple >= target and not is_target_alerted:
-                                msg = (
-                                    f"🎯 <b>INTERMEDIATE MILESTONE: +{target:.1f}R REACHED</b>\n"
-                                    f"Symbol: <code>{symbol}</code>\n"
-                                    f"Current Floating Gain: <b>+{r_multiple:.2f}R</b> (Trade Still Active)\n\n"
-                                    f"🛡️ <b>DISCIPLINE CHECK:</b> Milestone +{target:.1f}R cleared.\n"
-                                    "Autonomous fleet scale-out and trailing stop active. Position running toward full TP."
-                                )
-                                self.watchdog.notifier._send_message(msg)
-                                sym_data.setdefault("milestones", {})[target_key] = True
-                                self.watchdog.alerted_trades[t_id][target_key] = True
-                                self.watchdog.save_state()
+                        # 5. Milestone Telegram Alerts (Deduplicated per Symbol & Account-Tagged)
+                        acc_email = pos.get('account_email', '')
+                        if "s79qv3xetj" in acc_email: acc_label = "Account #1 ($25k)"
+                        elif "498svcbpfi" in acc_email: acc_label = "Account #2 ($50k)"
+                        elif "q20gxm287x" in acc_email: acc_label = "Account #3 ($25k)"
+                        elif "dwundrtxjv" in acc_email: acc_label = "Account #6 ($50k)"
+                        elif "875do5esrd" in acc_email: acc_label = "Account #7 ($25k)"
+                        elif "jfcuue7er3" in acc_email: acc_label = "Account #9 ($50k Lead)"
+                        elif acc_email: acc_label = f"Account ({acc_email.split('@')[0]})"
+                        else: acc_label = f"Account {pos.get('account_id', 'Fleet Lead')}"
+
+                        unalerted_milestones = [
+                            target for target in [1.5, 2.0, 2.5]
+                            if r_multiple >= target and not (
+                                sym_data.get("milestones", {}).get(str(target))
+                                or self.watchdog.alerted_trades.get(t_id, {}).get(str(target))
+                            )
+                        ]
+
+                        if unalerted_milestones:
+                            highest_target = max(unalerted_milestones)
+                            surged_past = [m for m in unalerted_milestones if m < highest_target]
+                            surged_note = f" (surged past {', '.join(f'+{m:.1f}R' for m in surged_past)})" if surged_past else ""
+                            msg = (
+                                f"🎯 <b>INTERMEDIATE MILESTONE: +{highest_target:.1f}R REACHED</b>\n"
+                                f"Symbol: <code>{symbol}</code> ({side})\n"
+                                f"Account: <b>{acc_label}</b> | Size: <b>{qty} lots</b>\n"
+                                f"Current Floating Gain: <b>+{r_multiple:.2f}R</b> (${pnl:,.2f}) (Trade Still Active)\n\n"
+                                f"🛡️ <b>DISCIPLINE CHECK:</b> Milestone +{highest_target:.1f}R cleared{surged_note}.\n"
+                                "Autonomous fleet scale-out and trailing stop active. Position running toward full TP."
+                            )
+                            self.watchdog.notifier._send_message(msg)
+                            for target in unalerted_milestones:
+                                sym_data.setdefault("milestones", {})[str(target)] = True
+                                self.watchdog.alerted_trades[t_id][str(target)] = True
+                            self.watchdog.save_state()
 
                 # Sleep 60s when positions exist, 120s when flat
                 sleep_time = 60 if positions else 120
