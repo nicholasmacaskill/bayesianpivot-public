@@ -1429,22 +1429,23 @@ class AlphaSweepScanner(SMCScanner):
                             session=killzone,
                             hurst_exponent=float(setup.get('hurst', setup.get('hurst_exponent', 0.58)))
                         )
-                        # Record in active trade brackets cache
-                        if not hasattr(self, '_active_trade_brackets'):
-                            self._active_trade_brackets = {}
-                        sym_key = symbol.replace("/", "").upper()
-                        self._active_trade_brackets[sym_key] = {
-                            'symbol': symbol,
-                            'side': exec_side,
-                            'entry_price': float(entry_price),
-                            'stop_loss': float(sl_price),
-                            'take_profit': float(tp_price),
-                            'initial_r_dist': abs(float(entry_price) - float(sl_price)),
-                            'session': killzone,
-                            'entry_time': datetime.now(timezone.utc),
-                            'tier': 0
-                        }
-                        self._save_active_trade_brackets()
+                        # Record in active trade brackets cache ONLY if filled
+                        if exec_result and exec_result.get('success'):
+                            if not hasattr(self, '_active_trade_brackets'):
+                                self._active_trade_brackets = {}
+                            sym_key = symbol.replace("/", "").upper()
+                            self._active_trade_brackets[sym_key] = {
+                                'symbol': symbol,
+                                'side': exec_side,
+                                'entry_price': float(entry_price),
+                                'stop_loss': float(sl_price),
+                                'take_profit': float(tp_price),
+                                'initial_r_dist': abs(float(entry_price) - float(sl_price)),
+                                'session': killzone,
+                                'entry_time': datetime.now(timezone.utc),
+                                'tier': 0
+                            }
+                            self._save_active_trade_brackets()
                         # Register in Execution Strategy Shadow Tournament
                         if hasattr(self, 'exec_shadow_engine'):
                             self.exec_shadow_engine.register_trade(
@@ -1465,7 +1466,13 @@ class AlphaSweepScanner(SMCScanner):
                 alert_phase = "SHADOW_OBSERVATION" if is_shadow_strategy else ("AUTO_EXECUTED" if is_auto_filled else "EXECUTION")
                 buttons = None
                     
-                exec_notice = f"\n\n⚡ <b>AUTO-EXECUTED:</b> 100% Position filled across {exec_result.get('filled_count', 0)}/{exec_result.get('total_accounts', 0)} accounts with SL & TP attached!" if is_auto_filled else ""
+                if is_auto_filled:
+                    exec_notice = f"\n\n⚡ <b>AUTO-EXECUTED:</b> 100% Position filled across {exec_result.get('filled_count', 0)}/{exec_result.get('total_accounts', 0)} accounts with SL & TP attached!"
+                elif exec_result and not exec_result.get('success'):
+                    rejection = exec_result.get('firewall_rejection', 'Broker / Firewall rejected trade')
+                    exec_notice = f"\n\n🛡️ <b>EXECUTION BLOCKED BY FIREWALL:</b>\n<code>{rejection}</code>\n(Zero Live Capital Risk — Trade Blocked)"
+                else:
+                    exec_notice = ""
                 
                 send_alert(
                     symbol=symbol,
