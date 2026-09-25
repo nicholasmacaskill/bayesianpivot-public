@@ -15,6 +15,10 @@ class TestTieredTrailingAndSessionLock(unittest.TestCase):
         self.scanner = AlphaSweepScanner()
         self.scanner.tl = MagicMock()
         self.scanner.fetch_data = MagicMock()
+        self.scanner._load_active_trade_brackets = MagicMock(return_value={})
+        self.scanner._save_active_trade_brackets = MagicMock()
+        self.scanner._active_trade_brackets = {}
+        self.scanner._position_tiers = {}
 
     def test_modify_position_bracket_url_contains_account_id(self):
         """Verify modify_position_bracket properly formats PATCH URL with account_id."""

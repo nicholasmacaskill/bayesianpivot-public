@@ -178,13 +178,13 @@ class IntermarketEngine:
                     btc_hold_pct = (btc_l2 - btc_l1) / btc_l1
                     strength = min(0.95, 0.5 + (dxy_sweep_pct + btc_hold_pct) * 100)
             else:
-                # Direct (NQ/ES): NQ makes Lower Low while BTC makes Higher Low
+                # Direct (NQ/ES): Correlated index makes Lower Low while BTC makes Higher Low
                 if corr_l2 < corr_l1 and btc_l2 > btc_l1:
                     smt_detected = True
-                    smt_type = "BULLISH_SMT (NQ/ES Sweep vs BTC Hold)"
-                    nq_sweep_pct = (corr_l1 - corr_l2) / corr_l1
+                    smt_type = f"BULLISH_SMT ({correlated_symbol_key} Sweep vs BTC Hold)"
+                    idx_sweep_pct = (corr_l1 - corr_l2) / corr_l1
                     btc_hold_pct = (btc_l2 - btc_l1) / btc_l1
-                    strength = min(0.95, 0.5 + (nq_sweep_pct + btc_hold_pct) * 100)
+                    strength = min(0.95, 0.5 + (idx_sweep_pct + btc_hold_pct) * 100)
 
             # 🔴 BEARISH SMT
             if not smt_detected:
@@ -197,13 +197,13 @@ class IntermarketEngine:
                         btc_hold_pct = (btc_h1 - btc_h2) / btc_h1
                         strength = min(0.95, 0.5 + (dxy_sweep_pct + btc_hold_pct) * 100)
                 else:
-                    # NQ makes Higher High while BTC makes Lower High
+                    # Correlated index makes Higher High while BTC makes Lower High
                     if corr_h2 > corr_h1 and btc_h2 < btc_h1:
                         smt_detected = True
-                        smt_type = "BEARISH_SMT (NQ/ES Sweep vs BTC Hold)"
-                        nq_sweep_pct = (corr_h2 - corr_h1) / corr_h1
+                        smt_type = f"BEARISH_SMT ({correlated_symbol_key} Sweep vs BTC Hold)"
+                        idx_sweep_pct = (corr_h2 - corr_h1) / corr_h1
                         btc_hold_pct = (btc_h1 - btc_h2) / btc_h1
-                        strength = min(0.95, 0.5 + (nq_sweep_pct + btc_hold_pct) * 100)
+                        strength = min(0.95, 0.5 + (idx_sweep_pct + btc_hold_pct) * 100)
 
             if smt_detected:
                 logger.info(f"⚡ TRUE SMT DETECTED: {smt_type} | Strength: {strength:.2f}")
@@ -216,9 +216,24 @@ class IntermarketEngine:
             return None, 0.0
 
     def get_smt_strength(self, symbol, btc_df):
-        """Wrapper for Pulse compatibility."""
-        _, strength = self.detect_true_smt(btc_df)
-        return strength
+        """
+        Multi-Asset SMT Divergence Evaluator.
+        Evaluates cross-asset sponsorship across DXY, S&P 500 (ES), and Nasdaq (NQ).
+        Returns highest confirmed divergence strength score.
+        """
+        best_strength = 0.0
+        best_smt = None
+        for key in ["DXY", "ES", "NQ"]:
+            try:
+                smt_type, strength = self.detect_true_smt(btc_df, correlated_symbol_key=key)
+                if strength > best_strength:
+                    best_strength = strength
+                    best_smt = smt_type
+            except Exception:
+                pass
+        if best_smt:
+            logger.info(f"🏛️ [INTERMARKET SMT] Active Sponsorship: {best_smt} ({best_strength:.2f})")
+        return best_strength
 
 if __name__ == "__main__":
     engine = IntermarketEngine()

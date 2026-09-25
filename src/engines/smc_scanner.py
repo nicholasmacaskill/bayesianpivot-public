@@ -364,8 +364,11 @@ class SMCScanner:
         try:
             tf_to_seconds = {'1m': 60, '5m': 300, '1h': 3600, '4h': 14400, '1d': 86400}
             
-            # Map Gold to Bybit continuous contract (XAU/USDT:USDT) to eliminate $64 PAXG basis gap
+            # Map Gold, Silver, EUR, GBP to Bybit continuous contracts
             is_gold = symbol in ["XAU/USD", "XAUUSD", "GOLD"]
+            is_silver = symbol in ["XAG/USD", "XAGUSD", "SILVER"]
+            is_eur = symbol in ["EUR/USD", "EURUSD"]
+            is_gbp = symbol in ["GBP/USD", "GBPUSD"]
             target_exchange = self.exchange
             fetch_symbol = symbol
 
@@ -375,6 +378,18 @@ class SMCScanner:
                     fetch_symbol = "XAU/USDT:USDT"
                 elif self.exchange.id == 'coinbase':
                     fetch_symbol = "PAXG/USD"
+            elif is_silver:
+                if getattr(self, 'bybit_exchange', None):
+                    target_exchange = self.bybit_exchange
+                    fetch_symbol = "XAG/USDT:USDT"
+            elif is_eur:
+                if getattr(self, 'bybit_exchange', None):
+                    target_exchange = self.bybit_exchange
+                    fetch_symbol = "EURUSD/USDT:USDT"
+            elif is_gbp:
+                if getattr(self, 'bybit_exchange', None):
+                    target_exchange = self.bybit_exchange
+                    fetch_symbol = "GBPUSD/USDT:USDT"
 
             # 1. Fetch Primary Stream
             # If Coinbase and 4H, aggregate from 1h; otherwise fetch natively from target exchange
@@ -426,8 +441,8 @@ class SMCScanner:
                 allowed_drift = Config.get('SYNC_LATENCY_SEC_MAX', 120) + tf_sec
                 
                 if drift > allowed_drift:
-                    if is_gold and now_utc.weekday() >= 5:
-                        logger.debug(f"Weekend gold stream {tf} drift: {drift:.1f}s. Skipping blocking wait.")
+                    if (is_gold or is_silver or is_eur or is_gbp) and now_utc.weekday() >= 5:
+                        logger.debug(f"Weekend stream {tf} drift for {symbol}: {drift:.1f}s. Skipping blocking wait.")
                         return None
                     logger.warning(f"🚨 DATA_DESYNC: Stream {tf} drift is {drift:.1f}s (Limit: {allowed_drift}s). Pausing 10s for stream sync...")
                     time.sleep(10)

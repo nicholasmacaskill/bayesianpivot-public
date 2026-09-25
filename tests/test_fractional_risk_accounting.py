@@ -280,8 +280,10 @@ class TestFractionalRiskBudgetedAccounting(unittest.TestCase):
             )
             # Even if time of day is outside London, either Gate 3 or Gate 9 will block;
             # If we test during a mock London time:
-            mock_london_dt = datetime(2026, 9, 24, 8, 30, tzinfo=timezone.utc)
-            with patch("src.core.execution_firewall.datetime") as mock_dt:
+            now_today = datetime.now(timezone.utc)
+            mock_london_dt = now_today.replace(hour=8, minute=30, second=0, microsecond=0)
+            with patch("src.core.execution_firewall.datetime") as mock_dt, \
+                 patch("src.engines.calendar_filter.CalendarFilter.is_safe_to_trade", return_value=(True, "Safe")):
                 mock_dt.now.return_value = mock_london_dt
                 mock_dt.fromisoformat = datetime.fromisoformat
                 approved_london, reason_london = ExecutionFirewall.audit_trade_request(

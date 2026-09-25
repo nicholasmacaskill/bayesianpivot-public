@@ -20,8 +20,8 @@ except Exception:
 class Config:
     # Target Instruments
     SYMBOLS = ['BTC/USD', 'XAU/USD']             # BTC + Gold Active (Live Fleet Execution - Alpha Champions)
-    SHADOW_SYMBOLS = ['ETH/USD', 'SOL/USD']      # 100% Zero-Risk Shadow Tracking (A/B Tournament Lab)
-    ALT_SYMBOLS = ['ETH/USD', 'SOL/USD']
+    SHADOW_SYMBOLS = ['ETH/USD', 'SOL/USD', 'XAG/USD', 'EUR/USD', 'GBP/USD']  # 100% Zero-Risk Shadow Tracking (A/B Tournament Lab)
+    ALT_SYMBOLS = ['ETH/USD', 'SOL/USD', 'XAG/USD', 'EUR/USD', 'GBP/USD']
     
     TIMEFRAME = '5m'
     HTF_TIMEFRAME = '1h'
