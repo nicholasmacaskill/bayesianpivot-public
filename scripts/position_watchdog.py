@@ -416,7 +416,11 @@ class PositionWatchdog:
                                 except (ValueError, TypeError):
                                     pass
 
-                            if helper.modify_position_bracket(pid, stop_loss=net_be):
+                            curr_tp = p.get("takeProfit")
+                            kwargs = {"stop_loss": net_be}
+                            if curr_tp is not None:
+                                kwargs["take_profit"] = curr_tp
+                            if helper.modify_position_bracket(pid, **kwargs):
                                 trailed_count += 1
                 except Exception as acc_err:
                     print(f"Error scaling out account {acc_idx+1}: {acc_err}")
@@ -512,7 +516,11 @@ class PositionWatchdog:
                             except (ValueError, TypeError):
                                 pass
 
-                        if helper.modify_position_bracket(pid, stop_loss=new_sl):
+                        curr_tp = p.get("takeProfit")
+                        kwargs = {"stop_loss": new_sl}
+                        if curr_tp is not None:
+                            kwargs["take_profit"] = curr_tp
+                        if helper.modify_position_bracket(pid, **kwargs):
                             trailed_count += 1
                 except Exception as acc_err:
                     print(f"Error executing stepped defense on account {acc_idx+1}: {acc_err}")

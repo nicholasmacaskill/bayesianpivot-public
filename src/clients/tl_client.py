@@ -340,6 +340,10 @@ class TradeLockerHelper:
                 self.access_token = None # Hard reset
                 if self.login():
                     return self.get_open_positions()
+            elif resp.status_code == 429:
+                logger.warning(f"⚠️ 429 Rate limited for {self.email} on positions. Preserving cached state.")
+                if hasattr(self, '_pos_cache') and self._pos_cache is not None:
+                    return list(self._pos_cache[1])
                 return []
             else:
                  return []
@@ -663,10 +667,12 @@ class TradeLockerHelper:
         else:
             url = f"{self.base_url}/backend-api/trade/positions/{position_id}"
             
-        payload = {"stopLossType": "absolute", "takeProfitType": "absolute"}
+        payload = {}
         if stop_loss is not None:
+            payload["stopLossType"] = "absolute"
             payload["stopLoss"] = float(stop_loss)
         if take_profit is not None:
+            payload["takeProfitType"] = "absolute"
             payload["takeProfit"] = float(take_profit)
             
         for attempt in range(3):
