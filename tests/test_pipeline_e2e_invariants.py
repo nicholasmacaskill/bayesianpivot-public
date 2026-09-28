@@ -132,6 +132,27 @@ class TestPipelineE2EInvariants(unittest.TestCase):
         self.assertEqual(Config.get_contract_size("XAU/USD"), 100.0)
         self.assertEqual(Config.get_contract_size("BTC/USD"), 1.0)
         self.assertEqual(Config.get_contract_size("ETH/USD"), 1.0)
+        self.assertEqual(Config.get_contract_size("XAG/USD"), 5000.0)
+
+    def test_metals_intermarket_relative_strength_leader_invariant(self):
+        """Invariant: Metals relative strength engine accurately identifies XAU_LEADER vs XAG_LEADER."""
+        scanner = AlphaSweepScanner.__new__(AlphaSweepScanner)
+        
+        # Test 1: XAU outperforming XAG -> XAU_LEADER
+        dates = pd.date_range("2026-09-28", periods=25, freq="1h")
+        df_xau_lead = pd.DataFrame({"close": np.linspace(4000, 4400, 25)}, index=dates)
+        df_xag_lag = pd.DataFrame({"close": np.linspace(65, 60, 25)}, index=dates)
+        
+        scanner.fetch_data = lambda sym, tf, limit=30, synchronized=False: df_xau_lead if "XAU" in sym else df_xag_lag
+        leader = scanner.get_metals_relative_strength_leader()
+        self.assertEqual(leader, "XAU_LEADER")
+
+        # Test 2: XAG outperforming XAU -> XAG_LEADER
+        df_xau_lag = pd.DataFrame({"close": np.linspace(4400, 4000, 25)}, index=dates)
+        df_xag_lead = pd.DataFrame({"close": np.linspace(60, 75, 25)}, index=dates)
+        scanner.fetch_data = lambda sym, tf, limit=30, synchronized=False: df_xau_lag if "XAU" in sym else df_xag_lead
+        leader = scanner.get_metals_relative_strength_leader()
+        self.assertEqual(leader, "XAG_LEADER")
 
 
 if __name__ == "__main__":

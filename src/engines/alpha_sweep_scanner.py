@@ -136,6 +136,29 @@ class AlphaSweepScanner(SMCScanner):
             logger.debug(f"Relative strength calculation fallback: {e}")
         return 'BTC_LEADER'
 
+    def get_metals_relative_strength_leader(self) -> str:
+        """
+        Calculates the dynamic relative strength leader between Gold (XAU/USD) and Silver (XAG/USD).
+        Returns:
+            'XAU_LEADER' if Gold is outperforming Silver (Gold Accumulation: XAU Longs & XAG Shorts aligned)
+            'XAG_LEADER' if Silver is outperforming Gold (Silver Accumulation: XAG Longs & XAU Shorts aligned)
+        """
+        try:
+            df_xau = self.fetch_data('XAU/USD', '1h', limit=30, synchronized=False)
+            df_xag = self.fetch_data('XAG/USD', '1h', limit=30, synchronized=False)
+            if df_xau is not None and df_xag is not None and len(df_xau) >= 20 and len(df_xag) >= 20:
+                min_len = min(len(df_xau), len(df_xag))
+                ratio = df_xau['close'].iloc[-min_len:].values / df_xag['close'].iloc[-min_len:].values
+                sma20 = pd.Series(ratio).rolling(20).mean().iloc[-1]
+                current_ratio = ratio[-1]
+                if current_ratio >= sma20:
+                    return 'XAU_LEADER'
+                else:
+                    return 'XAG_LEADER'
+        except Exception as e:
+            logger.debug(f"Metals relative strength calculation fallback: {e}")
+        return 'XAU_LEADER'
+
     def find_htf_levels(self, df_1h, window=2):
         """
         Finds recent high-timeframe swing highs and swing lows (fractals).
@@ -1097,6 +1120,55 @@ class AlphaSweepScanner(SMCScanner):
             else:
                 regime_msg = f"Institutional Sweep / Absorption Entry (Regime Exempt: {pattern_type})"
 
+            # ── ⚓ INTERMARKET RELATIVE STRENGTH & TIERED ANCHOR GATE ──
+            norm_sym = symbol.replace("/", "").replace("_", "").upper()
+            metals_leader = None
+            crypto_leader = None
+            is_macro_aligned = True
+            flow_leader_msg = "Neutral"
+
+            if any(m in norm_sym for m in ["XAU", "XAG", "GOLD", "SILVER"]):
+                metals_leader = self.get_metals_relative_strength_leader()
+                if "XAU" in norm_sym or "GOLD" in norm_sym:
+                    if metals_leader == "XAU_LEADER":
+                        is_macro_aligned = (setup['direction'] == "LONG")
+                        flow_leader_msg = "XAU Accumulation (Gold Longs Aligned)"
+                    else:
+                        is_macro_aligned = (setup['direction'] == "SHORT")
+                        flow_leader_msg = "XAG Outperformance (Gold Shorts Aligned)"
+                elif "XAG" in norm_sym or "SILVER" in norm_sym:
+                    if metals_leader == "XAU_LEADER":
+                        is_macro_aligned = (setup['direction'] == "SHORT")
+                        flow_leader_msg = "XAG Liquidation (Silver Shorts Aligned)"
+                    else:
+                        is_macro_aligned = (setup['direction'] == "LONG")
+                        flow_leader_msg = "XAG Accumulation (Silver Longs Aligned)"
+            elif any(c in norm_sym for c in ["BTC", "ETH", "SOL"]):
+                crypto_leader = self.get_relative_strength_leader()
+                if "BTC" in norm_sym:
+                    is_macro_aligned = (setup['direction'] == "LONG") if crypto_leader == "BTC_LEADER" else (setup['direction'] == "SHORT")
+                else:
+                    is_macro_aligned = (setup['direction'] == "SHORT") if crypto_leader == "BTC_LEADER" else (setup['direction'] == "LONG")
+                flow_leader_msg = f"Crypto {crypto_leader} Flow"
+
+            # Check for verified institutional anchor (SMT divergence or CVD absorption)
+            has_institutional_anchor = (
+                bool(setup.get('smt_divergence'))
+                or float(setup.get('smt_strength', 0.0)) >= 0.70
+                or setup.get('cvd_absorption', False)
+                or (isinstance(setup.get('cvd_divergence'), dict) and setup.get('cvd_divergence', {}).get('absorption', False))
+            )
+
+            is_unanchored_counter_flow = (not is_macro_aligned) and (not has_institutional_anchor)
+            setup['is_macro_aligned'] = is_macro_aligned
+            setup['flow_leader_msg'] = flow_leader_msg
+            setup['has_institutional_anchor'] = has_institutional_anchor
+
+            if is_unanchored_counter_flow:
+                logger.info(f"⚓ [INTERMARKET TIERED GATE] {symbol} {setup['direction']} is counter to {flow_leader_msg} with zero institutional anchor. Quarantined to Shadow Lab.")
+            elif not is_macro_aligned and has_institutional_anchor:
+                logger.info(f"⚓ [INTERMARKET TIERED GATE] {symbol} {setup['direction']} is counter to {flow_leader_msg} but has verified SMT/CVD anchor. Authorized as probe.")
+
             ai_validator_threshold = 8.5 if is_counter_regime else getattr(Config, 'AI_VALIDATOR_MIN_SCORE', 7.5)
             
             # ── PRE-COMPUTED ZERO-LATENCY AI RAG CONFLUENCE GATE ──
@@ -1215,6 +1287,7 @@ class AlphaSweepScanner(SMCScanner):
                 or (killzone == "NY_AFTERNOON_SHADOW")
                 or is_symbol_shadow
                 or is_low_density_sweep  # Hard density gate: noise sweeps → shadow only
+                or is_unanchored_counter_flow  # Intermarket tiered gate: unanchored counter-flow → shadow only
             )
             is_shadow_strategy = is_archetype_shadow or (not passed_ai_validator)
             
@@ -1225,6 +1298,10 @@ class AlphaSweepScanner(SMCScanner):
                 tag_label = "shadow asset quarantine ($0 live risk)"
                 pattern_str = f"[👻 SHADOW LAB - {symbol}] {base_pattern_str}"
                 ai_reasoning = f"[👻 SHADOW LAB ({symbol} $0 RISK)] {pattern_type.replace('_', ' ')} of HTF level {setup['level']:.2f}. Hurst: {setup['hurst']:.3f} ({setup['regime']}). AI Score: {shadow_score:.1f}/10. Tracking shadow expectancy..."
+            elif is_unanchored_counter_flow:
+                tag_label = "shadow trade, unanchored counter-flow"
+                pattern_str = f"[👻 SHADOW - UNANCHORED COUNTER-FLOW] {base_pattern_str}"
+                ai_reasoning = f"[👻 SHADOW LAB (UNANCHORED COUNTER-FLOW)] {symbol} {setup['direction']} is counter to {flow_leader_msg} with zero SMT/CVD anchor. Quarantined to $0 risk."
             elif pattern_type not in authorized_live_patterns:
                 tag_label = "shadow archetype quarantine"
                 pattern_str = f"[👻 SHADOW LAB - UNGRADUATED ARCHETYPE] {base_pattern_str}"
@@ -1364,7 +1441,9 @@ class AlphaSweepScanner(SMCScanner):
             if is_shadow_strategy:
                 setup['is_shadow_only'] = True
                 acct_label = f"{pattern_type}_SHADOW"
-                if not passed_ai_validator:
+                if is_unanchored_counter_flow:
+                    rejection_reasons = ["INTERMARKET_COUNTER_FLOW_NO_ANCHOR", f"LEADER_{flow_leader_msg.replace(' ', '_')}"]
+                elif not passed_ai_validator:
                     rejection_reasons = ["SHADOW_TRADE_DIDNT_PASS_AI_VALIDATOR"]
                 elif is_low_density_sweep:
                     rejection_reasons = [f"LOW_DENSITY_LIQUIDITY_SWEEP_{liq_density:.1f}/10"]
@@ -1380,7 +1459,11 @@ class AlphaSweepScanner(SMCScanner):
                             "pattern": pattern_str,
                             "price": entry_price,
                             "stop_loss": sl_price,
-                            "take_profit": tp_price
+                            "take_profit": tp_price,
+                            "regime": setup.get('regime', 'UNKNOWN'),
+                            "hurst": float(setup.get('hurst', 0.5)),
+                            "adx": float(setup.get('adx', 20.0)),
+                            "vol_percentile": float(setup.get('vol_percentile', 50.0))
                         },
                         account_key=acct_label,
                         strategy_mode="SHADOW_LAB_QUARANTINE",
