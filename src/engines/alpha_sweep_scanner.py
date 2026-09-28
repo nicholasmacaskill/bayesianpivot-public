@@ -1191,6 +1191,7 @@ class AlphaSweepScanner(SMCScanner):
 
             # ── LOCAL APPLE SILICON MLX LORA CONFLUENCE BOOSTER ──
             local_llm_result = None
+            is_local_lora_rejected = False
             try:
                 from src.engines.local_llm_handler import LocalLLMHandler
                 local_llm = LocalLLMHandler()
@@ -1216,6 +1217,7 @@ class AlphaSweepScanner(SMCScanner):
                     local_llm_result = local_scoring
                     loc_score = float(local_scoring.get("score", 0.0))
                     loc_verdict = str(local_scoring.get("verdict", "UNKNOWN"))
+                    loc_reason = str(local_scoring.get("reasoning", ""))
                     loc_provider = str(local_scoring.get("provider", local_llm.active_provider))
 
                     if loc_score >= 7.5 and loc_verdict == "FLOW_GO":
@@ -1223,7 +1225,8 @@ class AlphaSweepScanner(SMCScanner):
                         shadow_score = min(10.0, round(shadow_score + lora_boost, 1))
                         logger.info(f"🤖 [MLX LoRA Confluence Booster] {symbol} {setup['direction']} APPROVED by {loc_provider} (Score: {loc_score:.1f}/10) -> +{lora_boost:.1f} Boost applied -> New Score: {shadow_score:.1f}/10")
                     elif loc_score < 5.0 or loc_verdict == "REJECTED":
-                        logger.info(f"🤖 [MLX LoRA Guardrail] {symbol} {setup['direction']} REJECTED by {loc_provider} (Score: {loc_score:.1f}/10). Zero boost.")
+                        is_local_lora_rejected = True
+                        logger.info(f"🤖 [MLX LoRA Guardrail] {symbol} {setup['direction']} REJECTED by {loc_provider} (Score: {loc_score:.1f}/10). Live execution vetoed.")
                     else:
                         logger.info(f"🤖 [MLX LoRA Neutral] {symbol} {setup['direction']} Scored: {loc_score:.1f}/10 ({loc_verdict}).")
             except Exception as mlx_boost_err:
@@ -1238,7 +1241,7 @@ class AlphaSweepScanner(SMCScanner):
             if vec_mod != 0.0:
                 logger.info(f"👻 [Shadow Visual Vector Telemetry] {symbol} {setup['direction']}: Advisory modifier {vec_mod:+.1f} ({vec_rec}) logged to shadow telemetry (0% live impact).")
 
-            passed_ai_validator = (shadow_score >= ai_validator_threshold) and ai_approved
+            passed_ai_validator = (shadow_score >= ai_validator_threshold) and ai_approved and (not is_local_lora_rejected)
             
             # If Strategy 5 Gold Longs are graduated and active, exempt XAU/USD from blanket shadow quarantine
             is_strat_5_gold_live = (
@@ -1288,13 +1291,18 @@ class AlphaSweepScanner(SMCScanner):
                 or is_symbol_shadow
                 or is_low_density_sweep  # Hard density gate: noise sweeps → shadow only
                 or is_unanchored_counter_flow  # Intermarket tiered gate: unanchored counter-flow → shadow only
+                or is_local_lora_rejected  # Neural guardrail: MLX LoRA REJECTED → shadow only
             )
             is_shadow_strategy = is_archetype_shadow or (not passed_ai_validator)
             
             ai_score_val = shadow_score
             verdict_str = "SHADOW_OBSERVATION" if is_shadow_strategy else "CONFIRMED"
             
-            if is_symbol_shadow:
+            if is_local_lora_rejected:
+                tag_label = "shadow trade, neural guardrail veto"
+                pattern_str = f"[👻 SHADOW - NEURAL GUARD VETO] {base_pattern_str}"
+                ai_reasoning = f"[👻 SHADOW LAB (NEURAL GUARD VETO)] {pattern_type.replace('_', ' ')} on {symbol} was REJECTED by local MLX LoRA ({loc_verdict}, Score: {loc_score:.1f}/10: {loc_reason[:120]}). Live capital execution vetoed."
+            elif is_symbol_shadow:
                 tag_label = "shadow asset quarantine ($0 live risk)"
                 pattern_str = f"[👻 SHADOW LAB - {symbol}] {base_pattern_str}"
                 ai_reasoning = f"[👻 SHADOW LAB ({symbol} $0 RISK)] {pattern_type.replace('_', ' ')} of HTF level {setup['level']:.2f}. Hurst: {setup['hurst']:.3f} ({setup['regime']}). AI Score: {shadow_score:.1f}/10. Tracking shadow expectancy..."

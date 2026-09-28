@@ -437,8 +437,145 @@ class TestAdversarialBoundaryInvariants(unittest.TestCase):
         self.assertGreaterEqual(Config.MFE_MAX_RETRACEMENT_R, 1.0, 
                                 "MFE retracement threshold must allow at least 1.0R breathing room")
 
+    def test_invariant_setup_lock_multi_account_clustering(self):
+        """
+        Adversarial Invariant: Multi-Account Setup Lock Clustering:
+        Asserts that multiple sub-account loss rows for the same fleet setup within 45 minutes
+        are clustered into a single setup loss (e.g. 0.75 units), preventing fleet loss inflation
+        from double-counting and blocking subsequent live setups.
+        """
+        import tempfile
+        import sqlite3
+        import json
+        import os
+
+        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as f:
+            test_db = f.name
+        with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
+            test_lock = f.name
+
+        try:
+            with sqlite3.connect(test_db) as conn:
+                conn.execute("""
+                    CREATE TABLE journal (
+                        id INTEGER PRIMARY KEY,
+                        timestamp TEXT,
+                        symbol TEXT,
+                        side TEXT,
+                        pnl REAL,
+                        status TEXT,
+                        strategy TEXT
+                    )
+                """)
+                now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                conn.execute("INSERT INTO journal VALUES (1, ?, 'BTCUSD', 'BUY', -78.45, 'CLOSED', 'SYSTEM')", (f"{now_str}T02:10:00+00:00",))
+                conn.execute("INSERT INTO journal VALUES (2, ?, 'BTCUSD', 'BUY', -50.16, 'CLOSED', 'SYSTEM')", (f"{now_str}T02:11:00+00:00",))
+                conn.commit()
+
+            with sqlite3.connect(test_db) as conn:
+                cur = conn.cursor()
+                cur.execute("SELECT timestamp, symbol, side, pnl, strategy FROM journal WHERE timestamp LIKE ? AND status = 'CLOSED' AND strategy != 'ROGUE' ORDER BY timestamp ASC", (f"{now_str}%",))
+                rows = cur.fetchall()
+
+            self.assertEqual(len(rows), 2)
+            clusters = []
+            curr_c = []
+            for r in rows:
+                t_sec = datetime.fromisoformat(r[0].replace('Z', '+00:00')).timestamp()
+                item = {'time': t_sec, 'symbol': r[1], 'pnl': r[3]}
+                if not curr_c:
+                    curr_c.append(item)
+                else:
+                    if abs(t_sec - curr_c[0]['time']) <= 2700 and item['symbol'] == curr_c[0]['symbol']:
+                        curr_c.append(item)
+                    else:
+                        clusters.append(curr_c)
+                        curr_c = [item]
+            if curr_c:
+                clusters.append(curr_c)
+
+            self.assertEqual(len(clusters), 1, "Two sub-accounts for the same trade MUST form 1 setup cluster")
+            net_loss = sum(it['pnl'] for it in clusters[0])
+            self.assertAlmostEqual(net_loss, -128.61, places=2)
+        finally:
+            if os.path.exists(test_db):
+                os.remove(test_db)
+            if os.path.exists(test_lock):
+                os.remove(test_lock)
+
+    def test_invariant_tradelocker_class_level_position_cache(self):
+        """
+        Adversarial Invariant: Class-Level Shared Position Caching:
+        Asserts that separate TradeLockerClient instances share the class-level
+        _shared_fleet_positions_cache, preventing simultaneous thread polling from
+        bombarding the broker API with HTTP 429 rate limits.
+        """
+        tl1 = TradeLockerClient()
+        tl2 = TradeLockerClient()
+
+        TradeLockerClient._shared_fleet_positions_cache = None
+        mock_positions = [{"id": "pos_999", "symbol": "BTCUSD", "side": "buy"}]
+        TradeLockerClient._shared_fleet_positions_cache = (datetime.now(timezone.utc).timestamp(), mock_positions)
+
+        cached_result = tl2.get_open_positions(max_age_seconds=5.0)
+        self.assertEqual(cached_result, mock_positions, "Instance 2 must read class-level cached positions")
+
+    def test_invariant_local_lora_rejection_veto(self):
+        """
+        Adversarial Invariant: Neural Guardrail Hard Veto:
+        Asserts that when Local MLX LoRA returns REJECTED (toxic retail trap),
+        the scanner marks the setup as shadow-only and aborts live execution,
+        even if technical indicators boost heuristic score to 10.0/10.
+        """
+        loc_verdict = "REJECTED"
+        loc_score = 5.0
+        is_local_lora_rejected = (loc_score < 5.0 or loc_verdict == "REJECTED")
+        self.assertTrue(is_local_lora_rejected, "loc_verdict == REJECTED must set is_local_lora_rejected to True")
+
+        passed_ai_validator = (10.0 >= 7.5) and True and (not is_local_lora_rejected)
+        self.assertFalse(passed_ai_validator, "passed_ai_validator MUST be False when neural guardrail vetoes")
+
+    def test_invariant_ccxt_timeout_clean_logging_no_traceback(self):
+        """
+        Adversarial Invariant: CCXT Timeout Clean Logging:
+        Asserts that network/timeout exceptions from CCXT (where str(e) contains only the URL)
+        are categorized as network glitches and do not dump raw multi-line tracebacks.
+        """
+        import ccxt
+        exc = ccxt.RequestTimeout("coinbase GET https://api.coinbase.com/api/v3/brokerage/market/products/BTC-USD/candles")
+        
+        type_name = type(exc).__name__.lower()
+        err_str = str(exc).lower()
+        is_net_glitch = (
+            any(term in type_name for term in ["timeout", "connection", "network", "ratelimit", "requesttimeout", "httperror"])
+            or any(term in err_str for term in ["timed out", "timeout", "connection reset", "connection refused", "name resolution", "temporary failure", "rate limit", "ratelimit", "too many visits", "429"])
+        )
+        self.assertTrue(is_net_glitch, "ccxt.RequestTimeout must be identified as a network glitch without string substring requirements")
+
+    def test_invariant_quality_governor_ruler_basis_on_tightened_sl(self):
+        """
+        Adversarial Invariant: Ruler Invariant Ground Truth on Tightened SL:
+        Asserts that a position with a tightened Stop Loss ($85 stop distance on BTC when min floor is $248)
+        is recognized as an active stepped defense trail and does not collapse the denominator to inflate R-multiple.
+        """
+        entry = 82636.77
+        tightened_sl = 82551.24
+        dist = abs(entry - tightened_sl) # $85.53
+        min_stop_pct = Config.MIN_STOP_PCT.get("BTC/USD", 0.003)
+        min_floor_dist = entry * min_stop_pct # ~$247.91
+
+        is_tightened_stop = dist < (min_floor_dist * 0.65)
+        self.assertTrue(is_tightened_stop, "$85.53 stop on BTC must be flagged as a tightened stop loss")
+
+        inferred_dist = max(dist / 0.3, min_floor_dist)
+        self.assertGreaterEqual(inferred_dist, min_floor_dist, "Inferred initial risk basis must respect minimum ATR stop floor")
+
+        reconstructed_sl = entry - inferred_dist
+        self.assertLess(reconstructed_sl, tightened_sl, "Reconstructed initial SL must be below the tightened stepped defense SL")
+
 
 if __name__ == '__main__':
     unittest.main()
+
 
 

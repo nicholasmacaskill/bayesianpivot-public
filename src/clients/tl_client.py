@@ -2,6 +2,7 @@ import requests
 import os
 import time
 import logging
+import threading
 from datetime import datetime, date, timezone
 from dotenv import load_dotenv
 from src.core.config import Config
@@ -800,8 +801,12 @@ class TradeLockerClient:
                 self.helpers.append(TradeLockerHelper(email, password, server, base_url))
         self._open_positions_cache = None
 
+    _shared_fleet_positions_cache = None
+    _shared_positions_lock = threading.Lock()
+
     def invalidate_positions_cache(self):
         """Immediately clears open positions cache on order execution, modify, or close."""
+        TradeLockerClient._shared_fleet_positions_cache = None
         self._open_positions_cache = None
         for helper in self.helpers:
             helper._pos_cache = None
@@ -861,24 +866,26 @@ class TradeLockerClient:
         return total_closed
 
 
-    def get_open_positions(self, max_age_seconds=5.0):
-        """Aggregates open positions from all accounts with rate-limit pacing and smart caching."""
+    def get_open_positions(self, max_age_seconds=3.0, force_refresh=False):
+        """Aggregates open positions from all accounts with rate-limit pacing and cross-thread shared caching."""
         import time
         now = time.time()
-        if hasattr(self, '_open_positions_cache') and self._open_positions_cache is not None:
-            cached_time, cached_trades = self._open_positions_cache
-            if now - cached_time < max_age_seconds:
-                return list(cached_trades)
+        with TradeLockerClient._shared_positions_lock:
+            if not force_refresh and TradeLockerClient._shared_fleet_positions_cache is not None:
+                cached_time, cached_trades = TradeLockerClient._shared_fleet_positions_cache
+                if now - cached_time < max_age_seconds:
+                    return list(cached_trades)
 
-        all_trades = []
-        for i, helper in enumerate(self.helpers):
-            if i > 0:
-                time.sleep(0.25) # 250ms pacing between account queries to avoid Cloudflare 429 burst pressure
-            trades = helper.get_open_positions()
-            if trades:
-                all_trades.extend(trades)
-        self._open_positions_cache = (now, list(all_trades))
-        return all_trades
+            all_trades = []
+            for i, helper in enumerate(self.helpers):
+                if i > 0:
+                    time.sleep(0.25) # 250ms pacing between account queries to avoid Cloudflare 429 burst pressure
+                trades = helper.get_open_positions()
+                if trades:
+                    all_trades.extend(trades)
+            TradeLockerClient._shared_fleet_positions_cache = (now, list(all_trades))
+            self._open_positions_cache = TradeLockerClient._shared_fleet_positions_cache
+            return all_trades
 
     def get_total_equity(self):
         """Returns Total Equity across ALL UNIQUE accounts. Defaults to $100k if offline."""
@@ -1061,10 +1068,10 @@ class TradeLockerClient:
                     logger.critical(f"🛡️ [ATOMIC LOCK] Daily Loss Circuit Breaker Active ({cb_reason}). Rejecting fleet dispatch.")
                     return False
 
-                max_units = float(getattr(Config, 'DAILY_LOSS_UNIT_CIRCUIT_BREAKER', getattr(Config, 'DAILY_RISK_UNIT_CAP', 3.0)))
-                units_used = float(data.get("units_used", data.get("risk_units_used", 0.0)))
-                if units_used + requested_units > max_units + 1e-4:
-                    logger.critical(f"🛡️ [ATOMIC LOCK] Daily Loss Unit Limit ({units_used:.1f} + {requested_units:.1f} > {max_units:.1f}) reached. Rejecting fleet dispatch.")
+                # Check daily setup risk budget cap (e.g. 3.0 units of risk dispatched per day)
+                budget_ok, budget_reason = ExecutionFirewall.check_global_daily_setup_limit(requested_units)
+                if not budget_ok:
+                    logger.critical(f"🛡️ [ATOMIC LOCK] {budget_reason}. Rejecting fleet dispatch.")
                     return False
                 return True
 
@@ -1097,8 +1104,8 @@ class TradeLockerClient:
                     }
                 data["setups_fired"] = data.get("setups_fired", 0) + 1
                 
-                # units_used tracks cumulative realized loss units
-                # It does not burn capacity on trade entry; only closed losses consume units.
+                # units_used tracks cumulative clustered realized loss units
+                # Multiple sub-accounts closing on the same fleet setup are clustered into 1 setup loss.
                 realized_losses = 0.0
                 try:
                     import sqlite3
@@ -1107,16 +1114,53 @@ class TradeLockerClient:
                         with sqlite3.connect(db_path, timeout=3.0) as conn:
                             cur = conn.cursor()
                             cur.execute("""
-                                SELECT pnl FROM journal
-                                WHERE timestamp LIKE ? AND status = 'CLOSED' AND strategy != 'ROGUE' AND pnl < -10.0
+                                SELECT timestamp, symbol, side, pnl, strategy FROM journal
+                                WHERE timestamp LIKE ? AND status = 'CLOSED' AND strategy != 'ROGUE'
+                                ORDER BY timestamp ASC
                             """, (f"{today_str}%",))
-                            for (p,) in cur.fetchall():
-                                if p <= -25.0:
-                                    realized_losses += 1.0
-                                elif p <= -10.0:
-                                    realized_losses += 0.5
-                except Exception:
-                    pass
+                            rows = cur.fetchall()
+
+                            def _parse_ts(ts_val):
+                                try:
+                                    cleaned = str(ts_val).replace('Z', '+00:00')
+                                    return datetime.fromisoformat(cleaned).timestamp()
+                                except Exception:
+                                    return 0.0
+
+                            clusters = []
+                            curr_cluster = []
+                            for r in rows:
+                                ts_sec = _parse_ts(r[0])
+                                item = {'time': ts_sec, 'symbol': r[1], 'side': r[2], 'pnl': float(r[3] or 0.0), 'strategy': str(r[4] or '')}
+                                if not curr_cluster:
+                                    curr_cluster.append(item)
+                                else:
+                                    ref = curr_cluster[0]
+                                    if abs(ts_sec - ref['time']) <= 2700 and item['symbol'] == ref['symbol']:
+                                        curr_cluster.append(item)
+                                    else:
+                                        clusters.append(curr_cluster)
+                                        curr_cluster = [item]
+                            if curr_cluster:
+                                clusters.append(curr_cluster)
+
+                            for cluster in clusters:
+                                cluster_pnl = sum(it['pnl'] for it in cluster)
+                                if cluster_pnl <= -10.0:
+                                    ref_sym = cluster[0]['symbol']
+                                    ref_time = cluster[0]['time']
+                                    matched_unit = None
+                                    for s in data.get("setups", []):
+                                        if s.get("symbol") == ref_sym and abs(float(s.get("timestamp", 0)) - ref_time) <= 3600:
+                                            matched_unit = float(s.get("units", 1.0))
+                                            break
+                                    if matched_unit is not None:
+                                        realized_losses += matched_unit
+                                    else:
+                                        is_probe = any("PROBE" in it['strategy'].upper() or "AUCTION" in it['strategy'].upper() for it in cluster)
+                                        realized_losses += (0.5 if is_probe else 1.0)
+                except Exception as loss_err:
+                    logger.debug(f"Clustered realized loss calculation fallback: {loss_err}")
                 data["units_used"] = round(realized_losses, 2)
                 data["risk_units_used"] = round(realized_losses, 2)
 

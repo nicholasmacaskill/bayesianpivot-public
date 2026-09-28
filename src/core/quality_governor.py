@@ -331,12 +331,19 @@ class QualityGovernor:
                     initial_entry = float(pos.get("initial_entry") or entry)
                     initial_sl = float(pos.get("initial_sl") or 0.0)
                     if initial_sl <= 0:
-                        # Check if position has stepped defense executed
-                        is_stepped = alerted_trades.get(p_id, {}).get("stepped_defense_executed", False)
+                        # Check if position has stepped defense executed across trade or symbol state
+                        is_stepped = (
+                            alerted_trades.get(p_id, {}).get("stepped_defense_executed", False)
+                            or (clean_sym in watchdog_sym_state and isinstance(watchdog_sym_state[clean_sym], dict) and watchdog_sym_state[clean_sym].get("stepped_defense_executed", False))
+                        )
                         dist = abs(entry - sl) if sl > 0 else 0
-                        if is_stepped and dist > 0:
-                            # Reconstruct initial risk distance: stepped defense moved SL to -0.3R
-                            inferred_dist = dist / 0.3
+                        min_stop_pct = Config.MIN_STOP_PCT.get(sym, 0.003)
+                        # Plausible stop floor: if dist is less than 65% of minimum ATR floor, it is a tightened stop
+                        is_tightened_stop = (dist < (entry * min_stop_pct * 0.65)) if entry > 0 else False
+                        
+                        if (is_stepped or is_tightened_stop) and dist > 0:
+                            # Reconstruct initial risk distance: stepped defense moved SL to -0.3R (Rule 12: Ruler Invariant)
+                            inferred_dist = max(dist / 0.3, entry * min_stop_pct)
                             initial_sl = (entry - inferred_dist) if side == "BUY" else (entry + inferred_dist)
                         else:
                             initial_sl = sl
