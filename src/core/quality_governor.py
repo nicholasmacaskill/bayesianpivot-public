@@ -238,27 +238,43 @@ class QualityGovernor:
                 from src.clients.tl_client import TradeLockerClient
                 tl_client = TradeLockerClient()
 
-            positions = tl_client.get_open_positions()
+            try:
+                positions = tl_client.get_open_positions(max_age_seconds=30.0)
+            except TypeError:
+                positions = tl_client.get_open_positions()
+
             if not positions:
                 return True, []  # Flat is clean
 
-            # Load true frozen trade basis from watchdog state if available (Ruler Invariant)
-            watchdog_sym_state = {}
-            try:
-                import json
-                state_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data", "watchdog_state.json")
-                if os.path.exists(state_path):
-                    with open(state_path, "r") as f:
-                        w_data = json.load(f)
-                        watchdog_sym_state = w_data.get("symbol_state", {})
-            except Exception:
-                pass
+            # Load true frozen trade basis from persistent state (Ruler Invariant)
+            import json
+            import time
+            data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data")
+            
+            def _load_json_resilient(filename: str) -> dict:
+                fp = os.path.join(data_dir, filename)
+                if not os.path.exists(fp):
+                    return {}
+                for _ in range(3):
+                    try:
+                        with open(fp, "r") as f:
+                            raw = f.read().strip()
+                            if raw:
+                                return json.loads(raw)
+                    except Exception:
+                        time.sleep(0.05)
+                return {}
+
+            watchdog_data = _load_json_resilient("watchdog_state.json")
+            watchdog_sym_state = watchdog_data.get("symbol_state", {}) if isinstance(watchdog_data, dict) else {}
+            alerted_trades = watchdog_data.get("alerted_trades", {}) if isinstance(watchdog_data, dict) else {}
+            active_brackets = _load_json_resilient("active_trade_brackets.json")
 
             # Group by account & symbol
             by_account_sym = {}
             for pos in positions:
                 sym = pos.get("symbol", "")
-                p_id = pos.get("id")
+                p_id = str(pos.get("id") or "")
                 entry = float(pos.get("price") or 0.0)
                 pnl = float(pos.get("pnl") or 0.0)
                 qty = float(pos.get("qty") or 0.0)
@@ -278,11 +294,54 @@ class QualityGovernor:
 
                 # Invariant 3: Floating R-Multiple Break-Even Lock Check (Ruler Invariant)
                 clean_sym = sym.replace("/", "").replace("_", "").upper()
-                sym_basis = watchdog_sym_state.get(clean_sym, {})
-                initial_sl = float(sym_basis.get("initial_sl") or pos.get("initial_sl") or sl)
-                initial_entry = float(sym_basis.get("initial_entry") or entry)
-                stop_dist = abs(initial_entry - initial_sl)
+                
+                # Match basis by validating symbol, side, and entry price proximity (<= 5% drift)
+                matched_basis = None
+                
+                # A. First check active_trade_brackets.json
+                if clean_sym in active_brackets and isinstance(active_brackets[clean_sym], dict):
+                    b = active_brackets[clean_sym]
+                    b_side = str(b.get("side", "")).upper()
+                    b_entry = float(b.get("entry_price") or 0.0)
+                    if (not b_side or b_side == side) and (b_entry <= 0 or abs(entry - b_entry) / max(entry, 1.0) <= 0.05):
+                        matched_basis = {
+                            "initial_entry": b_entry if b_entry > 0 else entry,
+                            "initial_sl": float(b.get("stop_loss") or 0.0),
+                            "source": "active_brackets"
+                        }
+                
+                # B. Second check watchdog_state.json symbol_state
+                if not matched_basis and clean_sym in watchdog_sym_state and isinstance(watchdog_sym_state[clean_sym], dict):
+                    w = watchdog_sym_state[clean_sym]
+                    w_side = str(w.get("side", "")).upper()
+                    w_entry = float(w.get("initial_entry") or w.get("master_entry") or 0.0)
+                    if (not w_side or w_side == side) and (w_entry <= 0 or abs(entry - w_entry) / max(entry, 1.0) <= 0.05):
+                        matched_basis = {
+                            "initial_entry": w_entry if w_entry > 0 else entry,
+                            "initial_sl": float(w.get("initial_sl") or 0.0),
+                            "stepped_defense_executed": w.get("stepped_defense_executed", False),
+                            "scaleout_executed": w.get("scaleout_executed", False),
+                            "source": "watchdog_state"
+                        }
 
+                if matched_basis and matched_basis.get("initial_sl", 0) > 0:
+                    initial_entry = matched_basis["initial_entry"]
+                    initial_sl = matched_basis["initial_sl"]
+                else:
+                    initial_entry = float(pos.get("initial_entry") or entry)
+                    initial_sl = float(pos.get("initial_sl") or 0.0)
+                    if initial_sl <= 0:
+                        # Check if position has stepped defense executed
+                        is_stepped = alerted_trades.get(p_id, {}).get("stepped_defense_executed", False)
+                        dist = abs(entry - sl) if sl > 0 else 0
+                        if is_stepped and dist > 0:
+                            # Reconstruct initial risk distance: stepped defense moved SL to -0.3R
+                            inferred_dist = dist / 0.3
+                            initial_sl = (entry - inferred_dist) if side == "BUY" else (entry + inferred_dist)
+                        else:
+                            initial_sl = sl
+
+                stop_dist = abs(initial_entry - initial_sl)
                 if sl > 0 and initial_entry > 0 and qty > 0 and stop_dist > 0:
                     contract_size = Config.get_contract_size(sym)
                     current_price = entry + (pnl / (qty * contract_size)) if side == "BUY" else entry - (pnl / (qty * contract_size))
@@ -290,11 +349,18 @@ class QualityGovernor:
                     r_mult = PriceGeometryGroundTruth.compute_geom_r(initial_entry, initial_sl, current_price, side)
                     if r_mult >= 1.5:
                         # Verify if SL is at or better than entry price
-                        is_be_locked = (sl >= initial_entry) if side == "BUY" else (sl <= initial_entry)
-                        if not is_be_locked:
+                        is_be_locked = (sl >= initial_entry - 1e-4) if side == "BUY" else (sl <= initial_entry + 1e-4)
+                        
+                        # Check if fleet scale-out / BE trail is in progress
+                        w_scaled = False
+                        if clean_sym in watchdog_sym_state and isinstance(watchdog_sym_state[clean_sym], dict):
+                            w_scaled = watchdog_sym_state[clean_sym].get("scaleout_executed", False)
+
+                        if not is_be_locked and not w_scaled:
                             issues.append(
-                                f"🚨 [BREAK-EVEN INVARIANT BREACH] Position {p_id} ({sym}) reached +{r_mult:.2f}R "
-                                f"but Stop Loss (${sl:.2f}) is NOT locked at Break-Even (${initial_entry:.2f})!"
+                                f"🚨 [BREAK-EVEN INVARIANT BREACH] Position {p_id} ({sym} {side}) reached +{r_mult:.2f}R "
+                                f"(Initial: Entry=${initial_entry:,.2f}, SL=${initial_sl:,.2f}), "
+                                f"but live Stop Loss (${sl:,.2f}) has NOT trailed to Break-Even (${initial_entry:,.2f})!"
                             )
 
                 acc_id = str(pos.get("account_id") or pos.get("accountId") or pos.get("account_email") or "")

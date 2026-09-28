@@ -45,11 +45,13 @@ class PositionWatchdog:
     def save_state(self):
         try:
             os.makedirs(os.path.dirname(STATE_FILE_PATH), exist_ok=True)
-            with open(STATE_FILE_PATH, "w") as f:
+            tmp_path = f"{STATE_FILE_PATH}.tmp.{os.getpid()}"
+            with open(tmp_path, "w") as f:
                 json.dump({
                     "alerted_trades": self.alerted_trades,
                     "symbol_state": self.symbol_state
                 }, f, indent=4)
+            os.replace(tmp_path, STATE_FILE_PATH)
         except Exception as e:
             print(f"Error saving state: {e}")
 
@@ -529,8 +531,8 @@ class PositionWatchdog:
                 f"🛡️ <b>STEPPED STOP LOSS DEFENSE (+1.0R)</b>\n\n"
                 f"Symbol: <code>{symbol}</code>\n"
                 f"Side: <b>{side_upper}</b>\n"
-                f"Entry: <b>{entry_price}</b> | Initial SL: <b>{initial_sl}</b>\n"
-                f"🔒 <b>Tightened Stop Loss:</b> <code>{new_sl}</code> ({locked_r:.1f}R)\n"
+                f"Entry: <b>${float(entry_price):,.2f}</b> | Initial SL: <b>${float(initial_sl):,.2f}</b>\n"
+                f"🔒 <b>Tightened Stop Loss:</b> <code>${float(new_sl):,.2f}</code> ({locked_r:+.1f}R)\n"
                 f"✅ <b>Downside Risk Reduction:</b> 70% risk eliminated across {trailed_count} positions\n"
                 f"🎯 <b>Next Defense:</b> Break-Even (0.0R) at +1.5R target"
             )

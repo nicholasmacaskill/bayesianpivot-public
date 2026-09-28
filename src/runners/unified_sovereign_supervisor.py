@@ -249,7 +249,7 @@ class UnifiedSovereignSupervisor:
                         is_scaled_out = sym_data.get("scaleout_executed") or self.watchdog.alerted_trades.get(t_id, {}).get("scaleout_executed")
                         if stepped_enabled and r_multiple >= stepped_trigger and not is_stepped and not is_scaled_out:
                             logger.info(f"🛡️ [STEPPED DEFENSE] {symbol} reached {r_multiple:.2f}R! Tightening Stop Loss to {stepped_locked_r:.1f}R across fleet...")
-                            self.watchdog.execute_stepped_defense(symbol, entry, initial_sl, side=side, locked_r=stepped_locked_r)
+                            self.watchdog.execute_stepped_defense(symbol, initial_entry, initial_sl, side=side, locked_r=stepped_locked_r)
                             sym_data["stepped_defense_executed"] = True
                             self.watchdog.alerted_trades[t_id]["stepped_defense_executed"] = True
                             self.watchdog.save_state()
@@ -259,7 +259,7 @@ class UnifiedSovereignSupervisor:
                         is_scaled_out = sym_data.get("scaleout_executed") or self.watchdog.alerted_trades.get(t_id, {}).get("scaleout_executed")
                         if r_multiple >= be_trigger and not is_scaled_out:
                             logger.info(f"💰 [AUTO SCALE-OUT] {symbol} reached {r_multiple:.2f}R! Executing 50% fleet closure & Break-Even trail...")
-                            self.watchdog.execute_fleet_scaleout(symbol, entry, reason=f"+{be_trigger:.1f}R Target Reached", side=side, initial_sl=initial_sl)
+                            self.watchdog.execute_fleet_scaleout(symbol, initial_entry, reason=f"+{be_trigger:.1f}R Target Reached", side=side, initial_sl=initial_sl)
                             sym_data["scaleout_executed"] = True
                             self.watchdog.alerted_trades[t_id]["scaleout_executed"] = True
                             self.watchdog.save_state()
@@ -436,6 +436,8 @@ class UnifiedSovereignSupervisor:
             logger.error(f"Failed to initialize QualityGovernor: {e}")
             return
 
+        # Offset initial audit by 15s to allow WatchdogThread to initialize and populate positions cache
+        time.sleep(15)
         while self.running:
             try:
                 report = governor.run_runtime_audit(tl_client=self.get_tl_client())
