@@ -298,20 +298,8 @@ class QualityGovernor:
                 # Match basis by validating symbol, side, and entry price proximity (<= 5% drift)
                 matched_basis = None
                 
-                # A. First check active_trade_brackets.json
-                if clean_sym in active_brackets and isinstance(active_brackets[clean_sym], dict):
-                    b = active_brackets[clean_sym]
-                    b_side = str(b.get("side", "")).upper()
-                    b_entry = float(b.get("entry_price") or 0.0)
-                    if (not b_side or b_side == side) and (b_entry <= 0 or abs(entry - b_entry) / max(entry, 1.0) <= 0.05):
-                        matched_basis = {
-                            "initial_entry": b_entry if b_entry > 0 else entry,
-                            "initial_sl": float(b.get("stop_loss") or 0.0),
-                            "source": "active_brackets"
-                        }
-                
-                # B. Second check watchdog_state.json symbol_state
-                if not matched_basis and clean_sym in watchdog_sym_state and isinstance(watchdog_sym_state[clean_sym], dict):
+                # A. First check watchdog_state.json symbol_state (authoritative broker fill geometry)
+                if clean_sym in watchdog_sym_state and isinstance(watchdog_sym_state[clean_sym], dict):
                     w = watchdog_sym_state[clean_sym]
                     w_side = str(w.get("side", "")).upper()
                     w_entry = float(w.get("initial_entry") or w.get("master_entry") or 0.0)
@@ -322,6 +310,18 @@ class QualityGovernor:
                             "stepped_defense_executed": w.get("stepped_defense_executed", False),
                             "scaleout_executed": w.get("scaleout_executed", False),
                             "source": "watchdog_state"
+                        }
+
+                # B. Second check active_trade_brackets.json as fallback
+                if not matched_basis and clean_sym in active_brackets and isinstance(active_brackets[clean_sym], dict):
+                    b = active_brackets[clean_sym]
+                    b_side = str(b.get("side", "")).upper()
+                    b_entry = float(b.get("entry_price") or 0.0)
+                    if (not b_side or b_side == side) and (b_entry <= 0 or abs(entry - b_entry) / max(entry, 1.0) <= 0.05):
+                        matched_basis = {
+                            "initial_entry": b_entry if b_entry > 0 else entry,
+                            "initial_sl": float(b.get("stop_loss") or 0.0),
+                            "source": "active_brackets"
                         }
 
                 if matched_basis and matched_basis.get("initial_sl", 0) > 0:
