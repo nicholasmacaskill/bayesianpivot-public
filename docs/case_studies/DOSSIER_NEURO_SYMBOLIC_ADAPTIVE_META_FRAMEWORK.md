@@ -270,6 +270,32 @@ To verify the semantic accuracy of the Theory of Mind layer, live market tick da
 }
 ```
 
+### Experiment 3: The False-Hope Retest at Minute 20 (Bargaining Phase)
+* **Symbolic State:** Gold breakout bought at $4,188.50. Current price: $4,182.40 (-0.75 ATR). 4 candles elapsed. 1 relief bounce attempted to $4,186.00 and got slammed down with high sell volume. Distance to stop: 11.4 points.
+```json
+{
+  "breaking_point_proximity": 0.55,
+  "psychological_phase": "Bargaining",
+  "internal_monologue": "That bounce had no legs. If it can just crawl back to $4,186.50 or my entry, I'll close out flat and take a scratch. Just give me one more push up to get out alive.",
+  "catalyst_to_break": "Failure to hold $4,180.00 or another rejection when attempting to reclaim the $4,185.00 pivot.",
+  "capitulation_velocity": "Moderate",
+  "reasoning": "Initial profit expectation has shifted to survival bargaining. Emotional fatigue begins to mount as the first relief attempt was absorbed by institutional sellers."
+}
+```
+
+### Experiment 4: The Terminal Invalidation Cascade at Minute 50 (Active Capitulation)
+* **Symbolic State:** Gold breakout bought at $4,188.50. Current price: $4,170.80 (-2.1 ATR). 10 candles elapsed. Invalidation shelf ($4,171.00) breached on sudden 3x volume expansion. Distance to stop: 0 points (stops triggering).
+```json
+{
+  "breaking_point_proximity": 0.98,
+  "psychological_phase": "Active Capitulation",
+  "internal_monologue": "I can't take this anymore. Stop loss hit or I just have to market sell right now. It's completely broken, I'm getting destroyed.",
+  "catalyst_to_break": "Violation of the Equal Lows cluster at $4,171.00 triggering automated margin stops and panic liquidation orders.",
+  "capitulation_velocity": "Cascade Imminent",
+  "reasoning": "Pain threshold exceeded. The biological capacity to endure adverse excursions has collapsed into involuntary reflex liquidation, generating the exact liquidity pocket institutional buyers require."
+}
+```
+
 ---
 
 ## 7. Architecture & Deployment Status
