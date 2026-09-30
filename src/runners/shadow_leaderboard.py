@@ -57,6 +57,10 @@ def main():
             r = row['total_r_multiple']
             if "TURTLE_SOUP" in archetype or "SILVER_BULLET" in archetype:
                 return "👑 LIVE MASTER WEAPON"
+            elif "EQH_EQL_SHELF" in archetype:
+                if samples >= 30 and wr is not None and wr >= 35.0 and r > 15.0:
+                    return "🚀 QUALIFIED FOR LIVE PROMOTION"
+                return "🧠 ADAPTIVE META-MODEL ($0 RISK)"
             elif "CHALLENGER_LOCAL_MLX" in archetype:
                 if samples >= 30 and wr is not None and wr >= 55.0 and r > 10.0:
                     return "🚀 QUALIFIED FOR LIVE PROMOTION"

@@ -550,7 +550,7 @@ class AlphaSweepScanner(SMCScanner):
 
     def check_retail_trap_shadow(self, symbol, df_5m, df_1h, killzone):
         """
-        Scans for Retail LuxAlgo BOS/CHoCH Trap Fades.
+        Scans for Retail LuxAlgo BOS/CHoCH Trap Fades and Equal Highs/Lows Shelf Traps.
         100% SHADOW LAB ONLY - ZERO LIVE CAPITAL RISK.
         """
         trap = self.retail_trap_engine.detect_retail_trap(df_5m, df_1h)
@@ -563,16 +563,23 @@ class AlphaSweepScanner(SMCScanner):
         closes_1h = df_1h['close'].values
         hurst = self.get_hurst_exponent(closes_1h)
         
+        base_pattern = trap.get("pattern_type", "RETAIL_LUXALGO_TRAP")
+        pattern_type = f"{base_pattern}_SHADOW" if not base_pattern.endswith("_SHADOW") else base_pattern
+
         return {
             "direction": trap["direction"],
             "level": trap["breakout_level"],
             "hurst": hurst,
             "trend": "RETAIL_TRAP_FADE",
             "regime": "RETAIL_INDUCEMENT_PURGE",
-            "pattern_type": "RETAIL_LUXALGO_TRAP_SHADOW",
+            "pattern_type": pattern_type,
             "sweep_dist": abs(trap["price"] - trap["breakout_level"]),
             "atr": atr_5m,
             "price": trap["price"],
+            "stop_loss": trap.get("stop_loss"),
+            "take_profit": trap.get("take_profit"),
+            "target_rr": trap.get("target_rr", 2.60),
+            "breathing_room_threshold": trap.get("breathing_room_threshold", 1.40),
             "is_shadow_only": True,
             "retail_reasoning": trap["reasoning"],
             "target_stop_pool": trap["target_stop_pool"]
