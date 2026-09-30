@@ -352,7 +352,7 @@ class TradeLockerHelper:
             logger.error(f"Open Positions Fetch Error: {e}")
             return []
 
-    def get_recent_history(self, hours=24):
+    def get_recent_history(self, hours=24, retries=3):
         """
         Fetches filled orders from the ordersHistory endpoint.
         Pairs BUY/SELL orders by position_id to calculate per-trade PnL.
@@ -366,13 +366,15 @@ class TradeLockerHelper:
             
             if resp.status_code == 401:
                 logger.warning(f"401 Unauthorized for {self.email} on history. Re-authenticating...")
-                if self.login():
-                    return self.get_recent_history(hours)
+                if self.login() and retries > 0:
+                    return self.get_recent_history(hours, retries=retries - 1)
                 return []
             if resp.status_code == 429:
                 retry_after = max(float(resp.headers.get("Retry-After") or 5.0), 5.0)
                 logger.warning(f"⚠️ Rate limited on history fetch (HTTP 429) for {self.email}. Backing off {retry_after}s...")
                 time.sleep(retry_after)
+                if retries > 0:
+                    return self.get_recent_history(hours, retries=retries - 1)
                 return []
             if resp.status_code != 200:
                 logger.error(f"ordersHistory failed: {resp.status_code} - {resp.text[:200]}")
@@ -441,7 +443,8 @@ class TradeLockerHelper:
                 avg_sell = sum(o['price'] * o['qty'] for o in sells) / sum(o['qty'] for o in sells)
                 total_qty = min(sum(o['qty'] for o in buys), sum(o['qty'] for o in sells))
 
-                pnl = (avg_sell - avg_buy) * total_qty
+                contract_size = Config.get_contract_size(pos['symbol'])
+                pnl = (avg_sell - avg_buy) * total_qty * contract_size
                 
                 # Sort orders by time_ms to identify the opening trade side (BUY for Long, SELL for Short)
                 orders_sorted = sorted(orders, key=lambda x: x['time_ms'])
