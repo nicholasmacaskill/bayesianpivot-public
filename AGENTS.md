@@ -88,7 +88,7 @@
 * **RULE:** Any time a change is made to the working live codebase, it **MUST** be run through the full adversarial quality verification process to ensure zero regressions and guarantee the code works correctly in production as intended:
   1. **Automated Invariant & Regression Testing:** Run targeted unit tests and the Sovereign 3D Crucible Matrix (`tests/run_3d_crucible.py` / `tests/run_bulletproof_harness.py` / `PYTHONPATH=. ./venv/bin/pytest`) to mathematically verify all broker, risk, sizing, and firewall constraints pass.
   2. **Production Integrity Check:** Confirm runtime daemon status, log outputs, and invariant sentry health to ensure production stability.
-  3. **Immediate Commit & Remote Push:** Once each change passes the adversarial quality verification, immediately commit with a clean, descriptive message and push the updated code to the private repository (`gitlab main`).
+  3. **Immediate Commit & Dual Remote Push:** Once each change passes the adversarial quality verification, immediately commit with a clean, descriptive message and push the updated code to BOTH remotes: GitHub (`origin main`) and GitLab (`gitlab main`).
 
 ### 10. Mandatory Live Broker Query Protocol (Strict Prohibition Against Stale Hardcoded Balances)
 * **RULE:** Agents and runners **MUST NEVER** store, quote, or rely on mutable live account balances, drawdown buffers, or loss runways as static text inside `AGENTS.md` or any documentation file.
