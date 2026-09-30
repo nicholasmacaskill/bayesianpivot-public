@@ -16,7 +16,7 @@ class TestExecutionShadowEngine(unittest.TestCase):
         conn.close()
 
     def test_full_tp_scenario(self):
-        """When a trade hits full TP, live gets 3.0R, partial gets 2.25R, binary gets 3.0R."""
+        """When a trade hits full TP, live gets 3.0R, partial gets 2.25R, binary gets 3.0R, buffered gets 3.0R."""
         self.engine.register_trade(
             symbol="TEST/BTC",
             direction="SHORT",
@@ -33,6 +33,7 @@ class TestExecutionShadowEngine(unittest.TestCase):
         self.assertAlmostEqual(res["live_ratchet_r"], 3.0)
         self.assertAlmostEqual(res["shadow_partial_r"], 2.25)
         self.assertAlmostEqual(res["shadow_binary_r"], 3.0)
+        self.assertAlmostEqual(res["shadow_buffered_r"], 3.0)
 
     def test_pullback_after_1_8r_scenario(self):
         """When trade reaches +1.8R and then hits SL, live gets 0.0R (BE), partial gets +0.75R, binary gets -1.0R."""
@@ -96,6 +97,31 @@ class TestExecutionShadowEngine(unittest.TestCase):
         self.assertAlmostEqual(res["live_ratchet_r"], -1.0)
         self.assertAlmostEqual(res["shadow_partial_r"], -1.0)
         self.assertAlmostEqual(res["shadow_binary_r"], -1.0)
+
+    def test_buffered_stop_deeper_plunge_scenario(self):
+        """When price blows straight past the 1.25x buffered stop, buffered stop records -1.25R (larger drawdown)."""
+        self.engine.register_trade(
+            symbol="TEST/PLUNGE",
+            direction="LONG",
+            entry_price=100.0,
+            stop_loss=90.0,    # risk_dist = 10, buffered_sl = 100 - 12.5 = 87.5
+            take_profit=130.0,
+            risk_usd=100.0
+        )
+        
+        # Price plunges directly to 86.0 (below both initial SL and buffered SL)
+        resolved = self.engine.update_price("TEST/PLUNGE", 86.0)
+        self.assertEqual(len(resolved), 1)
+        res = resolved[0]
+        self.assertAlmostEqual(res["live_ratchet_r"], -1.0)
+        self.assertAlmostEqual(res["shadow_buffered_r"], -1.25)
+        self.assertAlmostEqual(res["shadow_buffered_pnl"], -125.0)
+
+    def test_leaderboard_contains_shadow_buffered_and_session(self):
+        """Verifies get_leaderboard outputs shadow_buffered and shadow_session_adaptive keys."""
+        board = self.engine.get_leaderboard()
+        self.assertIn("shadow_buffered", board)
+        self.assertIn("shadow_session_adaptive", board)
 
 if __name__ == '__main__':
     unittest.main()
