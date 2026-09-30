@@ -182,6 +182,7 @@ class CalendarFilter:
             ev_time = e['time_utc']
             if ev_time.tzinfo is None:
                 ev_time = ev_time.replace(tzinfo=timezone.utc)
+                e['time_utc'] = ev_time
             diff_hours = (ev_time - now_utc).total_seconds() / 3600
             if 0 < diff_hours < 24:
                 upcoming.append(e)
