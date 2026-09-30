@@ -22,6 +22,129 @@ class RetailStopTrapEngine:
         self.swing_window = swing_window
         self.trap_lookback = trap_lookback
 
+    def calculate_pain_overextension_index(self, df_5m: pd.DataFrame, lookback: int = 40) -> Dict[str, Any]:
+        """
+        Quantifies Market Overextension via the Pain Surface & Entrapment Density Function.
+        
+        Replaces naive oscillator overextension (RSI, Bollinger Bands, Z-scores) with
+        causal human nervous system exhaustion:
+        - Trapped Capital Volume: Aggressive volume entered on wrong side of shelf.
+        - Adverse Displacement: Distance in ATR from the entrapment shelf.
+        - Capitulation Clock: Consecutive 5m bars held in floating loss without relief.
+        
+        Returns:
+            pain_index: 0.0 to 100.0 (where >= 75.0 indicates terminal pain overextension)
+            trapped_side: "LONGS" | "SHORTS" | "NEUTRAL"
+            is_overextended: True if pain_index >= 75.0
+        """
+        if len(df_5m) < lookback:
+            return {"pain_index": 0.0, "trapped_side": "NEUTRAL", "is_overextended": False, "thesis": "Insufficient data"}
+
+        highs = df_5m['high'].values
+        lows = df_5m['low'].values
+        closes = df_5m['close'].values
+        volumes = df_5m['volume'].values if 'volume' in df_5m.columns else np.ones(len(df_5m))
+        
+        last_idx = len(df_5m) - 2 # Last closed 5m candle
+        curr_close = float(closes[last_idx])
+        
+        # ATR 14
+        atr_14 = float(np.mean([max(highs[k] - lows[k], 1e-8) for k in range(max(0, last_idx-14), last_idx)]))
+        vol_sma20 = float(np.mean(volumes[max(0, last_idx-20):last_idx])) if len(volumes) >= 20 else 1.0
+        
+        window_highs = highs[max(0, last_idx - lookback):last_idx]
+        window_lows = lows[max(0, last_idx - lookback):last_idx]
+        window_vols = volumes[max(0, last_idx - lookback):last_idx]
+        
+        max_shelf = float(np.max(window_highs))
+        min_shelf = float(np.min(window_lows))
+        
+        # 1. EVALUATE TRAPPED LONGS (Market overextended to downside after failed high)
+        long_underwater_bars = 0
+        for k in range(last_idx, max(0, last_idx - 20), -1):
+            if closes[k] < max_shelf * 0.9992:
+                long_underwater_bars += 1
+            else:
+                break
+                
+        # Trapped volume at top 15% of range
+        top_band = max_shelf - (max_shelf - min_shelf) * 0.15
+        trapped_long_vol = float(np.sum([window_vols[k] for k in range(len(window_highs)) if window_highs[k] >= top_band]))
+        vol_ratio_long = (trapped_long_vol / (vol_sma20 * 4.0)) if vol_sma20 > 0 else 1.0
+        dist_atr_long = abs(max_shelf - curr_close) / max(atr_14, 1e-8)
+        
+        # Long Pain Score
+        duration_factor_long = min(long_underwater_bars / 6.0, 2.0) # 6 bars = 30 min base threshold
+        distance_factor_long = min(dist_atr_long / 1.5, 2.0)       # 1.5 ATR adverse excursion
+        volume_factor_long = min(vol_ratio_long, 2.0)
+        long_pain_score = min(((duration_factor_long * 0.40) + (distance_factor_long * 0.35) + (volume_factor_long * 0.25)) * 50.0, 100.0)
+
+        # 2. EVALUATE TRAPPED SHORTS (Market overextended to upside after failed low)
+        short_underwater_bars = 0
+        for k in range(last_idx, max(0, last_idx - 20), -1):
+            if closes[k] > min_shelf * 1.0008:
+                short_underwater_bars += 1
+            else:
+                break
+                
+        bottom_band = min_shelf + (max_shelf - min_shelf) * 0.15
+        trapped_short_vol = float(np.sum([window_vols[k] for k in range(len(window_lows)) if window_lows[k] <= bottom_band]))
+        vol_ratio_short = (trapped_short_vol / (vol_sma20 * 4.0)) if vol_sma20 > 0 else 1.0
+        dist_atr_short = abs(curr_close - min_shelf) / max(atr_14, 1e-8)
+        
+        # Short Pain Score
+        duration_factor_short = min(short_underwater_bars / 6.0, 2.0)
+        distance_factor_short = min(dist_atr_short / 1.5, 2.0)
+        volume_factor_short = min(vol_ratio_short, 2.0)
+        short_pain_score = min(((duration_factor_short * 0.40) + (distance_factor_short * 0.35) + (volume_factor_short * 0.25)) * 50.0, 100.0)
+
+        # Determine dominant pain state
+        if long_pain_score > short_pain_score and long_pain_score >= 50.0:
+            is_overextended = long_pain_score >= 75.0
+            thesis = (
+                f"Trapped Longs in acute pain ({long_pain_score:.1f}/100). "
+                f"Underwater {long_underwater_bars * 5}m, {dist_atr_long:.1f} ATR adverse excursion. "
+                f"{'Downside move overextended; capitulation cascade nearing completion.' if is_overextended else 'Pain accumulating.'}"
+            )
+            return {
+                "pain_index": round(long_pain_score, 1),
+                "trapped_side": "LONGS",
+                "underwater_bars": long_underwater_bars,
+                "underwater_minutes": long_underwater_bars * 5,
+                "distance_atr": round(dist_atr_long, 2),
+                "trapped_volume_mult": round(vol_ratio_long, 2),
+                "is_overextended": is_overextended,
+                "thesis": thesis
+            }
+        elif short_pain_score >= 50.0:
+            is_overextended = short_pain_score >= 75.0
+            thesis = (
+                f"Trapped Shorts in acute pain ({short_pain_score:.1f}/100). "
+                f"Underwater {short_underwater_bars * 5}m, {dist_atr_short:.1f} ATR adverse excursion. "
+                f"{'Upside move overextended; short squeeze nearing completion.' if is_overextended else 'Pain accumulating.'}"
+            )
+            return {
+                "pain_index": round(short_pain_score, 1),
+                "trapped_side": "SHORTS",
+                "underwater_bars": short_underwater_bars,
+                "underwater_minutes": short_underwater_bars * 5,
+                "distance_atr": round(dist_atr_short, 2),
+                "trapped_volume_mult": round(vol_ratio_short, 2),
+                "is_overextended": is_overextended,
+                "thesis": thesis
+            }
+        else:
+            return {
+                "pain_index": round(max(long_pain_score, short_pain_score), 1),
+                "trapped_side": "NEUTRAL",
+                "underwater_bars": max(long_underwater_bars, short_underwater_bars),
+                "underwater_minutes": max(long_underwater_bars, short_underwater_bars) * 5,
+                "distance_atr": 0.0,
+                "trapped_volume_mult": 1.0,
+                "is_overextended": False,
+                "thesis": "Equilibrium state; market participants operating within tolerable biological stress bands."
+            }
+
     def detect_eqh_eql_shelf_trap(self, df_5m: pd.DataFrame, df_1h: pd.DataFrame) -> Optional[Dict[str, Any]]:
         """
         Scans for confirmed Equal Highs / Equal Lows (Double Top/Bottom) Breakout Traps.

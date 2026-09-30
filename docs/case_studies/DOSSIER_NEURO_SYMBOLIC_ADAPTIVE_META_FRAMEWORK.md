@@ -149,7 +149,59 @@ Classifies the session terrain into three execution postures:
 
 ---
 
-## 4. Empirical Validation: Full-Year 2025 Crucible
+## 4. The Pain Surface as an Objective Overextension Metric (Beyond RSI & Bollinger Bands)
+
+The central innovation of the Adaptive Meta-Framework is replacing static oscillator overextension with **The Entrapment Density Function (The Quantitative Pain Surface)**.
+
+### The Fallacy of Mathematical Overextension
+Traditional technical analysis asserts that an asset is "overextended" or "overbought" when a mathematical formula breaches an arbitrary threshold:
+* *RSI > 70 or 80*
+* *Price > +2.0 or +3.0 Sigma Bollinger Bands*
+* *DeMark Sequential 9/13 exhaustion counts*
+
+In real institutional order flow, these indicators are notoriously lethal to counter-trend traders. In strong macro trends, an asset can remain "overbought" for three consecutive days while aggressive short sellers get systematically liquidated. 
+
+**Why? Because dead mathematical formulas cannot feel pain.** Price is never "too high" or "too low" in a vacuum. Price moves until it encounters resting liquidity, and trends are fueled by the forced margin liquidations of the trapped counter-party.
+
+### The Sovereign Definition of Overextension
+The Sovereign architecture establishes a physics-grounded paradigm:
+
+> **A market is NOT overextended because price is far from an arbitrary moving average. A market is overextended ONLY when the cohort of human beings trapped on the wrong side has reached biological and financial pain saturation.**
+
+* If Bitcoin surges +$3,000 on low volume with minimal short entrapment, **the market is NOT overextended**. There is no trapped inventory, no forced covering, and price can easily run another +$3,000.
+* If Bitcoin surges +$3,000 into a dense wall of retail short sellers who entered at the range low, and that short cohort has been held underwater for 45 minutes near their liquidation price, **the pain is at terminal saturation**. 
+
+When pain saturates, the fuel driving the move (involuntary panic-buying by liquidated shorts) is completely exhausted. The market hits structural overextension, and price violently snaps back to the core auction manifold.
+
+### The Quantitative Pain Overextension Index (POI)
+Codified in [RetailStopTrapEngine.calculate_pain_overextension_index()](file:///Users/nicholasmacaskill/sovereignSMC/bayesian-pivot-trading-infra/src/engines/retail_trap_engine.py#L25-L147), the engine calculates:
+
+```
+POI = min(((Duration_Factor * 0.40) + (Distance_Factor * 0.35) + (Volume_Factor * 0.25)) * 50.0, 100.0)
+```
+
+Where:
+* **The Capitulation Clock (Duration Factor):** `min(underwater_bars / 6.0, 2.0)` — Models the 30-minute biological stamina decay of trapped human traders.
+* **Adverse Excursion (Distance Factor):** `min(distance_from_entry_atr / 1.5, 2.0)` — Measures floating dollar loss normalized by 14-period 5m ATR.
+* **Trapped Mass (Volume Factor):** `min(trapped_volume / (vol_sma20 * 4.0), 2.0)` — Measures the cumulative capital mass locked on the wrong side of the shelf.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                          PAIN OVEREXTENSION INDEX (POI) SCALE                               │
+├─────────────────────┬─────────────────────────────────────┬─────────────────────────────────┤
+│ Score Range         │ Market State                        │ Tactical Action                 │
+├─────────────────────┼─────────────────────────────────────┼─────────────────────────────────┤
+│ 0.0 to 49.9 POI     │ Equilibrium / Low Friction          │ Trend is healthy. DO NOT FADE.  │
+│ 50.0 to 74.9 POI    │ Pain Accumulation / Bargaining      │ Herd sweating; monitor shelf.   │
+│ 75.0 to 100.0 POI   │ Terminal Pain Overextension         │ Counterparty breaking; EXECUTE. │
+└─────────────────────┴─────────────────────────────────────┴─────────────────────────────────┘
+```
+
+When `POI >= 75.0`, the system flags `is_overextended = True`, confirming that the move has exhausted its human fuel and an asymmetric mean-reversion reversal is primed.
+
+---
+
+## 5. Empirical Validation: Full-Year 2025 Crucible
 
 The architecture was backtested across **209,670 five-minute candles** (104,835 candles each on Bitcoin and Gold/PAXG) covering the complete 2025 calendar year.
 
@@ -188,7 +240,7 @@ When evaluating the age of the Equal Highs/Lows shelf before the sweep occurred:
 
 ---
 
-## 5. Live Neuro-Symbolic Verification (Empirical Proof)
+## 6. Live Neuro-Symbolic Verification (Empirical Proof)
 
 To verify the semantic accuracy of the Theory of Mind layer, live market tick data was fed through the local inference hub:
 
@@ -220,7 +272,7 @@ To verify the semantic accuracy of the Theory of Mind layer, live market tick da
 
 ---
 
-## 6. Architecture & Deployment Status
+## 7. Architecture & Deployment Status
 
 1. **System 1 Scanner:** Implemented inside [retail_trap_engine.py](file:///Users/nicholasmacaskill/sovereignSMC/bayesian-pivot-trading-infra/src/engines/retail_trap_engine.py) and integrated into [alpha_sweep_scanner.py](file:///Users/nicholasmacaskill/sovereignSMC/bayesian-pivot-trading-infra/src/engines/alpha_sweep_scanner.py).
 2. **Zero Live Capital Risk:** Flagged with `is_shadow_only = True`, routing tickets exclusively to the Shadow Tournament database for continuous telemetry tracking.
