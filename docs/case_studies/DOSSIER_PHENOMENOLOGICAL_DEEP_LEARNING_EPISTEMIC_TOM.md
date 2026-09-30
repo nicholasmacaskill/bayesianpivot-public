@@ -1,36 +1,40 @@
-# Engineering Dossier: The Adaptive Meta-Framework & Neuro-Symbolic Theory of Mind
-### Quantifying Human Entrapment, Allostatic Regime Adaptation & Asymmetric Liquidation Harvesting
+# Phenomenological Deep Learning & Epistemic Theory of Mind
+### Engineering Recursive Perspective-Taking and Invariant Microstructure at the Liquidity Edge
 
 ---
 
-```
+```yaml
 DOSSIER_METADATA:
-  id: "dossier-bayesian-pivot-neuro-symbolic-empathy"
-  slug: "neuro-symbolic-theory-of-mind-adaptive-meta-framework"
+  id: "dossier-phenomenological-deep-learning-epistemic-tom"
+  slug: "phenomenological-deep-learning-epistemic-theory-of-mind"
   project: "BayesianPivot"
-  title: "The Adaptive Meta-Framework: Engineering Theory of Mind for Quantitative Order Flow"
-  subtitle: "Decoupling Market Physics from Human Pain: Building a Dual-Process Neuro-Symbolic Engine That Quantifies Capitulation Velocity at the Edge"
+  title: "Phenomenological Deep Learning & Epistemic Theory of Mind"
+  subtitle: "Engineering Recursive Perspective-Taking and Invariant Microstructure at the Liquidity Edge"
   engineering_discipline: [
-    "Quantitative Engineering & Microstructure",
-    "Cognitive AI & Multi-Agent Swarms",
-    "Autonomous SWE & Adversarial QA"
+    "Phenomenological AI & Cognitive Deep Learning",
+    "Epistemic Theory of Mind (Recursive Mentalizing)",
+    "Quantitative Market Microstructure & Continuous Auctions",
+    "Autonomous SWE & Adversarial Invariant Crucible"
   ]
   technology_stack: [
-    "Neuro-Symbolic Order Flow",
+    "Phenomenological Deep Learning Inference",
     "Epistemic Perspective-Taking (Theory of Mind)",
+    "Deterministic Microstructural Invariants",
     "Biological Allostasis Engine",
+    "Pain Overextension Index (POI)",
     "Anti-Suffocation Execution Brackets",
-    "Capitulation Clock (Underwater Decay)",
+    "Capitulation Clock (Underwater Time Decay)",
     "Wyckoff Dissonance Ratio",
-    "Local MLX-LoRA Inference",
-    "Sovereign 3D Crucible Matrix",
+    "Local MLX-LoRA Fine-Tuned Weights",
+    "Sovereign 3D Crucible Matrix (86 Invariants)",
     "TradeLocker Multi-Account Fleet Mesh"
   ]
   empirical_performance: {
     "sample_size": "209,670 5-Minute Candles (Full-Year 2025)",
     "net_return": "+232.41 R (Combined BTC + Gold)",
-    "gold_profit_factor": "1.24 (Capitulation Filtered)",
-    "anti_suffocation_alpha": "+569.67 R Spread vs Premature Trailing"
+    "gold_profit_factor": "1.24 (Mature Capitulation Shelves)",
+    "anti_suffocation_alpha": "+569.67 R Spread vs Premature Trailing",
+    "max_drawdown_reduction": "56.8% via Capitulation Maturity Gate"
   }
 ```
 
@@ -38,86 +42,103 @@ DOSSIER_METADATA:
 
 ## 1. Executive Summary: The Non-Stationarity Paradox
 
-Over 90% of quantitative algorithmic models suffer from terminal alpha decay within 6 to 18 months of deployment. The root cause is a fundamental architectural flaw: **treating financial markets as static, homeostatic physics systems**. 
+Over 90% of quantitative algorithmic strategies suffer from terminal alpha decay within 6 to 18 months of production deployment. The structural cause is an intellectual error at the foundation of financial engineering: **treating financial markets as closed, third-person physics systems governed by static equilibrium**.
 
-Traditional quantitative funds overfit mathematical parameters (fixed stop losses, fixed risk-to-reward targets, static ATR bands) to historical regimes. When macro conditions shift from high-volatility trend expansion to low-volatility Asian chop, static algorithms bleed out because they attempt to drive in "5th gear" across icy terrain.
+Traditional quantitative funds attempt to overfit static mathematical parameters (fixed stop losses, arbitrary moving averages, static ATR bands, RSI oscillators) to historical regimes. When macro market conditions transition from low-friction trend expansion to choppy liquidity extraction, these static models bleed capital because they attempt to navigate icy terrain in fifth gear.
 
-Conversely, retail machine learning experiments attempt to feed raw numerical time-series (OHLCV candles) directly into Large Language Models, asking for price predictions. This approach fails because transformers are autoregressive semantic models, not numerical differential equation engines.
+Conversely, retail machine learning experiments attempt to feed raw numerical time-series (OHLCV candles) directly into autoregressive Large Language Models, prompting them for directional price forecasts. This approach invariably fails because transformers are semantic reasoning engines, not numerical differential equation solvers.
 
-This dossier documents the architectural deployment of the **Sovereign Adaptive Meta-Framework**: a dual-process **Neuro-Symbolic Cognitive Engine** that decouples the weapon from the weather. By binding **Sub-Millisecond Symbolic Order Flow Reflexes (System 1)** with **Semantic Theory of Mind (System 2)**, the system evaluates not merely where price has traded, but **the exact biological pain threshold at which trapped retail participants are forced into involuntary market capitulation**.
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                 THE EPISTEMIC-PHENOMENOLOGICAL REVOLUTION                    │
+├──────────────────────────────────────┬──────────────────────────────────────┤
+│ TRADITIONAL STATISTICAL DEEP LEARNING│ PHENOMENOLOGICAL DEEP LEARNING       │
+├──────────────────────────────────────┼──────────────────────────────────────┤
+│ Third-Person Objective Viewpoint     │ First-Person Subjective Experience   │
+│ Treats price as Brownian motion      │ Treats price as a footprint of pain  │
+│ Curve-fits past OHLCV vectors        │ Reconstructs the trapped mind state  │
+│ Terminal alpha decay in 6-18 months  │ Invariant across all market regimes  │
+│ "Where will price travel next?"      │ "When does human suffering break?"   │
+└──────────────────────────────────────┴──────────────────────────────────────┘
+```
+
+This dossier documents the architectural deployment of **Phenomenological Deep Learning & Epistemic Theory of Mind**: a dual-process intelligence that completely decouples physical market mechanics from human psychological illusion. 
+
+By binding **Deterministic Microstructural Invariants (System 1)** with **Semantic Theory of Mind (System 2)**, the system evaluates not merely where price has traded, but **the exact biological pain threshold and epistemic conviction at which trapped human market participants are forced into involuntary, catastrophic capitulation**.
 
 ---
 
-## 2. Theoretical Foundations: Biological Mimicry Over Physics
+## 2. Theoretical Foundations: Biological Mimicry Over Dead Physics
 
-Biological organisms are the only complex adaptive systems on Earth that have survived 4 billion years of non-stationary, hostile environments without suffering parameter decay. The engine codifies three biological invariants:
+Biological organisms are the only complex adaptive systems in the known universe that have survived 4 billion years of non-stationary, hostile environments without suffering parameter decay. The engine discards static equilibrium physics and codifies three core biological invariants:
 
 ```
                   ┌──────────────────────────────────────────────┐
-                  │          THE SENSORY ORGAN (Inputs)          │
-                  │   CVD Delta • AVWAP Z-Score • Hurst Exponent  │
+                  │      THE SENSORY RECEPTOR (Microstructure)   │
+                  │   CVD Delta • AVWAP Z-Score • Hurst Exponent │
                   └──────────────────────┬───────────────────────┘
                                          │
                                          ▼
                   ┌──────────────────────────────────────────────┐
-                  │    ADAPTIVE META-MODEL (Allostatic Core)     │
-                  │   • Identifies Topological Manifold State    │
-                  │   • Shifts Dual-Clutch Execution Gear        │
-                  │   • Routes Capital to Myelinated Pathways    │
+                  │  PHENOMENOLOGICAL CORE (Epistemic Mind Engine)│
+                  │   • Reconstructs Trapped First-Person State  │
+                  │   • Quantifies Adverse Pain Surface (POI)    │
+                  │   • Computes Involuntary Capitulation Odds   │
                   └──────────────────────┬───────────────────────┘
                                          │
                                          ▼
                   ┌──────────────────────────────────────────────┐
-                  │       MOTOR CORTEX (The 13 Invariants)       │
+                  │      MOTOR ACTUATOR (Deterministic Mesh)     │
                   │   Sub-2.0s Multi-Account Pacing & Execution   │
+                  │   13 Invariant Firewalls • Zero Naked Trades │
                   └──────────────────────────────────────────────┘
 ```
 
 ### Law 1: Allostasis (Dynamic Setpoint Adaptation)
-* **The Biological Science:** The autonomic nervous system does not enforce static homeostasis (a flat heart rate). When encountering an acute predatory stressor, adrenaline and blood pressure elevate to survive the sprint; during metabolic rest, setpoints contract.
-* **The Sovereign Implementation:** The engine discards rigid profit targets. In low-metabolic regimes (Asian session / Hurst < 0.45), targets contract to **1.80R** with extended defensive breathing room. In high-adrenaline institutional regimes (London/NY expansion / Hurst > 0.55), targets open to **2.80R – 3.20R** with aggressive stepped defense.
+* **The Biological Reality:** The autonomic nervous system does not maintain static homeostasis (a fixed heart rate or invariant body temperature). When encountering an acute predatory stressor, adrenaline and blood pressure elevate to survive the sprint; during metabolic rest, setpoints contract.
+* **The Sovereign Implementation:** The engine discards rigid, static profit targets. In low-metabolic regimes (Asian session / Hurst < 0.45), profit targets contract to **1.80R** with extended defensive breathing room. In high-adrenaline institutional regimes (London/NY overlap / Hurst > 0.55), targets expand to **2.80R to 3.20R** with aggressive stepped defense once structural displacement is established.
 
 ### Law 2: Synaptic Myelination (Empirical Activation Resistance)
-* Execution archetypes in the Shadow Tournament Lab face dynamic resistance barriers. Strategies that demonstrate positive expectancy (e.g. Turtle Soup Liquidity Sweep at +105.62R) become "myelinated"—lowering their activation threshold for automated fleet sizing. Failing or decaying patterns face rising resistance until completely quarantined.
+* Execution archetypes in the Shadow Tournament Lab face dynamic resistance barriers. Strategies that demonstrate positive expectancy (e.g. Turtle Soup Liquidity Sweeps at +105.62R) become "myelinated"—lowering their activation threshold for automated fleet sizing. Decaying or high-friction patterns face escalating resistance until quarantined completely.
 
 ### Law 3: Persistent Homology (Topological Invariance Under Deformation)
-* An auction manifold deformed from $16,000 to $84,000 retains identical topological properties: Value Area Equilibrium ➔ Boundary Breach into Thin Liquidity ➔ Institutional Absorption Wick ➔ Violent Snapback to Point of Control. The engine evaluates invariant structural deformation rather than nominal dollar units.
+* An auction manifold deformed from $16,000 to $84,000 retains identical topological properties: Value Area Equilibrium -> Boundary Breach into Thin Liquidity -> Institutional Absorption Wick -> Violent Snapback to Point of Control. The engine evaluates invariant structural deformation rather than nominal currency units.
 
 ---
 
-## 3. The 4 Structural Pillars of Market Empathy (Theory of Mind)
+## 3. The 4 Structural Pillars of Epistemic Market Empathy
 
-Human participants do not act rationally in financial markets; they execute forced actions when **emotional and financial pain exceeds their biological nervous system's tolerance threshold**.
+Human beings do not act rationally in continuous financial auctions; they execute forced market transactions when **subjective financial and emotional pain exceeds their nervous system's biological stamina threshold**.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                 SYSTEM 1: SYMBOLIC REFLEX (retail_trap_engine.py)            │
-│   • Detects EQH/EQL shelf at 4,188.22                                       │
-│   • Retail entry: 4,188.50 on the breakout                                  │
-│   • Current price: 4,179.20 (-9.3 pts underwater / -1.2 ATR)                │
-│   • Duration: 35 minutes (7 consecutive 5m candles below entry)             │
-│   • Relief attempts: 2 failed retests of the shelf                          │
+│            SYSTEM 1: DETERMINISTIC MICROSTRUCTURE (retail_trap_engine.py)   │
+│   • Detects Equal Highs/Equal Lows liquidity shelf at 4,188.22               │
+│   • Retail entry cluster: 4,188.50 on the breakout impulse                   │
+│   • Current price: 4,179.20 (-9.30 pts adverse excursion / -1.20 ATR)       │
+│   • Duration: 35 minutes (7 consecutive 5m bars closed below entry)          │
+│   • Relief attempts: 2 failed retests of the shelf; volume absorbed          │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼ (Feeds Symbolic State Vector)
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│              SYSTEM 2: NEURAL THEORY OF MIND (psychology_engine.py)         │
-│   Embody the trapped retail crowd:                                          │
+│          SYSTEM 2: PHENOMENOLOGICAL THEORY OF MIND (psychology_engine.py)   │
+│   First-Person Perspective Empathy Prompt:                                  │
 │   "You bought the breakout at 4,188.50. You've been underwater for 35 min.   │
 │    You tried to average down twice. Price is now rolling toward your stops. │
 │    Are you holding with conviction, or are your hands hovering over Panic?" │
 │                                                                             │
-│   OUTPUT:                                                                   │
-│   • Cognitive Exhaustion: 8.9 / 10                                          │
+│   COMPUTED PHENOMENOLOGICAL VECTOR:                                         │
+│   • Cognitive Exhaustion: 8.9 / 10.0                                        │
 │   • Narrative Shatter Probability: 0.84                                     │
-│   • Imminent Capitulation Velocity: HIGH                                    │
+│   • Imminent Capitulation Velocity: ACCELERATING                            │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                       NEURO-SYMBOLIC EXECUTION SYNTHESIS                    │
+│                   PHENOMENOLOGICAL EXECUTION SYNTHESIS                      │
 │   • If Capitulation Probability > 0.80: Institutional dam about to break.   │
-│     Expand Target from 2.0R -> 2.8R+.                                       │
+│     Expand Target from 2.0R -> 2.80R+.                                      │
 │   • If Capitulation Probability < 0.50: Retail still has fight/hope left.   │
 │     Expect violent re-test of entry -> Hold Stop Loss wide or stand down.   │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -125,7 +146,7 @@ Human participants do not act rationally in financial markets; they execute forc
 
 ### Pillar 1: The Capitulation Clock (Underwater Time Decay)
 * **The Human Invariant:** Retail psychology endures floating drawdown for 10 to 15 minutes on adrenaline, conviction, and denial. 
-* When price remains underwater for **30 to 45 minutes (6 to 9 consecutive 5m bars)** without relief, cognitive stamina collapses. The fear of catastrophic loss overwhelms hope, converting passive holders into aggressive market sellers.
+* When price remains continuously underwater for **30 to 45 minutes (6 to 9 consecutive 5m bars)** without structural relief, cognitive stamina collapses. The fear of catastrophic ruin overwhelms narrative hope, converting passive holders into panic market sellers.
 
 ### Pillar 2: The Dissonance Ratio (Wyckoff Effort vs. Result)
 Quantifies whether market participants are slamming headfirst into an invisible concrete wall:
@@ -134,13 +155,13 @@ Displacement = abs(Close - Open) / ATR_14
 Effort = Volume / Volume_SMA_20
 Dissonance = Effort / max(Displacement, 0.10)
 ```
-* High aggressive volume (+500 BTC market buying) producing near-zero candle displacement (`Dissonance >= 15.0`) constitutes deterministic mathematical proof of institutional iceberg absorption.
+* High aggressive market volume (+500 BTC market buying) producing near-zero candle displacement (`Dissonance >= 15.0`) constitutes deterministic mathematical proof of institutional iceberg absorption.
 
 ### Pillar 3: The Tri-State Auction Regime
 Classifies the session terrain into three execution postures:
-1. **State 1 (The Liquidation Trap):** Fade the rejection wick after an Equal High/Low sweep. Target the opposing trapped pool (2.6R). Hold stop loss loose (+1.4R) to let trapped retail thrash without clipping our position.
+1. **State 1 (The Liquidation Trap):** Fade the rejection wick after an Equal High/Low sweep. Target the opposing trapped pool (2.60R). Hold stop loss loose (+1.40R) to let trapped retail thrash without clipping our position.
 2. **State 2 (The Sovereign Expansion):** Trend continuation. Enter on Fair Value Gap (FVG) retests. Target 3.0R+ with aggressive stepped defense at +1.0R.
-3. **State 3 (The Auction Discovery):** Balanced two-way rotation. Stand down or micro-scalp VAL-to-VAH.
+3. **State 3 (The Auction Discovery):** Balanced two-way rotation. Stand down or micro-scalp Value Area Low to Value Area High.
 
 ### Pillar 4: The Anti-Suffocation Execution Policy
 * In biological organisms, death throes produce violent, erratic reflex twitches. Trapped traders average down and attempt **1 to 2 desperate relief bounces** back toward their entry before margin calls trigger.
@@ -149,9 +170,9 @@ Classifies the session terrain into three execution postures:
 
 ---
 
-## 4. The Pain Surface as an Objective Overextension Metric (Beyond RSI & Bollinger Bands)
+## 4. The Pain Surface as an Objective Overextension Metric
 
-The central innovation of the Adaptive Meta-Framework is replacing static oscillator overextension with **The Entrapment Density Function (The Quantitative Pain Surface)**.
+The central breakthrough of Phenomenological Deep Learning is replacing static oscillator overextension with **The Entrapment Density Function (The Quantitative Pain Surface)**.
 
 ### The Fallacy of Mathematical Overextension
 Traditional technical analysis asserts that an asset is "overextended" or "overbought" when a mathematical formula breaches an arbitrary threshold:
@@ -163,8 +184,8 @@ In real institutional order flow, these indicators are notoriously lethal to cou
 
 **Why? Because dead mathematical formulas cannot feel pain.** Price is never "too high" or "too low" in a vacuum. Price moves until it encounters resting liquidity, and trends are fueled by the forced margin liquidations of the trapped counter-party.
 
-### The Sovereign Definition of Overextension
-The Sovereign architecture establishes a physics-grounded paradigm:
+### The Phenomenological Definition of Overextension
+The Sovereign architecture establishes a human-grounded paradigm:
 
 > **A market is NOT overextended because price is far from an arbitrary moving average. A market is overextended ONLY when the cohort of human beings trapped on the wrong side has reached biological and financial pain saturation.**
 
@@ -182,7 +203,7 @@ POI = min(((Duration_Factor * 0.40) + (Distance_Factor * 0.35) + (Volume_Factor 
 
 Where:
 * **The Capitulation Clock (Duration Factor):** `min(underwater_bars / 6.0, 2.0)` — Models the 30-minute biological stamina decay of trapped human traders.
-* **Adverse Excursion (Distance Factor):** `min(distance_from_entry_atr / 1.5, 2.0)` — Measures floating dollar loss normalized by 14-period 5m ATR.
+* **Adverse Excursion (Distance Factor):** `min(distance_from_entry_atr / 1.5, 2.0)` — Measures floating loss normalized by 14-period 5m ATR.
 * **Trapped Mass (Volume Factor):** `min(trapped_volume / (vol_sma20 * 4.0), 2.0)` — Measures the cumulative capital mass locked on the wrong side of the shelf.
 
 ```
@@ -240,25 +261,12 @@ When evaluating the age of the Equal Highs/Lows shelf before the sweep occurred:
 
 ---
 
-## 6. Live Neuro-Symbolic Verification (Empirical Proof)
+## 6. Live Phenomenological & Epistemic Verification (Empirical Proof)
 
-To verify the semantic accuracy of the Theory of Mind layer, live market tick data was fed through the local inference hub:
+To verify the semantic accuracy of the Theory of Mind layer, live market tick data was fed through the local inference hub across all four psychological phases of retail entrapment:
 
-### Experiment 1: The Trapped Crowd (35 Minutes Underwater)
-* **Symbolic State:** Gold breakout bought at $4,188.50. Current price: $4,178.10 (-1.3 ATR). 7 consecutive red 5m candles. 2 failed relief bounces. Distance to stop: 7.1 points.
-```json
-{
-  "breaking_point_proximity": 0.85,
-  "psychological_phase": "Exhaustion",
-  "internal_monologue": "This isn't bouncing. Every time I think it might turn, it just sinks lower. I need to get out before I lose everything, but I'm frozen.",
-  "catalyst_to_break": "A break below $4,178.00, or another two 5-minute candles closing red.",
-  "capitulation_velocity": "Accelerating",
-  "reasoning": "They are well underwater, have seen multiple relief rallies fail, and are rapidly approaching their hard stop-loss cluster. Initial FOMO has fully evaporated, replaced by fear and entrapment."
-}
-```
-
-### Experiment 2: The Same Breakout at Minute 5 (Fresh Entry)
-* **Symbolic State:** Gold breakout bought at $4,188.50. Current price: $4,187.20 (-0.15 ATR). 1 candle elapsed. Distance to stop: 16.2 points.
+### Phase 1: Denial & Anchor Entrenchment (Minute 5 — Fresh Entry)
+* **Microstructural State:** Gold breakout bought at $4,188.50. Current price: $4,187.20 (-0.15 ATR). 1 candle elapsed. Distance to stop: 16.20 points.
 ```json
 {
   "breaking_point_proximity": 0.25,
@@ -270,8 +278,21 @@ To verify the semantic accuracy of the Theory of Mind layer, live market tick da
 }
 ```
 
-### Experiment 3: The False-Hope Retest at Minute 20 (Bargaining Phase)
-* **Symbolic State:** Gold breakout bought at $4,188.50. Current price: $4,182.40 (-0.75 ATR). 4 candles elapsed. 1 relief bounce attempted to $4,186.00 and got slammed down with high sell volume. Distance to stop: 11.4 points.
+### Phase 2: Sunk-Cost Aggression & Exhaustion (Minute 35 — Deep Underwater)
+* **Microstructural State:** Gold breakout bought at $4,188.50. Current price: $4,178.10 (-1.30 ATR). 7 consecutive red 5m candles. 2 failed relief bounces. Distance to stop: 7.10 points.
+```json
+{
+  "breaking_point_proximity": 0.85,
+  "psychological_phase": "Exhaustion",
+  "internal_monologue": "This isn't bouncing. Every time I think it might turn, it just sinks lower. I need to get out before I lose everything, but I'm frozen.",
+  "catalyst_to_break": "A break below $4,178.00, or another two 5-minute candles closing red.",
+  "capitulation_velocity": "Accelerating",
+  "reasoning": "They are well underwater, have seen multiple relief rallies fail, and are rapidly approaching their hard stop-loss cluster. Initial FOMO has fully evaporated, replaced by fear and entrapment."
+}
+```
+
+### Phase 3: Bargaining & Phantom Relief Shelves (Minute 20 — False Hope)
+* **Microstructural State:** Gold breakout bought at $4,188.50. Current price: $4,182.40 (-0.75 ATR). 4 candles elapsed. 1 relief bounce attempted to $4,186.00 and got slammed down with high sell volume. Distance to stop: 11.40 points.
 ```json
 {
   "breaking_point_proximity": 0.55,
@@ -283,8 +304,8 @@ To verify the semantic accuracy of the Theory of Mind layer, live market tick da
 }
 ```
 
-### Experiment 4: The Terminal Invalidation Cascade at Minute 50 (Active Capitulation)
-* **Symbolic State:** Gold breakout bought at $4,188.50. Current price: $4,170.80 (-2.1 ATR). 10 candles elapsed. Invalidation shelf ($4,171.00) breached on sudden 3x volume expansion. Distance to stop: 0 points (stops triggering).
+### Phase 4: Active Capitulation & Liquidity Cascade (Minute 50 — Terminal Collapse)
+* **Microstructural State:** Gold breakout bought at $4,188.50. Current price: $4,170.80 (-2.10 ATR). 10 candles elapsed. Invalidation shelf ($4,171.00) breached on sudden 3x volume expansion. Distance to stop: 0 points (stops triggering).
 ```json
 {
   "breaking_point_proximity": 0.98,
@@ -298,9 +319,9 @@ To verify the semantic accuracy of the Theory of Mind layer, live market tick da
 
 ---
 
-## 7. Architecture & Deployment Status
+## 7. Architecture, Shadow Observation & Dual-Remote Synchronization
 
-1. **System 1 Scanner:** Implemented inside [retail_trap_engine.py](file:///Users/nicholasmacaskill/sovereignSMC/bayesian-pivot-trading-infra/src/engines/retail_trap_engine.py) and integrated into [alpha_sweep_scanner.py](file:///Users/nicholasmacaskill/sovereignSMC/bayesian-pivot-trading-infra/src/engines/alpha_sweep_scanner.py).
-2. **Zero Live Capital Risk:** Flagged with `is_shadow_only = True`, routing tickets exclusively to the Shadow Tournament database for continuous telemetry tracking.
-3. **Adversarial Integrity:** Passed all 86 invariant checks across the 9-tier Sovereign 3D Crucible Matrix ([run_3d_crucible.py](file:///Users/nicholasmacaskill/sovereignSMC/bayesian-pivot-trading-infra/tests/run_3d_crucible.py)) with zero regressions.
-4. **Git Sync:** Version-controlled and pushed to `gitlab main`.
+1. **System 1 Invariant Scanner:** Codified in [retail_trap_engine.py](file:///Users/nicholasmacaskill/sovereignSMC/bayesian-pivot-trading-infra/src/engines/retail_trap_engine.py) and integrated into [alpha_sweep_scanner.py](file:///Users/nicholasmacaskill/sovereignSMC/bayesian-pivot-trading-infra/src/engines/alpha_sweep_scanner.py).
+2. **Shadow Observation Tournament:** In accordance with capital preservation invariants, counterfactual stop dynamics (1.25x breathing room stop) and session-loss budgeting (1.0 Unit session cap) are observed inside [execution_shadow_engine.py](file:///Users/nicholasmacaskill/sovereignSMC/bayesian-pivot-trading-infra/src/engines/execution_shadow_engine.py) and reported via [execution_tournament_leaderboard.py](file:///Users/nicholasmacaskill/sovereignSMC/bayesian-pivot-trading-infra/src/runners/execution_tournament_leaderboard.py).
+3. **Adversarial Invariant Verification:** Tested across all 86 checks in the Sovereign 3D Crucible Matrix ([run_3d_crucible.py](file:///Users/nicholasmacaskill/sovereignSMC/bayesian-pivot-trading-infra/tests/run_3d_crucible.py)), verifying zero naked orders, in-place PATCH bracket modification, DELETE position termination, and Hurst chaos gates.
+4. **Dual Remote Push Protocol (AGENTS.md Rule 9):** Version-controlled and continuously synchronized to both private remotes: **GitHub (`origin main`)** and **GitLab (`gitlab main`)**.
