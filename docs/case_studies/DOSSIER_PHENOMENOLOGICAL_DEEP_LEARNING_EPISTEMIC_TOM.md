@@ -136,6 +136,12 @@ Maurice Merleau-Ponty demonstrated that subjective experience cannot be detached
 * Institutional algorithms and market makers do not trade against retail mathematical models; they trade against biological latency. Human motor reaction time spikes non-linearly under existential financial threat.
 * The liquidation cascade is not an intellectual decision—it is the point where **the biological substrate violently overrides cognitive strategy**, converting frozen hesitation into an involuntary rush of market orders.
 
+### Pillar 5: Intersubjectivity & Second-Order Intentionality (Schütz / Husserl)
+Edmund Husserl and Alfred Schütz (the founder of the phenomenology of the social world) proved that conscious agents never exist in a solipsistic vacuum. In continuous financial auctions, every trade operates within a shared **intersubjective horizon**.
+* **Second-Order Mentalizing:** A trapped retail trader does not merely monitor price; they continuously mentalize the collective market: *"Are the larger buyers stepping in? Will the bids hold? Someone is going to defend this level."*
+* **The Rupture of Intersubjective Trust:** When the institutional predator sweeps the shelf and absorbs the breakout, they do not merely push price lower; they violently shatter the **shared intersubjective trust**. The sudden disappearance of expected bid depth sends an unmistakable epistemic signal: *no one is coming to save this position*.
+* **Computational Order Book Counterpart:** The engine detects the collapse of intersubjective depth—the moment resting bid liquidity evaporates and market-sell delta spikes without absorption.
+
 ---
 
 ### Formal Taxonomy: Structural Phenomenology to Microstructure Mapping
@@ -146,6 +152,7 @@ Maurice Merleau-Ponty demonstrated that subjective experience cannot be detached
 | **Temporal Horizon** | Retention, Primal Impression, Protention (Husserl) | The Capitulation Clock: time-decay of conviction, failed relief bounce cycles, shattered protentive expectation |
 | **Praxical Breakdown** | *Zuhandenheit* to *Vorhandenheit* (Heidegger) | Transition from passive trend-following to cognitive paralysis at the invalidation boundary |
 | **Affective Grounding** | The Lived Body / *Leib* (Merleau-Ponty) | Somatic pain saturation (POI >= 75.0), decision latency spikes, and involuntary reflex liquidation cascades |
+| **Intersubjective Horizon** | Mutual Epistemic Trust (Alfred Schütz) | Evaporating order book liquidity depth, broken collective defense, and isolated panic liquidation cascades |
 
 ---
 
@@ -163,16 +170,18 @@ Human beings do not act rationally in continuous financial auctions; they execut
 │   • Relief attempts: 2 failed retests of the shelf; volume absorbed          │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │
-                                       ▼ (Feeds Symbolic State Vector)
+                                       ▼ (Feeds Deterministic Microstate Vector)
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│          SYSTEM 2: PHENOMENOLOGICAL THEORY OF MIND (psychology_engine.py)   │
-│   First-Person Perspective Empathy Prompt:                                  │
-│   "You bought the breakout at 4,188.50. You've been underwater for 35 min.   │
-│    You tried to average down twice. Price is now rolling toward your stops. │
-│    Are you holding with conviction, or are your hands hovering over Panic?" │
+│          SYSTEM 2: AMORTIZED INFERENCE OVER PHENOMENOLOGICAL STATE SPACE    │
+│   Conditioned Prior Generator over the Latent Phenomenological State Space: │
+│   S_phenom = { Intentional_Arc, Protentive_Entropy, Praxical_Friction,      │
+│                Somatic_Saturation, Intersubjective_Trust }                  │
 │                                                                             │
-│   COMPUTED PHENOMENOLOGICAL VECTOR:                                         │
+│   The SLM acts as an amortized variational inference engine, parameterizing │
+│   the probability density of involuntary counterparty liquidation:          │
 │   • Cognitive Exhaustion: 8.9 / 10.0                                        │
+│   • Protentive Entropy (H_prot): 0.12 (Terminal Temporal Rupture)           │
+│   • Intersubjective Trust: Evaporated (Solitary Entrapment)                 │
 │   • Narrative Shatter Probability: 0.84                                     │
 │   • Imminent Capitulation Velocity: ACCELERATING                            │
 └──────────────────────────────────────┬──────────────────────────────────────┘
@@ -187,9 +196,17 @@ Human beings do not act rationally in continuous financial auctions; they execut
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Pillar 1: The Capitulation Clock (Underwater Time Decay)
+### Pillar 1: The Capitulation Clock & Protentive Entropy Decay
 * **The Human Invariant:** Retail psychology endures floating drawdown for 10 to 15 minutes on adrenaline, conviction, and denial. 
 * When price remains continuously underwater for **30 to 45 minutes (6 to 9 consecutive 5m bars)** without structural relief, cognitive stamina collapses. The fear of catastrophic ruin overwhelms narrative hope, converting passive holders into panic market sellers.
+* **Mathematical Formalization of Protentive Entropy:**
+  * Let `Delta_P_expected(t)` be the projected relief bounce amplitude toward the trapped entry anchor.
+  * Let `k` be the count of failed bounce retests.
+  * Protentive Coherence decays exponentially:
+    `C_prot(t) = Delta_P_expected(t) * exp(-lambda_decay * k)` (with `lambda_decay = 0.45`).
+  * Protentive Entropy across directional outcomes:
+    `H_prot(t) = - sum(P(Bounce_i) * log2(P(Bounce_i)))`.
+  * **Temporal Rupture Condition:** When `C_prot(t) <= 0.15 * ATR_14` and `H_prot(t) <= 0.20`, protentive coherence reaches terminal collapse. The trader can no longer construct a viable mental future, triggering an immediate reflex liquidation cascade.
 
 ### Pillar 2: The Dissonance Ratio (Wyckoff Effort vs. Result)
 Quantifies whether market participants are slamming headfirst into an invisible concrete wall:
