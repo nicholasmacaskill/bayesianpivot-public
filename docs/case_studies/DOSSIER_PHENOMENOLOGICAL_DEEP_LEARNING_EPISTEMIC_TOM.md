@@ -6,6 +6,7 @@
 **Canonical Reference:** `dossier/phenomenological-deep-learning-epistemic-tom`  
 **Classification:** Sovereign R&D Forge // Active-State Systems  
 **Publication Date:** 2026-10-01  
+**Verified Public Repository:** [![GitHub: bayesianpivot-public](https://img.shields.io/badge/GitHub-bayesianpivot--public-181717?logo=github)](https://github.com/nicholasmacaskill/bayesianpivot-public)  
 
 ---
 

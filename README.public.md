@@ -14,7 +14,7 @@
 - Flocano Labs: https://flocanolabs.com
 - Case Studies: https://www.flocanolabs.com/flocanolabs/case-studies
 - Portfolio: https://nicholasmacaskill.com
-- GitHub: https://github.com/nicholasmacaskill/bayesian-pivot-trading-infra-public
+- GitHub: https://github.com/nicholasmacaskill/bayesianpivot-public
 - Creator IG: https://instagram.com/nicholasmacaskill
 - Sibling IG: https://instagram.com/betbodhi
 
