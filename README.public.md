@@ -47,7 +47,7 @@
 
 ---
 
-## 📑 Complete Engineering Dossiers (Shards 01–19)
+## 📑 Complete Engineering Dossiers (Shards 01–20)
 
 ### [01] Executive Policy Alignment & Asymmetric Ruin-Weighted SLMs
 
@@ -1197,6 +1197,18 @@ To actively capitalize on news volatility, we built `NewsCatalystScanner`:
 * **Range Locking:** Locks the pre-news 15-minute price boundaries at T-15m.
 * **Sweep Verification:** Between T+2m and T+15m, the scanner monitors for aggressive institutional liquidity sweeps beyond the pre-news high/low directly into High Time Frame (1H/4H) Points of Interest (POIs).
 * **Displacement Trigger:** Submits immediate limit entries when 1m/5m Fair Value Gaps (FVGs) displace back inside the pre-news range.
+
+---
+
+### [20] Phenomenological Deep Learning & Epistemic Theory of Mind
+
+> **discipline:** `Cognitive AI & Autonomous Agents` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `sample_size: 209,670_candles // net_return: +232.41_R // gold_pf: 1.24 // anti_suffocation_alpha: +569.67_R // drawdown_reduction: 56.8% // invariant_crucible: 86/86_passed` &nbsp;|&nbsp; **dossier_id:** [`phenomenological-deep-learning-epistemic-tom`](https://www.flocanolabs.com/flocanolabs/case-studies)
+
+### 1. Epistemic Theory of Mind vs. Naive Numerical Transformers
+Financial markets are continuous double auctions where no market participant ever trades raw objective scalar price. By fusing System 1 Deterministic Microstructural Invariants with System 2 Epistemic Theory of Mind inference, the architecture reconstructs the trapped counterparty's subjective intentional horizon, internal time-consciousness, and biological pain thresholds.
+
+### 2. Protentive Entropy Decay & The Anti-Suffocation Execution Invariant
+Replaces arbitrary mathematical oscillators with the Pain Overextension Index (POI) and formal Husserlian Protentive Entropy (`H_prot`). Backtested across 209,670 continuous 5-minute candles on Bitcoin and Gold (2025 Full-Year), validating that holding protective stops wide until counterparty capitulation generates a **+569.67 R performance spread** over naive breakeven trailing.
 
 ---
 
