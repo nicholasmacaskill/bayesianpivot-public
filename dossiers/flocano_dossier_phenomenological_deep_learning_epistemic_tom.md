@@ -20,7 +20,7 @@ DOSSIER_METADATA:
     "Phenomenological Deep Learning Inference",
     "Epistemic Perspective-Taking (Theory of Mind)",
     "Deterministic Microstructural Invariants",
-    "Biological Allostasis Engine",
+    "Structural Phenomenology Engine (Husserlian Horizons)",
     "Pain Overextension Index (POI)",
     "Anti-Suffocation Execution Brackets",
     "Capitulation Clock (Underwater Time Decay)",
@@ -68,41 +68,84 @@ By binding **Deterministic Microstructural Invariants (System 1)** with **Semant
 
 ---
 
-## 2. Theoretical Foundations: Biological Mimicry Over Dead Physics
+## 2. Theoretical Foundations: Structural Phenomenology & Constitutive Market Consciousness
 
-Biological organisms are the only complex adaptive systems in the known universe that have survived 4 billion years of non-stationary, hostile environments without suffering parameter decay. The engine discards static equilibrium physics and codifies three core biological invariants:
+Classical phenomenology is not a sentimental exercise in "market empathy" or retail sentiment analysis. It is the **formal, structural science of how consciousness constitutes reality**.
+
+Traditional quantitative finance operates exclusively from a third-person, Cartesian perspective: it assumes an external, objective price vector moving via continuous Brownian motion. But financial markets are not physics laboratories—they are continuous, reflexive double auctions where **no participant ever trades raw objective price**. Every market participant acts solely through a constituted subjective horizon.
+
+> *"Our architecture does not claim synthetic subjectivity; rather, it formalizes **Structural Phenomenology as a predictive quantitative engine**. Where traditional statistical models analyze price as an external physical particle, this system computationally reconstructs the **intentional horizons, temporal protentions, and praxical breakdowns** of human market participants to pinpoint the exact inflection where counterparty conviction collapses into forced liquidation."*
 
 ```
-                  ┌──────────────────────────────────────────────┐
-                  │      THE SENSORY RECEPTOR (Microstructure)   │
-                  │   CVD Delta • AVWAP Z-Score • Hurst Exponent │
-                  └──────────────────────┬───────────────────────┘
-                                         │
-                                         ▼
-                  ┌──────────────────────────────────────────────┐
-                  │  PHENOMENOLOGICAL CORE (Epistemic Mind Engine)│
-                  │   • Reconstructs Trapped First-Person State  │
-                  │   • Quantifies Adverse Pain Surface (POI)    │
-                  │   • Computes Involuntary Capitulation Odds   │
-                  └──────────────────────┬───────────────────────┘
-                                         │
-                                         ▼
-                  ┌──────────────────────────────────────────────┐
-                  │      MOTOR ACTUATOR (Deterministic Mesh)     │
-                  │   Sub-2.0s Multi-Account Pacing & Execution   │
-                  │   13 Invariant Firewalls • Zero Naked Trades │
-                  └──────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│               THE PHENOMENOLOGICAL CONSTITUTION PIPELINE                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ 1. INTENTIONAL HORIZON (Brentano / Husserl)                                 │
+│    Consciousness directed toward an object under an aspect.                 │
+│    Order Book Mapping: Delta between Intended Arc and Opposing Tape.        │
+│                                  │                                          │
+│                                  ▼                                          │
+│ 2. INTERNAL TIME-CONSCIOUSNESS (Husserl)                                    │
+│    Retention (Entry Anchor) -> Primal Impression (Tape) -> Protention       │
+│    Order Book Mapping: Protention Collapse via Failed Bounce Cycles.        │
+│                                  │                                          │
+│                                  ▼                                          │
+│ 3. PRAXICAL BREAKDOWN (Heidegger)                                           │
+│    Ready-to-Hand (Transparent Execution) -> Present-at-Hand (Paralysis)     │
+│    Order Book Mapping: Cognitive Freeze at Invalidation Shelves.            │
+│                                  │                                          │
+│                                  ▼                                          │
+│ 4. EMBODIED SOMATIC INVALIDATION (Merleau-Ponty)                            │
+│    The Lived Body (Leib) overrides cognitive strategy.                      │
+│    Order Book Mapping: Reflex Market-Sell Capitulation Cascades.            │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Law 1: Allostasis (Dynamic Setpoint Adaptation)
-* **The Biological Reality:** The autonomic nervous system does not maintain static homeostasis (a fixed heart rate or invariant body temperature). When encountering an acute predatory stressor, adrenaline and blood pressure elevate to survive the sprint; during metabolic rest, setpoints contract.
-* **The Sovereign Implementation:** The engine discards rigid, static profit targets. In low-metabolic regimes (Asian session / Hurst < 0.45), profit targets contract to **1.80R** with extended defensive breathing room. In high-adrenaline institutional regimes (London/NY overlap / Hurst > 0.55), targets expand to **2.80R to 3.20R** with aggressive stepped defense once structural displacement is established.
+### Pillar 1: Intentionality & The Intentional Arc (Brentano / Husserl)
+In classical phenomenology (Franz Brentano, Edmund Husserl), consciousness is inherently **intentional**—meaning consciousness is always *consciousness of something* directed toward an object under a specific aspect.
+* **The Classical Quant Fallacy:** Price prints at $4,175.20. Traditional quants log this as an objective scalar coordinate.
+* **The Phenomenological Reality:** A trader never encounters an objective scalar. They experience price through an **intentional horizon**:
+  - To the trapped long breakout buyer, $4,175.20 is experienced as a *mortal threat to margin and account survival*.
+  - To the aggressive institutional predator, $4,175.20 is experienced as an *acceleration threshold to trigger resting stop liquidity*.
+* **Computational Order Book Counterpart:** The architecture calculates the **Intentional Arc**—the widening divergence between what the trapped cohort intended the market to accomplish (e.g. breakout continuation above an Equal High shelf) and the obstinate intentional object now forcing itself upon their attention (unrelenting sell delta and absorption).
 
-### Law 2: Synaptic Myelination (Empirical Activation Resistance)
-* Execution archetypes in the Shadow Tournament Lab face dynamic resistance barriers. Strategies that demonstrate positive expectancy (e.g. Turtle Soup Liquidity Sweeps at +105.62R) become "myelinated"—lowering their activation threshold for automated fleet sizing. Decaying or high-friction patterns face escalating resistance until quarantined completely.
+### Pillar 2: Husserlian Internal Time-Consciousness (Retention, Primal Impression, Protention)
+Husserl's formal phenomenology of time-consciousness reveals that human experience is never a succession of discrete mathematical instants ("now-points"), but a continuous tripartite temporal continuum:
+1. **Retention:** The trailing immediate past that remains actively retained in the present consciousness (*"I bought 15 minutes ago at the high; that high is actively burning in my working memory"*).
+2. **Primal Impression:** The sensory present (*the live order book print bleeding lower*).
+3. **Protention:** The forward-looking anticipation generated by intentional consciousness (*"Price must bounce off VWAP / this order block within the next 2 bars"*).
 
-### Law 3: Persistent Homology (Topological Invariance Under Deformation)
-* An auction manifold deformed from $16,000 to $84,000 retains identical topological properties: Value Area Equilibrium -> Boundary Breach into Thin Liquidity -> Institutional Absorption Wick -> Violent Snapback to Point of Control. The engine evaluates invariant structural deformation rather than nominal currency units.
+When a market chops or trends adversely against a trapped cohort, **protention collapses**. Each failed relief bounce invalidates the forward-projected temporal horizon. When protention shatters completely, the trader can no longer construct a coherent future state, inducing acute temporal disorientation and panic liquidation:
+
+```
+[ Retention: Anchored Entry High ] ──> [ Primal Impression: Tape Bleed ] ──> [ Protention: Broken Expectation ]
+                                                                                         │
+                                                                           Husserlian Temporal Rupture
+                                                                                         │
+                                                                                 Forced Market Exit
+```
+
+### Pillar 3: Heideggerian Praxical Breakdown (Zuhandenheit to Vorhandenheit)
+In Martin Heidegger’s *Being and Time*, agents interact with the world through smooth, non-deliberative coping (**ready-to-hand** / *zuhanden*). A carpenter swinging a hammer does not contemplate the hammer; the tool is functionally transparent. Only when the hammer breaks does it suddenly become **present-at-hand** (*vorhanden*)—an obstinate, alien problem demanding disruptive conscious attention.
+* **In Live Continuous Auctions:** A profitable or tranquil position is transparent (*ready-to-hand*). The trader experiences zero cognitive friction; their thesis operates smoothly in the background.
+* **The Praxical Rupture:** When price breaches the structural invalidation shelf, the position breaks. The market ceases to be a smooth instrument of financial yield and morphs into a terrifying, unready-to-hand monstrosity. The trader experiences acute cognitive friction, narrative paralysis, and finally an involuntary motor reflex to sever the connection via a panic market-order liquidation.
+* **Computational Order Book Counterpart:** The system identifies the exact microstructural boundary where retail participants transition from automatic holding into **existential cognitive paralysis**.
+
+### Pillar 4: Merleau-Ponty: Embodied Cognition & Somatic Invalidation (The Lived Body / Leib)
+Maurice Merleau-Ponty demonstrated that subjective experience cannot be detached from biological embodiment. A trader under severe adverse excursion is not a Bayesian computing machine updating priors; they are an embodied biological organism (*Leib*) experiencing tachycardia, cortisol surges, and visual tunnel constriction.
+* Institutional algorithms and market makers do not trade against retail mathematical models; they trade against biological latency. Human motor reaction time spikes non-linearly under existential financial threat.
+* The liquidation cascade is not an intellectual decision—it is the point where **the biological substrate violently overrides cognitive strategy**, converting frozen hesitation into an involuntary rush of market orders.
+
+---
+
+### Formal Taxonomy: Structural Phenomenology to Microstructure Mapping
+
+| Phenomenological Dimension | Phenomenological Concept | Computational / Order Book Counterpart |
+| :--- | :--- | :--- |
+| **Noetic-Noematic Correlation** | How consciousness acts (*noesis*) upon its intended object (*noema*) | Mapping the trapped cohort's directional bias onto the current order book depth and CVD divergence |
+| **Temporal Horizon** | Retention, Primal Impression, Protention (Husserl) | The Capitulation Clock: time-decay of conviction, failed relief bounce cycles, shattered protentive expectation |
+| **Praxical Breakdown** | *Zuhandenheit* to *Vorhandenheit* (Heidegger) | Transition from passive trend-following to cognitive paralysis at the invalidation boundary |
+| **Affective Grounding** | The Lived Body / *Leib* (Merleau-Ponty) | Somatic pain saturation (POI >= 75.0), decision latency spikes, and involuntary reflex liquidation cascades |
 
 ---
 
