@@ -244,9 +244,9 @@ class AlphaSweepScanner(SMCScanner):
             
         is_trending = hurst > 0.55
         target_rr = getattr(Config, 'TARGET_RR', 3.0)
-        min_stop_pct = getattr(Config, 'MIN_STOP_PCT', {}).get(symbol, 0.003)
+        min_stop_pct = getattr(Config, 'MIN_STOP_PCT', {}).get(symbol, 0.006)
         min_stop_dist = c_close * min_stop_pct
-        buffer = max(atr_5m * 0.5, min_stop_dist * 0.5)
+        buffer = max(atr_5m * 0.8, min_stop_dist * 0.5)
         
         # Long Setup (Sweep of Support)
         for level in recent_lows:
@@ -912,9 +912,9 @@ class AlphaSweepScanner(SMCScanner):
 
             # ── UNIFIED MASTER VOLATILITY & MINIMUM STOP FLOOR ──
             # Enforces that EVERY trade type has sufficient breathing room outside market noise
-            min_stop_pct = getattr(Config, 'MIN_STOP_PCT', {}).get(symbol, 0.003)
+            min_stop_pct = getattr(Config, 'MIN_STOP_PCT', {}).get(symbol, 0.006)
             min_stop_dist = entry_price * min_stop_pct
-            min_atr_dist = atr_val * getattr(Config, 'MIN_STOP_LOSS_ATR', 1.8)
+            min_atr_dist = atr_val * getattr(Config, 'MIN_STOP_LOSS_ATR', 2.5)
             effective_min_stop = max(min_stop_dist, min_atr_dist)
 
             if stop_distance < effective_min_stop:
