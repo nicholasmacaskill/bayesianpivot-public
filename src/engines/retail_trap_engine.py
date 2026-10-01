@@ -195,30 +195,32 @@ class RetailStopTrapEngine:
             
             if wick_ratio >= 0.35 and has_absorption:
                 min_prior_low = float(np.min(prior_lows))
-                sl_price = float(curr_high + (atr_14 * 0.10))
-                risk = abs(sl_price - curr_close)
-                if risk > 0:
-                    tp_price = float(curr_close - (risk * 2.60))
-                    dissonance_mult = (curr_vol / vol_sma20) if vol_sma20 > 0 else 1.0
-                    return {
-                        "direction": "SHORT",
-                        "trap_type": "BULL_TRAP_EQH_SHELF_SWEEP",
-                        "pattern_type": "RETAIL_EQH_EQL_SHELF_TRAP",
-                        "breakout_level": max_prior_high,
-                        "retail_entry_zone": float(curr_high),
-                        "target_stop_pool": min_prior_low,
-                        "price": float(curr_close),
-                        "stop_loss": sl_price,
-                        "take_profit": tp_price,
-                        "target_rr": 2.60,
-                        "breathing_room_threshold": 1.40,
-                        "confidence": 9.2,
-                        "reasoning": (
-                            f"Retail baited into Double Top Breakout above ${max_prior_high:,.2f}. "
-                            f"Institutional iceberg absorbed breakout (Dissonance {dissonance_mult:.2f}x vol) "
-                            f"with {wick_ratio*100:.0f}% upper wick. Target 2.60R at ${tp_price:,.2f}."
-                        )
-                    }
+                # Refined Anti-Suffocation Invariant: 2.5x ATR minimum floor protects against broker spread
+                raw_risk = abs(curr_high - curr_close) + (atr_14 * 0.35)
+                min_stop_dist = max(atr_14 * 2.50, curr_close * 0.0050)
+                risk = max(raw_risk, min_stop_dist)
+                sl_price = float(curr_close + risk)
+                tp_price = float(curr_close - (risk * 2.60))
+                dissonance_mult = (curr_vol / vol_sma20) if vol_sma20 > 0 else 1.0
+                return {
+                    "direction": "SHORT",
+                    "trap_type": "BULL_TRAP_EQH_SHELF_SWEEP",
+                    "pattern_type": "RETAIL_EQH_EQL_SHELF_TRAP",
+                    "breakout_level": max_prior_high,
+                    "retail_entry_zone": float(curr_high),
+                    "target_stop_pool": min_prior_low,
+                    "price": float(curr_close),
+                    "stop_loss": sl_price,
+                    "take_profit": tp_price,
+                    "target_rr": 2.60,
+                    "breathing_room_threshold": 1.40,
+                    "confidence": 9.2,
+                    "reasoning": (
+                        f"Retail baited into Double Top Breakout above ${max_prior_high:,.2f}. "
+                        f"Institutional iceberg absorbed breakout (Dissonance {dissonance_mult:.2f}x vol) "
+                        f"with {wick_ratio*100:.0f}% upper wick. Target 2.60R at ${tp_price:,.2f}."
+                    )
+                }
 
         # ── 2. BULLISH TRAP: SWEEP OF EQUAL LOWS (DOUBLE BOTTOM) ──
         min_prior_low = float(np.min(prior_lows))
@@ -233,30 +235,32 @@ class RetailStopTrapEngine:
             
             if wick_ratio >= 0.35 and has_absorption:
                 max_prior_high = float(np.max(prior_highs))
-                sl_price = float(curr_low - (atr_14 * 0.10))
-                risk = abs(curr_close - sl_price)
-                if risk > 0:
-                    tp_price = float(curr_close + (risk * 2.60))
-                    dissonance_mult = (curr_vol / vol_sma20) if vol_sma20 > 0 else 1.0
-                    return {
-                        "direction": "LONG",
-                        "trap_type": "BEAR_TRAP_EQL_SHELF_SWEEP",
-                        "pattern_type": "RETAIL_EQH_EQL_SHELF_TRAP",
-                        "breakout_level": min_prior_low,
-                        "retail_entry_zone": float(curr_low),
-                        "target_stop_pool": max_prior_high,
-                        "price": float(curr_close),
-                        "stop_loss": sl_price,
-                        "take_profit": tp_price,
-                        "target_rr": 2.60,
-                        "breathing_room_threshold": 1.40,
-                        "confidence": 9.2,
-                        "reasoning": (
-                            f"Retail baited into Double Bottom Breakdown below ${min_prior_low:,.2f}. "
-                            f"Institutional iceberg absorbed breakdown (Dissonance {dissonance_mult:.2f}x vol) "
-                            f"with {wick_ratio*100:.0f}% lower wick. Target 2.60R at ${tp_price:,.2f}."
-                        )
-                    }
+                # Refined Anti-Suffocation Invariant: 2.5x ATR minimum floor protects against broker spread
+                raw_risk = abs(curr_close - curr_low) + (atr_14 * 0.35)
+                min_stop_dist = max(atr_14 * 2.50, curr_close * 0.0050)
+                risk = max(raw_risk, min_stop_dist)
+                sl_price = float(curr_close - risk)
+                tp_price = float(curr_close + (risk * 2.60))
+                dissonance_mult = (curr_vol / vol_sma20) if vol_sma20 > 0 else 1.0
+                return {
+                    "direction": "LONG",
+                    "trap_type": "BEAR_TRAP_EQL_SHELF_SWEEP",
+                    "pattern_type": "RETAIL_EQH_EQL_SHELF_TRAP",
+                    "breakout_level": min_prior_low,
+                    "retail_entry_zone": float(curr_low),
+                    "target_stop_pool": max_prior_high,
+                    "price": float(curr_close),
+                    "stop_loss": sl_price,
+                    "take_profit": tp_price,
+                    "target_rr": 2.60,
+                    "breathing_room_threshold": 1.40,
+                    "confidence": 9.2,
+                    "reasoning": (
+                        f"Retail baited into Double Bottom Breakdown below ${min_prior_low:,.2f}. "
+                        f"Institutional iceberg absorbed breakdown (Dissonance {dissonance_mult:.2f}x vol) "
+                        f"with {wick_ratio*100:.0f}% lower wick. Target 2.60R at ${tp_price:,.2f}."
+                    )
+                }
 
         return None
 
