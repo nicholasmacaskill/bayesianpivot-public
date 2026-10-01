@@ -1,4 +1,4 @@
-# Engineering Dossier: Sovereign 3D Crucible Matrix: Multi-Axis Invariants & Mutation Meta-Testing
+# Engineering Dossier: Tri-Axial Invariant Crucible: Multi-Axis Invariants & Mutation Meta-Testing
 
 **Project:** BayesianPivot  
 **Discipline:** Autonomous SWE & Adversarial QA // Quantitative Engineering & Microstructure  
@@ -14,7 +14,7 @@
 ```json
 {
   "id": "sovereign-3d-crucible-matrix",
-  "title": "Sovereign 3D Crucible Matrix: Multi-Axis Invariants & Mutation Meta-Testing",
+  "title": "Tri-Axial Invariant Crucible: Multi-Axis Invariants & Mutation Meta-Testing",
   "subtitle": "tri-axial fault injection, 100% mutant kill rate, reboot-persistent risk rulers & zero-naked execution",
   "category": "technical",
   "project": "BayesianPivot",
@@ -22,7 +22,7 @@
   "summary": "Solves the fatal flaw of 1D mock testing in quantitative execution systems by establishing a 3-dimensional adversarial verification lattice (Mathematical Geometry, Temporal State Evolution, and Environmental Chaos). Integrates a 16-scenario chaos fuzzer (AQEC), an in-memory reboot persistence layer preserving the initial risk denominator across daemon restarts, an inverted bracket negative slippage shield, and a Tier 8 3D Mutation Meta-Tester that injects fatal code defects to guarantee 100% test fault-detection sensitivity in 0.002s.",
   "metrics": "invariant_checks: 53/53 passed // verification_latency: 8.58s // mutation_kill_rate: 100.0% (8/8) // naked_order_leakage: 0.00% // memory_amnesia_risk: $0.00 // contract_multiplier_accuracy: 100.0%",
   "technologies": [
-    "Sovereign 3D Crucible Matrix",
+    "Tri-Axial Invariant Crucible",
     "Autonomous Quant Execution Crucible (AQEC)",
     "3D Mutation Meta-Testing",
     "Fault-Injection Engine",
@@ -65,7 +65,7 @@
                     ┌──────────────────────────────────────────┴──────────────────────────────────────────┐
                     ▼                                                                                     ▼
   ┌───────────────────────────────────────────────────┐                                 ┌───────────────────────────────────────────────────┐
-  │         SOVEREIGN 3D CRUCIBLE MATRIX              │                                 │            PRODUCTION RUNTIME SENTRY              │
+  │         TRI-AXIAL INVARIANT CRUCIBLE              │                                 │            PRODUCTION RUNTIME SENTRY              │
   │         (Pre-Commit / Pre-Flight Gate)            │                                 │         (Continuous 60s Broker Auditor)           │
   ├───────────────────────────────────────────────────┤                                 ├───────────────────────────────────────────────────┤
   │ AXIS X: Mathematical Geometry                     │                                 │ • Direct TradeLocker REST Audit (/positions)      │
@@ -119,7 +119,7 @@ Further investigation into the trade lifecycle revealed an even more critical te
 
 ---
 
-## 4. The Sovereign 3D Execution Matrix
+## 4. The Tri-Axial Invariant Crucible Execution Matrix
 
 To permanently eliminate both the $6 risk anomaly and the state amnesia vector, the verification framework was reconstructed across three physical dimensions.
 
@@ -204,7 +204,7 @@ Tier 7 of the Matrix executes the **Autonomous Quant Execution Crucible (AQEC)**
 ### The Tautology Problem in Test Suites
 A test suite that always passes is a dangerous illusion. If a test harness relies on flawed assumptions or mock shortcuts, it can produce 100% green checkmarks while the production engine bleeds capital.
 
-To solve this, Tier 8 implements **Mutation Meta-Testing** (Fault-Injection Analysis). We deliberately inject 8 fatal, breaking defects (Mutants) into the production code and run the Sovereign 3D Crucible Matrix against the broken implementation. 
+To solve this, Tier 8 implements **Mutation Meta-Testing** (Fault-Injection Analysis). We deliberately inject 8 fatal, breaking defects (Mutants) into the production code and run the Tri-Axial Invariant Crucible against the broken implementation. 
 
 **The Objective:** The test matrix **must detect the corruption and kill every mutant immediately**. A surviving mutant indicates a blind spot in the harness.
 
@@ -250,13 +250,13 @@ MUTATION SENSITIVITY SCORE: 100.0% (Zero Vacuous Passes Detected in 0.002s)
 
 ## 7. Production Telemetry & Verification Scorecard
 
-The complete **Sovereign 3D Crucible Matrix** is executed prior to every code change and remote synchronization. 
+The complete **Tri-Axial Invariant Crucible** is executed prior to every code change and remote synchronization. 
 
 ### Terminal Verification Scorecard
 
 ```
 ╔══════════════════════════════════════════════════════════════════════════════════╗
-║              ⚡ SOVEREIGN 3D CRUCIBLE MATRIX // MULTI-AXIS ENGINE ⚡             ║
+║              ⚡ TRI-AXIAL INVARIANT CRUCIBLE // MULTI-AXIS ENGINE ⚡             ║
 ╚══════════════════════════════════════════════════════════════════════════════════╝
 
 ▶ Running TIER 1: BROKER & EXECUTION INVARIANTS (AGENTS.md)...
@@ -284,7 +284,7 @@ The complete **Sovereign 3D Crucible Matrix** is executed prior to every code ch
   └─ Status: ✔ PASSED (8/8) in 0.000s
 
 ──────────────────────────────────────────────────────────────────────────────────
-📊 SOVEREIGN 3D CRUCIBLE MATRIX SCORECARD:
+📊 TRI-AXIAL INVARIANT CRUCIBLE SCORECARD:
 ──────────────────────────────────────────────────────────────────────────────────
  ✅ TIER 1: BROKER & EXECUTION INVARIANTS (AGENTS.md)       [4/4 passed] (5.528s)
  ✅ TIER 2: QUANTITATIVE PHYSICS & HURST INVARIANTS         [2/2 passed] (0.513s)
@@ -320,7 +320,7 @@ The complete **Sovereign 3D Crucible Matrix** is executed prior to every code ch
 
 ## 9. Conclusion & Operational Impact
 
-The **Sovereign 3D Crucible Matrix** eliminates the gap between theoretical quantitative models and production execution realities. 
+The **Tri-Axial Invariant Crucible** eliminates the gap between theoretical quantitative models and production execution realities. 
 
 By binding:
 1. Pure mathematical sizing formulas to physical asset multipliers,

@@ -31,7 +31,7 @@
     "Merleau-Ponty Somatic Invalidation",
     "Alfred Schütz Intersubjective Horizon",
     "Local MLX-LoRA Fine-Tuned Weights",
-    "Sovereign 3D Crucible Matrix"
+    "Tri-Axial Invariant Crucible"
   ],
   "featured": true,
   "date": "2026-10-01"
@@ -413,5 +413,5 @@ To verify the semantic accuracy of the Theory of Mind layer, live market tick da
 1. **System 1 Deterministic Microstructural Engine:** Extracts objective order book geometric primitives (Equal High/Low shelves, delta absorption, volume displacement) with sub-millisecond deterministic execution, passing sanitized microstate vectors to the inference layer.
 2. **System 2 Epistemic Theory of Mind Hub:** Dispatches microstate vectors to an on-device, privately fine-tuned Small Language Model (LoRA on Apple Silicon unified memory). Parameterizes the trapped counterparty's latent psychological state without introducing cloud API latency or narrative hallucinations.
 3. **The Shadow Proving Tournament:** Evaluates new execution policies (anti-suffocation stop expansion, capitulation maturity gates) in real-time forward simulation against live production streams with $0.00 capital risk before graduating to the live fleet.
-4. **Adversarial Invariant Verification:** Verified against the Sovereign 3D Crucible Matrix across 86 multi-axis invariants—guaranteeing deterministic stop-loss attachment on entry, zero-naked order leakage, and invariant risk denominators across runtime state mutations.
+4. **Adversarial Invariant Verification:** Verified against the Tri-Axial Invariant Crucible across 86 multi-axis invariants—guaranteeing deterministic stop-loss attachment on entry, zero-naked order leakage, and invariant risk denominators across runtime state mutations.
 5. **Continuous Sovereign Deployment:** Maintained in high-frequency dual-remote version control, preserving verifiable audit trails of every code mutation, backtest benchmark, and live execution telemetry.

@@ -1206,7 +1206,7 @@ To actively capitalize on news volatility, we built `NewsCatalystScanner`:
 Financial markets are continuous double auctions where no market participant ever trades raw objective scalar price. By fusing System 1 Deterministic Microstructural Invariants with System 2 Epistemic Theory of Mind inference, the architecture reconstructs the trapped counterparty's subjective intentional horizon, internal time-consciousness, and biological pain thresholds.
 
 ### 2. Protentive Entropy Decay & The Anti-Suffocation Execution Invariant
-Fuses deterministic microstructural invariants with amortized epistemic ToM inference and Husserlian Protentive Entropy decay. Backtested across 209,670 candles in the 2025 Crucible with +232.41 R net return.
+Fuses deterministic microstructural invariants with amortized epistemic ToM inference and Husserlian Protentive Entropy decay. Backtested across 209,670 candles in the 2025 Tri-Axial Invariant Crucible with +232.41 R net return.
 
 ---
 
