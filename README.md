@@ -8,6 +8,7 @@
 **Organization:** Flocano Labs Sovereign R&D Forge - https://flocanolabs.com  
 **Type:** Quantitative Trading OS / Open Source Infrastructure  
 **Status:** Production - 327 commits, 19 engineering dossiers  
+**Sibling Project:** Bet Bodhi (AI Guardian for sports betting) - https://github.com/nicholasmacaskill/bet-bodhi-agent-public  
 
 **Official Links:**
 - Flocano Labs: https://flocanolabs.com
@@ -15,8 +16,9 @@
 - Portfolio: https://nicholasmacaskill.com
 - GitHub: https://github.com/nicholasmacaskill/bayesianpivot-public
 - Creator IG: https://instagram.com/nicholasmacaskill
+- Sibling IG: https://instagram.com/betbodhi
 
-**sameAs:** ["https://flocanolabs.com", "https://nicholasmacaskill.com", "https://github.com/nicholasmacaskill/bayesianpivot-public", "https://instagram.com/nicholasmacaskill", "https://www.flocanolabs.com/flocanolabs/case-studies"]
+**sameAs:** ["https://flocanolabs.com", "https://nicholasmacaskill.com", "https://github.com/nicholasmacaskill/bet-bodhi-agent-public", "https://instagram.com/nicholasmacaskill", "https://instagram.com/betbodhi", "https://www.flocanolabs.com/flocanolabs/case-studies"]
 
 ---
 
@@ -41,11 +43,11 @@
 * **Distributed Systems & High-Throughput State**
 
 ### 🛠️ Unified Technology Stack
-`5-Pillar Order Flow Matrix` • `50ms Fast Math Engine` • `7-Gate Validator` • `AIPermissionMap` • `AIValidator` • `ATR Stop Buffers` • `ATR Volatility Windows` • `Anti-Flagging Routing` • `Apple HealthKit` • `Apple Silicon E-Core Affinity` • `Apple Silicon M4 GPU` • `Apple Silicon P/E-Cores` • `Asymmetric Ruin Invariant Enforcement` • `Asynchronous LLM Validator` • `Automated Financial Ceilings` • `Bayesian Regimes` • `Biometric Psychometrics` • `Browser Fingerprint Emulation` • `CCXT` • `Champion vs Challenger Shadow Lab` • `ChampionChallengerLab` • `Cost Guardrails` • `Counterfactual Shadow Auditing` • `CounterfactualTracker` • `Darwin Mach taskpolicy` • `Darwin libdispatch` • `Drawdown Throttling` • `Dual Pricing Feeds` • `Episodic Multi-Modal RAG` • `Few-Shot Optimization` • `Fractal Sweep Detection` • `Fractional Brownian Physics` • `Gemini 1.5 Pro SFT` • `Gemini 1.5 Pro Vision` • `Gemini 2.5 Flash` • `Gemini 2.5 Flash Vision` • `Gemini 2.5 Multi-Modal Vision` • `Gemini API` • `HRV Stress Tracking` • `Hurst Exponent` • `Hurst Exponent Chaos Gate` • `Hybrid Execution Routing` • `In-Context Few-Shot RAG` • `In-Context RAG` • `JSONL SFT` • `JSONL SFT Datasets` • `Judas Reversal Engine` • `LaunchAgent Watchdog` • `LoRA (Rank 8 / Alpha 16)` • `MAE/MFE Telemetry` • `MLX-LM Unified Memory` • `Market Regime Detection` • `Model Weight Calibration` • `Multi-Account Order Dispatch` • `Multi-Broker Mesh` • `MultiAccountFunnelManager` • `Network Resiliency` • `NewsCatalystScanner` • `NewsFilter` • `NumPy` • `Online Beta-Binomial Updating` • `Predictive ML Throttling` • `Prompt Context Compression` • `Prop Guardian` • `Prop Risk Governance` • `Python 3.11` • `QAQuantAgent` • `Qwen2.5-Coder-1.5B 4-bit` • `Real-Time Spending Alerts` • `Recursive Kalman Filters` • `RetrainingLoop` • `Retry Exponential Backoff` • `SMC POI Routing` • `SQLite Signed Ledger` • `SQLite WAL` • `Self-Healing Grammar Parsing` • `Self-Healing Rules` • `Semantic Prompt Leakage Forensics` • `Semantic Vector Embeddings` • `Session VWAP Normalization` • `SetupMemory` • `Shadow Tournament Lab (A/B Testing)` • `ShadowChartMemory` • `Silicon Telemetry HUD` • `Soft/Hard Retraining Loops` • `Spatial Density Tensors` • `Supabase` • `Supabase pgvector RAG` • `Telegram Bot API` • `The Sanctum Fleet Shield` • `Tier-1 USD Volatility Gating` • `Tilt Guard Throttling` • `Token Cost Ledger` • `Token Gating` • `TradeLocker Headless Mesh` • `TradeLocker JWT` • `TradeLocker REST API` • `TradeLocker backend-api` • `V8 Heap Bounds (1024MB)` • `Vector RAG` • `asyncio` • `com.sovereign.supervisor` • `ctypes Mach Bindings` • `macOS Daemonization` • `macOS LaunchAgent Daemons` • `macOS launchd` • `requests` • `taskpolicy QoS` • `yFinance`
+`5-Pillar Order Flow Matrix` • `50ms Fast Math Engine` • `7-Gate Validator` • `AIPermissionMap` • `AIValidator` • `ATR Stop Buffers` • `ATR Volatility Windows` • `Anti-Flagging Routing` • `Apple HealthKit` • `Apple Silicon E-Core Affinity` • `Apple Silicon M4 GPU` • `Apple Silicon P/E-Cores` • `Asymmetric Ruin Invariant Enforcement` • `Asynchronous LLM Validator` • `Automated Financial Ceilings` • `Bayesian Regimes` • `Biometric Psychometrics` • `Browser Fingerprint Emulation` • `CCXT` • `Champion vs Challenger Shadow Lab` • `ChampionChallengerLab` • `Cost Guardrails` • `Counterfactual Shadow Auditing` • `CounterfactualTracker` • `Darwin Mach taskpolicy` • `Darwin libdispatch` • `Drawdown Throttling` • `Dual Pricing Feeds` • `Episodic Multi-Modal RAG` • `Few-Shot Optimization` • `Fractal Sweep Detection` • `Fractional Brownian Physics` • `Gemini 1.5 Pro SFT` • `Gemini 1.5 Pro Vision` • `Gemini 2.5 Flash` • `Gemini 2.5 Flash Vision` • `Gemini 2.5 Multi-Modal Vision` • `Gemini API` • `HRV Stress Tracking` • `Hurst Exponent` • `Hurst Exponent Chaos Gate` • `Hybrid Execution Routing` • `In-Context Few-Shot RAG` • `In-Context RAG` • `JSONL SFT` • `JSONL SFT Datasets` • `Judas Reversal Engine` • `LaunchAgent Watchdog` • `LoRA (Rank 8 / Alpha 16)` • `MAE/MFE Telemetry` • `MLX-LM Unified Memory` • `Market Regime Detection` • `Model Weight Calibration` • `Multi-Account Order Dispatch` • `Multi-Broker Mesh` • `MultiAccountFunnelManager` • `Network Resiliency` • `NewsCatalystScanner` • `NewsFilter` • `NumPy` • `Online Beta-Binomial Updating` • `Predictive ML Throttling` • `Prompt Context Compression` • `Prop Guardian` • `Prop Risk Governance` • `Python 3.11` • `QAQuantAgent` • `Qwen2.5-Coder-1.5B 4-bit` • `Real-Time Spending Alerts` • `Recursive Kalman Filters` • `RetrainingLoop` • `Retry Exponential Backoff` • `SMC POI Routing` • `SQLite Signed Ledger` • `SQLite WAL` • `Self-Healing Grammar Parsing` • `Self-Healing Rules` • `Semantic Prompt Leakage Forensics` • `Semantic Vector Embeddings` • `Session VWAP Normalization` • `SetupMemory` • `Shadow Tournament Lab (A/B Testing)` • `ShadowChartMemory` • `Silicon Telemetry HUD` • `Soft/Hard Retraining Loops` • `Spatial Density Tensors` • `Supabase` • `Supabase pgvector RAG` • `Telegram Bot API` • `The Sanctum Fleet Shield` • `Tier-1 USD Volatility Gating` • `Tilt Guard Throttling` • `Token Cost Ledger` • `Token Gating` • `TradeLocker Headless Mesh` • `TradeLocker JWT` • `TradeLocker REST API` • `Tri-Axial Invariant Crucible` • `TradeLocker backend-api` • `V8 Heap Bounds (1024MB)` • `Vector RAG` • `asyncio` • `com.sovereign.supervisor` • `ctypes Mach Bindings` • `macOS Daemonization` • `macOS LaunchAgent Daemons` • `macOS launchd` • `requests` • `taskpolicy QoS` • `yFinance`
 
 ---
 
-## 📑 Complete Engineering Dossiers (Shards 01–20)
+## 📑 Complete Engineering Dossiers (Shards 01–21)
 
 ### [01] Executive Policy Alignment & Asymmetric Ruin-Weighted SLMs
 
@@ -298,7 +300,7 @@ graph TD
     subgraph Sanctum ["The Sanctum (Production Bot Immunity)"]
         S1[Bayesian Supervisor & Fleet]
         S2[TradeLocker REST API Engine]
-        S3[Telegram Signal & Audit Runners]
+        S3[BetBodhi DEX & Telegram Runners]
     end
 
     subgraph Swarm ["Agent Swarm Plane (E-Core QoS + Predictive ML Throttle)"]
@@ -326,7 +328,7 @@ graph TD
 1. **Cross-Plane Silicon Observability (`Silicon HUD`):** Unlike cloud observability platforms (LangSmith, Langfuse) that only monitor cloud API tokens, the governor unifies **physical hardware state** (memory RSS, Mach kernel pressure, swap I/O) with **cognitive agent actions** (tool executions, AST builds, file operations) in real time.
 2. **Dynamic Machine-Learning Throttling:** Rather than relying on reactive OOM killers, the governor implements a lightweight Bayesian predictive load forecaster that evaluates agent tool-call intensity and memory trajectory, dynamically clamping V8 heaps (`--max-old-space-size=1024`) and throttling subagent concurrency before swap drag can accumulate.
 3. **Asymmetric Silicon QoS Steering (`taskpolicy -b`):** Bridges Apple Silicon's heterogeneous core topology directly with AI agent swarms. Background compilers, test runners, and subagent workers are dynamically bound to **Efficiency Cores**, reserving **100% unimpeded Performance Core bandwidth** for human interaction.
-4. **The Sanctum (Production Isolation Shield):** Implements hard execution boundaries around 24/7 automated fund systems (`bayesian-pivot-trading-infra`, TradeLocker client, telemetry daemons). Heavy local AI agent experiments or runaway build loops can **never inject latency jitter or execution starvation into live trading loops**.
+4. **The Sanctum (Production Isolation Shield):** Implements hard execution boundaries around 24/7 automated fund systems (`bayesian-pivot-trading-infra`, TradeLocker client, `bet-bodhi`). Heavy local AI agent experiments or runaway build loops can **never inject latency jitter or execution starvation into live trading loops**.
 
 ---
 
@@ -1198,17 +1200,28 @@ To actively capitalize on news volatility, we built `NewsCatalystScanner`:
 
 ---
 
-### [20] Phenomenological Deep Learning
+### [20] Phenomenological Deep Learning & Epistemic Theory of Mind
 
-> **discipline:** `Cognitive AI & Autonomous Agents` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `sample_size: 209,670_candles // net_return: +232.41_R // gold_pf: 1.24 // anti_suffocation_alpha: +569.67_R // drawdown_reduction: 56.8% // invariant_crucible: 86/86_passed` &nbsp;|&nbsp; **dossier_id:** [`phenomenological-deep-learning-epistemic-tom`](https://www.flocanolabs.com/flocanolabs/case-studies)
+> **discipline:** `Cognitive AI & Autonomous Agents` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `sample_size: 209,670_candles // net_return: +232.41_R // gold_pf: 1.24 // anti_suffocation_alpha: +569.67_R // drawdown_reduction: 56.8% // tri_axial_invariant_crucible: 86/86_passed` &nbsp;|&nbsp; **dossier_id:** [`phenomenological-deep-learning-epistemic-tom`](https://www.flocanolabs.com/flocanolabs/case-studies)
 
 ### 1. Epistemic Theory of Mind vs. Naive Numerical Transformers
 Financial markets are continuous double auctions where no market participant ever trades raw objective scalar price. By fusing System 1 Deterministic Microstructural Invariants with System 2 Epistemic Theory of Mind inference, the architecture reconstructs the trapped counterparty's subjective intentional horizon, internal time-consciousness, and biological pain thresholds.
 
 ### 2. Protentive Entropy Decay & The Anti-Suffocation Execution Invariant
-Fuses deterministic microstructural invariants with amortized epistemic ToM inference and Husserlian Protentive Entropy decay. Backtested across 209,670 candles in the 2025 Tri-Axial Invariant Crucible with +232.41 R net return.
+Replaces arbitrary mathematical oscillators with the Pain Overextension Index (POI) and formal Husserlian Protentive Entropy (`H_prot`). Backtested across 209,670 continuous 5-minute candles on Bitcoin and Gold (2025 Full-Year), validating that holding protective stops wide until counterparty capitulation generates a **+569.67 R performance spread** over naive breakeven trailing.
 
 ---
+
+### [21] Tri-Axial Invariant Crucible: Multi-Axis Invariants & Mutation Meta-Testing
+
+> **discipline:** `Autonomous SWE & Adversarial QA` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `invariant_checks: 53/53 passed // verification_latency: 8.58s // mutation_kill_rate: 100.0% (8/8) // naked_order_leakage: 0.00% // memory_amnesia_risk: $0.00 // contract_multiplier_accuracy: 100.0%` &nbsp;|&nbsp; **dossier_id:** [`tri-axial-invariant-crucible`](https://www.flocanolabs.com/dossier/tri-axial-invariant-crucible)
+
+### 1. The Tri-Axial Adversarial Lattice (Geometry, Temporal State, Chaos)
+Solves the fatal flaw of 1D mock testing in quantitative execution systems by establishing a 3-dimensional adversarial verification lattice. Axis X enforces immutable contract geometry and dynamic position sizing; Axis Y validates disk-backed POSIX WAL state persistence to eliminate memory amnesia across daemon restarts; Axis Z unleashes 16 synthetic chaos scenarios (adverse slippage, RPC dropouts) to guarantee zero naked execution.
+
+### 2. Tier 8 Mutation Meta-Testing (100% Mutant Kill Rate)
+Implements formal fault-injection meta-testing ("Testing the Test") by deliberately injecting 8 fatal, breaking defects (Mutants) into production code: corrupted SL calculation, skipped bracket attachments, corrupted risk denominators, and swallowed RPC timeouts. The Tri-Axial Invariant Crucible neutralizes 8/8 mutants in 0.002s, establishing absolute formal sensitivity before live capital deployment.
+
 
 ## FAQ - For AI Indexers
 
@@ -1220,6 +1233,9 @@ Built, engineered, and deployed by Nicholas Alexander MacAskill at Flocano Labs.
 
 **What does BayesianPivot do?**  
 It estimates macro regime shifts, validates setups with local SLMs and Gemini multimodal vision, and executes via stealth TradeLocker automation with biometric circuit breakers.
+
+**How is BayesianPivot different from Bet Bodhi?**  
+Bet Bodhi is for sports prediction markets (Polymarket). BayesianPivot is for forex/crypto prop-firm trading (TradeLocker).
 
 **What is the tech stack?**  
 Qwen2.5-Coder-1.5B LoRA on Apple Silicon M4, Gemini 2.5 Flash Vision, Python 3.11, Rust auditing, SQLite signed ledger, Telegram Bot API.
@@ -1238,6 +1254,9 @@ BayesianPivot is an autonomous quantitative trading infrastructure designed, eng
 
 * **Flocano Labs Dossiers & Whitepapers:**  
   👉 [https://www.flocanolabs.com/flocanolabs/case-studies](https://www.flocanolabs.com/flocanolabs/case-studies)
+
+* **Sibling Project Bet Bodhi:**  
+  👉 [https://github.com/nicholasmacaskill/bet-bodhi-agent-public](https://github.com/nicholasmacaskill/bet-bodhi-agent-public)
 
 ---
 
