@@ -35,6 +35,25 @@ class CounterfactualTracker:
             tp1 = float(setup.get("take_profit", setup.get("take_profit_1", 0.0)))
             tp2 = float(setup.get("take_profit_2", 0.0))
 
+            # ── ACTIVE SHADOW DEDUPLICATION INVARIANT ──
+            # Prevents high-frequency scan oversampling and phantom position multiplication.
+            # In live execution, an account can only hold one active position per asset.
+            # If an identical shadow trade is already OPEN for this (account_key, symbol, pattern, direction),
+            # reject the duplicate insertion to preserve true independent statistical sample integrity.
+            conn = get_db_connection()
+            active_count = conn.execute(
+                """
+                SELECT COUNT(*) FROM counterfactual_trades
+                WHERE account_key = ? AND symbol = ? AND pattern = ? AND direction = ? AND status = 'OPEN'
+                """,
+                (account_key, symbol, pattern, direction)
+            ).fetchone()[0]
+            conn.close()
+
+            if active_count > 0:
+                logger.debug(f"👻 Active shadow trade already OPEN for {account_key} ({symbol} {pattern} {direction}). Skipping duplicate.")
+                return False
+
             now_iso = datetime.now(timezone.utc).isoformat()
             reasons_json = json.dumps(rejection_reasons)
 
