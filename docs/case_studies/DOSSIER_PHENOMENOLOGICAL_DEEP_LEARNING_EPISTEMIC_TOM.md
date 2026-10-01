@@ -280,6 +280,34 @@ Where:
 
 When `POI >= 75.0`, the system flags `is_overextended = True`, confirming that the move has exhausted its human fuel and an asymmetric mean-reversion reversal is primed.
 
+### The Protentive Entropy Decay Function & The Temporal Rupture Boundary
+
+While POI quantifies the cumulative build-up of adverse capital and somatic pressure, **Protentive Entropy** measures the formal, information-theoretic collapse of the trapped trader's forward temporal horizon (Husserl's Protention).
+
+1. **Projected Relief Amplitude:**
+   Let `Delta_P_expected(t)` denote the projected amplitude of an anticipated relief bounce back toward the trapped entry anchor price `P_entry`:
+   `Delta_P_expected(t) = abs(P_entry - P_current(t))`
+
+2. **Protentive Coherence Decay:**
+   With each successive failed relief bounce (where price tests the shelf and gets rejected by institutional iceberg absorption), the trader's forward anticipation experiences exponential decay:
+   `C_prot(t) = Delta_P_expected(t) * exp(-lambda_decay * k_failed_retests)`
+   *(where `lambda_decay = 0.45`, calibrated to continuous 5m auction order book data).*
+
+3. **Protentive Information Entropy:**
+   Let `P(State_i)` represent the subjective probability distribution over forward auction outcomes:
+   * `State 1`: Breakout Continuation / Rescue
+   * `State 2`: Breakeven Scratch
+   * `State 3`: Catastrophic Margin Invalidation
+
+   Protentive Entropy is defined as:
+   `H_prot(t) = - sum(P(State_i) * log2(P(State_i)))`
+
+4. **The Temporal Rupture Threshold:**
+   When `C_prot(t) <= 0.15 * ATR_14` and `H_prot(t) <= 0.20`:
+   * Protentive variance collapses to zero.
+   * The forward temporal horizon dissolves; the agent is incapable of mentally constructing a viable future state.
+   * **Husserlian Temporal Rupture occurs:** Holding collapses into involuntary reflex market-sell capitulation, feeding the exact liquidity pocket required by institutional buy orders.
+
 ---
 
 ## 5. Empirical Validation: Full-Year 2025 Crucible
