@@ -981,11 +981,15 @@ class AlphaSweepScanner(SMCScanner):
             try:
                 shadow_report = self.shadow_engine.run_shadow_audit(symbol, df_5m, setup['direction'])
                 shadow_score = float(shadow_report.get('shadow_score', 5.0))
-                logger.info(f"👻 Shadow Substitution Score for {symbol}: {shadow_score}/10 | CVD: {shadow_report.get('cvd_absorption', {}).get('details', 'N/A')} | VWAP Z-Score: {shadow_report.get('session_vwap', {}).get('z_score', 0):.2f}")
+                cvd_data = shadow_report.get('cvd_absorption', {})
+                setup['cvd_absorption'] = bool(cvd_data.get('active', False))
+                setup['cvd_details'] = str(cvd_data.get('details', 'N/A'))
+                logger.info(f"👻 Shadow Substitution Score for {symbol}: {shadow_score}/10 | CVD: {cvd_data.get('details', 'N/A')} | VWAP Z-Score: {shadow_report.get('session_vwap', {}).get('z_score', 0):.2f}")
             except Exception as shadow_err:
                 logger.warning(f"Shadow substitution audit error: {shadow_err}")
                 shadow_report = {}
                 shadow_score = 5.0
+                setup['cvd_absorption'] = False
 
             # ── INSTITUTIONAL LIQUIDITY HEATMAP AUDIT (HIGHEST WEIGHT CRITERIA) ──
             try:
@@ -1176,6 +1180,42 @@ class AlphaSweepScanner(SMCScanner):
             elif not is_macro_aligned and has_institutional_anchor:
                 logger.info(f"⚓ [INTERMARKET TIERED GATE] {symbol} {setup['direction']} is counter to {flow_leader_msg} but has verified SMT/CVD anchor. Authorized as probe.")
 
+            # ── 🛡️ MANDATORY CVD ICEBERG GATE FOR COUNTER-TREND FADES ──
+            # Empirically verified: Shorting into an active bull trend or longing into a bear trend
+            # without confirmed limit iceberg absorption produces a 22.3% win rate (-21.81R bleed).
+            # Fades against active persistent trends MUST possess verified CVD absorption.
+            asset_trend = str(setup.get('trend') or setup.get('bias') or '').upper()
+            setup_dir = str(setup.get('direction') or '').upper()
+            hurst_val = float(setup.get('hurst', 0.50))
+            regime_val = str(setup.get('regime') or '').upper()
+
+            is_active_trend = (hurst_val > 0.55) or ("TRENDING" in regime_val)
+            is_counter_to_asset_trend = (
+                ("BULL" in asset_trend and setup_dir in ["SHORT", "SELL"])
+                or ("BEAR" in asset_trend and setup_dir in ["LONG", "BUY"])
+            )
+
+            is_fade_archetype = any(
+                fp in pattern_type for fp in [
+                    "TURTLE_SOUP", "SNAPBACK", "RANGE_FADE", "REJECTION",
+                    "UPTHRUST", "SPRING", "TRAP", "VAL", "VAH"
+                ]
+            )
+
+            is_unanchored_counter_trend_fade = (
+                is_fade_archetype 
+                and is_active_trend 
+                and is_counter_to_asset_trend 
+                and (not has_institutional_anchor)
+            )
+            setup['is_unanchored_counter_trend_fade'] = is_unanchored_counter_trend_fade
+
+            if is_unanchored_counter_trend_fade:
+                logger.info(
+                    f"🛡️ [CVD COUNTER-TREND GATE] {symbol} {setup_dir} is fading an active {asset_trend} trend "
+                    f"(Hurst={hurst_val:.2f}) with zero confirmed CVD limit iceberg absorption. Quarantined to Shadow Lab."
+                )
+
             ai_validator_threshold = 8.5 if is_counter_regime else getattr(Config, 'AI_VALIDATOR_MIN_SCORE', 7.5)
             
             # ── PRE-COMPUTED ZERO-LATENCY AI RAG CONFLUENCE GATE ──
@@ -1298,6 +1338,7 @@ class AlphaSweepScanner(SMCScanner):
                 or is_symbol_shadow
                 or is_low_density_sweep  # Hard density gate: noise sweeps → shadow only
                 or is_unanchored_counter_flow  # Intermarket tiered gate: unanchored counter-flow → shadow only
+                or is_unanchored_counter_trend_fade  # Mandatory CVD gate: counter-trend fades without iceberg → shadow only
                 or is_local_lora_rejected  # Neural guardrail: MLX LoRA REJECTED → shadow only
             )
             is_shadow_strategy = is_archetype_shadow or (not passed_ai_validator)
@@ -1313,6 +1354,10 @@ class AlphaSweepScanner(SMCScanner):
                 tag_label = "shadow asset quarantine ($0 live risk)"
                 pattern_str = f"[👻 SHADOW LAB - {symbol}] {base_pattern_str}"
                 ai_reasoning = f"[👻 SHADOW LAB ({symbol} $0 RISK)] {pattern_type.replace('_', ' ')} of HTF level {setup['level']:.2f}. Hurst: {setup['hurst']:.3f} ({setup['regime']}). AI Score: {shadow_score:.1f}/10. Tracking shadow expectancy..."
+            elif is_unanchored_counter_trend_fade:
+                tag_label = "shadow trade, unanchored counter-trend fade"
+                pattern_str = f"[👻 SHADOW - UNANCHORED COUNTER-TREND FADE] {base_pattern_str}"
+                ai_reasoning = f"[👻 SHADOW LAB (COUNTER-TREND FADE)] {symbol} {setup['direction']} is fading an active {asset_trend} trend (Hurst: {hurst_val:.3f}) with zero confirmed CVD limit iceberg absorption. Quarantined to $0 live risk."
             elif is_unanchored_counter_flow:
                 tag_label = "shadow trade, unanchored counter-flow"
                 pattern_str = f"[👻 SHADOW - UNANCHORED COUNTER-FLOW] {base_pattern_str}"
