@@ -15,12 +15,12 @@
 ```json
 {
   "id": "phenomenological-deep-learning-epistemic-tom",
-  "title": "Phenomenological Deep Learning & Epistemic Theory of Mind",
-  "subtitle": "Recursive perspective-taking, protentive entropy decay & microstructural pain overextension at the liquidity edge",
+  "title": "Phenomenological Deep Learning",
+  "subtitle": "Recursive perspective-taking, protentive entropy decay & microstructural pain overextension",
   "category": "technical",
   "project": "BayesianPivot",
   "discipline": "Cognitive AI & Autonomous Agents",
-  "summary": "Decouples physical market mechanics from human cognitive illusion by fusing deterministic microstructural invariants (System 1) with amortized epistemic Theory of Mind inference (System 2). Replaces static oscillators with a formal Husserlian Protentive Entropy decay function and the Pain Overextension Index (POI) to pinpoint counterparty biological exhaustion. Validated across 209,670 continuous 5-minute candles in the 2025 Sovereign Crucible with +232.41 R net return and +569.67 R anti-suffocation alpha.",
+  "summary": "Fuses deterministic microstructural invariants with amortized epistemic ToM inference and Husserlian Protentive Entropy decay. Backtested across 209,670 candles in the 2025 Crucible with +232.41 R net return.",
   "metrics": "sample_size: 209,670_candles // net_return: +232.41_R // gold_pf: 1.24 // anti_suffocation_alpha: +569.67_R // drawdown_reduction: 56.8% // invariant_crucible: 86/86_passed",
   "technologies": [
     "Phenomenological Deep Learning",

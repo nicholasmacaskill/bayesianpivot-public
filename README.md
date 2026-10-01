@@ -1198,7 +1198,7 @@ To actively capitalize on news volatility, we built `NewsCatalystScanner`:
 
 ---
 
-### [20] Phenomenological Deep Learning & Epistemic Theory of Mind
+### [20] Phenomenological Deep Learning
 
 > **discipline:** `Cognitive AI & Autonomous Agents` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `sample_size: 209,670_candles // net_return: +232.41_R // gold_pf: 1.24 // anti_suffocation_alpha: +569.67_R // drawdown_reduction: 56.8% // invariant_crucible: 86/86_passed` &nbsp;|&nbsp; **dossier_id:** [`phenomenological-deep-learning-epistemic-tom`](https://www.flocanolabs.com/flocanolabs/case-studies)
 
@@ -1206,7 +1206,7 @@ To actively capitalize on news volatility, we built `NewsCatalystScanner`:
 Financial markets are continuous double auctions where no market participant ever trades raw objective scalar price. By fusing System 1 Deterministic Microstructural Invariants with System 2 Epistemic Theory of Mind inference, the architecture reconstructs the trapped counterparty's subjective intentional horizon, internal time-consciousness, and biological pain thresholds.
 
 ### 2. Protentive Entropy Decay & The Anti-Suffocation Execution Invariant
-Replaces arbitrary mathematical oscillators with the Pain Overextension Index (POI) and formal Husserlian Protentive Entropy (`H_prot`). Backtested across 209,670 continuous 5-minute candles on Bitcoin and Gold (2025 Full-Year), validating that holding protective stops wide until counterparty capitulation generates a **+569.67 R performance spread** over naive breakeven trailing.
+Fuses deterministic microstructural invariants with amortized epistemic ToM inference and Husserlian Protentive Entropy decay. Backtested across 209,670 candles in the 2025 Crucible with +232.41 R net return.
 
 ---
 
