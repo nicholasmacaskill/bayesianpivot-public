@@ -24,6 +24,23 @@ from src.core.config import Config
 logger = logging.getLogger("QualityGovernor")
 
 
+def _load_json_resilient(filename: str, data_dir: Optional[str] = None) -> dict:
+    if not data_dir:
+        data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data")
+    fp = os.path.join(data_dir, filename)
+    if not os.path.exists(fp):
+        return {}
+    for _ in range(3):
+        try:
+            with open(fp, "r") as f:
+                raw = f.read().strip()
+                if raw:
+                    return json.loads(raw)
+        except Exception:
+            time.sleep(0.05)
+    return {}
+
+
 class QualityGovernor:
     """
     Production Quality Loop & Invariant Governor.
@@ -247,24 +264,6 @@ class QualityGovernor:
                 return True, []  # Flat is clean
 
             # Load true frozen trade basis from persistent state (Ruler Invariant)
-            import json
-            import time
-            data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data")
-            
-            def _load_json_resilient(filename: str) -> dict:
-                fp = os.path.join(data_dir, filename)
-                if not os.path.exists(fp):
-                    return {}
-                for _ in range(3):
-                    try:
-                        with open(fp, "r") as f:
-                            raw = f.read().strip()
-                            if raw:
-                                return json.loads(raw)
-                    except Exception:
-                        time.sleep(0.05)
-                return {}
-
             watchdog_data = _load_json_resilient("watchdog_state.json")
             watchdog_sym_state = watchdog_data.get("symbol_state", {}) if isinstance(watchdog_data, dict) else {}
             alerted_trades = watchdog_data.get("alerted_trades", {}) if isinstance(watchdog_data, dict) else {}

@@ -30,6 +30,10 @@ class TestDynamicRiskSizing(unittest.TestCase):
         self.client = TradeLockerClient()
         self.client.helpers = [self.mock_helper]
 
+        self.cb_patcher = patch("src.core.execution_firewall.ExecutionFirewall.check_daily_loss_circuit_breaker", return_value=(True, "OK"))
+        self.cb_patcher.start()
+        self.addCleanup(self.cb_patcher.stop)
+
     @patch("src.core.execution_firewall.ExecutionFirewall.audit_trade_request", return_value=(True, "Approved"))
     @patch("src.core.execution_firewall.ExecutionFirewall.is_account_eligible", return_value=(True, "ELIGIBLE"))
     @patch.object(Config, 'ACCOUNT_RISK_CAPS', {"eval_user@upcomers.com": 50.0})

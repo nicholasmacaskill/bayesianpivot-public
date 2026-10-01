@@ -128,9 +128,10 @@ class TestQualityGovernor(unittest.TestCase):
             }
         ]
 
-        clean, issues = self.governor.audit_active_positions(tl_client=mock_tl)
-        self.assertFalse(clean)
-        self.assertTrue(any("BREAK-EVEN INVARIANT BREACH" in iss for iss in issues))
+        with patch("src.core.quality_governor._load_json_resilient", return_value={}):
+            clean, issues = self.governor.audit_active_positions(tl_client=mock_tl)
+            self.assertFalse(clean)
+            self.assertTrue(any("BREAK-EVEN INVARIANT BREACH" in iss for iss in issues))
 
     def test_contract_size_invariants_across_all_asset_classes(self):
         """Verify Config.get_contract_size returns correct multiplier for all asset types."""

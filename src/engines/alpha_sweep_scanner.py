@@ -1704,11 +1704,14 @@ class AlphaSweepScanner(SMCScanner):
                 if entry_price <= 0:
                     continue
 
-                initial_r_dist = cached_r_dist if cached_r_dist > 0 else abs(entry_price - current_sl)
-                # Plausible stop floor: if SL has already trailed or is uninitialized, fall back to minimum ATR stop distance
-                min_stop_pct = Config.MIN_STOP_PCT.get(symbol, 0.003)
-                if initial_r_dist < (entry_price * min_stop_pct * 0.5):
-                    initial_r_dist = entry_price * min_stop_pct
+                if cached_r_dist > 0:
+                    initial_r_dist = cached_r_dist
+                else:
+                    initial_r_dist = abs(entry_price - current_sl)
+                    # Plausible stop floor: if SL has already trailed or is uninitialized, fall back to minimum ATR stop distance
+                    min_stop_pct = Config.MIN_STOP_PCT.get(symbol, 0.003)
+                    if initial_r_dist < (entry_price * min_stop_pct * 0.5):
+                        initial_r_dist = entry_price * min_stop_pct
 
                 # Fetch live mark price with symbol normalization & broker fallback
                 fetch_sym = symbol

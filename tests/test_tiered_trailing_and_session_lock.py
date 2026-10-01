@@ -16,8 +16,18 @@ class TestTieredTrailingAndSessionLock(unittest.TestCase):
         self.scanner.tl = MagicMock()
         self.scanner.fetch_data = MagicMock()
         self.scanner._load_active_trade_brackets = MagicMock(return_value={})
-        self.scanner._save_active_trade_brackets = MagicMock()
-        self.scanner._active_trade_brackets = {}
+        self.scanner._active_trade_brackets = {
+            'BTCUSD': {
+                'symbol': 'BTC/USD',
+                'side': 'sell',
+                'entry_price': 77725.0,
+                'stop_loss': 77925.0,
+                'take_profit': 77000.0,
+                'initial_r_dist': 200.0,
+                'session': 'LONDON_KILLZONE',
+                'tier': 0
+            }
+        }
         self.scanner._position_tiers = {}
 
     def test_modify_position_bracket_url_contains_account_id(self):

@@ -12,6 +12,10 @@ class TestMultiAccountFunnel(unittest.TestCase):
         init_db()
         self.manager = MultiAccountFunnelManager()
         self.tracker = CounterfactualTracker()
+        conn = get_db_connection()
+        conn.execute("DELETE FROM counterfactual_trades WHERE account_key = 'ACCOUNT_A'")
+        conn.commit()
+        conn.close()
 
     def test_profile_initialization(self):
         self.assertEqual(len(self.manager.profiles), 9)

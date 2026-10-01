@@ -56,6 +56,7 @@ class TestHardenedArchitecture(unittest.TestCase):
 
         with patch("src.core.execution_firewall.ExecutionFirewall.audit_trade_request", return_value=(True, "Approved")), \
              patch("src.core.execution_firewall.ExecutionFirewall.is_account_eligible", return_value=(True, "ELIGIBLE")), \
+             patch("src.core.execution_firewall.ExecutionFirewall.check_daily_loss_circuit_breaker", return_value=(True, "OK")), \
              patch.object(Config, 'ACCOUNT_RISK_CAPS', {"s79qv3xetj@upcomers.com": 25.0}), \
              patch("builtins.open", unittest.mock.mock_open(read_data='{"date": "2099-01-01", "setups_fired": 0}')):
                 res = client.execute_trade_across_all_accounts(
