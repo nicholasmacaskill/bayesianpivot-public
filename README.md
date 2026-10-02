@@ -51,6 +51,10 @@
 
 ### [01] Executive Policy Alignment & Asymmetric Ruin-Weighted SLMs
 
+<p align="center">
+  <img src="README_images/dossiers/slide-06-dossier-slm-01.png" alt="BayesianPivot — Continuous Expectancy SLM (Dossier SLM-01)" width="720" />
+</p>
+
 > **discipline:** `Quantitative Engineering & Microstructure` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `validation_loss: 0.059 (-96.9%) // local_inference_latency: 450ms // ram_footprint: 638 MB // disk_swap: 0 bytes // shadow_capital_risk: $0.00` &nbsp;|&nbsp; **dossier_id:** [`continuous-expectancy-slm-orderflow-matrix`](https://www.flocanolabs.com/flocanolabs/case-studies)
 
 ### 1. The Core Thesis: Why Naive LLMs Fail at Market Microstructure
@@ -345,6 +349,10 @@ graph TD
 
 ### [03] Deep Darwin Systems Architecture for Real-Time AI Agents
 
+<p align="center">
+  <img src="README_images/dossiers/slide-07-dossier-dd-01.png" alt="BayesianPivot — Deep Darwin Systems Architecture (Dossier DD-01)" width="720" />
+</p>
+
 > **discipline:** `Cognitive AI & Multi-Agent Swarms` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `execution_latency: <0.2ms // memory_pressure_governor: active // e_core_affinity: 100% // toxic_quarantine_saved: $26,900.00 // net_realized_alpha: +$7,001.61` &nbsp;|&nbsp; **dossier_id:** [`deep-darwin-systems-architecture-real-time-ai`](https://www.flocanolabs.com/flocanolabs/case-studies)
 
 ### 1. Executive Abstract
@@ -446,7 +454,7 @@ rho(p) = , sum_{i=1}^{N} w_i * , exp( -{(p - p_i)^2}{2, sigma_{ATR}^2} ) * (1 + 
 ```
 
 
-where , sigma_{ATR} is the 20-period Average True Range, p_i is historical fractal pivot i, and beta = 0.25 weights multi-touch liquidity clusters.
+where , sigma_{ATR} is the 20-period Average True Range, p_i is historical fractal pivot i, and beta is a proprietary weighting parameter for multi-touch liquidity clusters.
 
 #### B. Episodic Vector Similarity Retrieval
 When a candidate sweep occurs at timestamp t, the visual geometry vector v_t in R^{d} is queried against historical ground-truth precedents in episodic memory:
@@ -632,6 +640,10 @@ The integration of **ShadowChartMemory** transforms quantitative strategy execut
 
 ### [05] Non-Stationary Bayesian Invariance Mesh
 
+<p align="center">
+  <img src="README_images/dossiers/slide-08-dossier-bp-09.png" alt="BayesianPivot — Bayesian Invariance Mesh (Dossier BP-09)" width="720" />
+</p>
+
 > **discipline:** `Quantitative Engineering & Microstructure` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `architecture: bayesian_invariance_swarm // online_updating: <0.5ms // kalman_velocity: zero_lag // shadow_lab: 100+_nodes // prop_lockout: 5.0%_hard_ceiling` &nbsp;|&nbsp; **dossier_id:** [`bp-non-stationary-bayesian-invariance`](https://www.flocanolabs.com/flocanolabs/case-studies)
 
 ### 1. Executive Summary & Problem Formulation
@@ -762,6 +774,10 @@ In the sovereign cryptographic ledger (`signed_ledger`), high-conviction setups 
 ---
 
 ### [06] Distributed Multi-Agent Consensus Protocol (DMACP-07)
+
+<p align="center">
+  <img src="README_images/dossiers/slide-09-dossier-dmacp-07.png" alt="BayesianPivot — DMACP-07 Refractive Consensus Protocol" width="720" />
+</p>
 
 > **discipline:** `Cognitive AI & Multi-Agent Swarms` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `architecture: dmacp_07_mesh // regimes: hurst_adf_conditioned (h=0.423) // conviction: 9.0/10 // fleet_execution: 1.52_btc_short // realized: +$1,755.47_cash` &nbsp;|&nbsp; **dossier_id:** [`bp-dmacp-07-refractive-consensus`](https://www.flocanolabs.com/flocanolabs/case-studies)
 

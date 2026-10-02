@@ -152,7 +152,7 @@ Edmund Husserl and Alfred Schütz (the founder of the phenomenology of the socia
 | **Noetic-Noematic Correlation** | How consciousness acts (*noesis*) upon its intended object (*noema*) | Mapping the trapped cohort's directional bias onto the current order book depth and CVD divergence |
 | **Temporal Horizon** | Retention, Primal Impression, Protention (Husserl) | The Capitulation Clock: time-decay of conviction, failed relief bounce cycles, shattered protentive expectation |
 | **Praxical Breakdown** | *Zuhandenheit* to *Vorhandenheit* (Heidegger) | Transition from passive trend-following to cognitive paralysis at the invalidation boundary |
-| **Affective Grounding** | The Lived Body / *Leib* (Merleau-Ponty) | Somatic pain saturation (POI >= 75.0), decision latency spikes, and involuntary reflex liquidation cascades |
+| **Affective Grounding** | The Lived Body / *Leib* (Merleau-Ponty) | Somatic pain saturation past proprietary POI thresholds, decision latency spikes, and involuntary reflex liquidation cascades |
 | **Intersubjective Horizon** | Mutual Epistemic Trust (Alfred Schütz) | Evaporating order book liquidity depth, broken collective defense, and isolated panic liquidation cascades |
 
 ---
@@ -204,10 +204,10 @@ Human beings do not act rationally in continuous financial auctions; they execut
   * Let `Delta_P_expected(t)` be the projected relief bounce amplitude toward the trapped entry anchor.
   * Let `k` be the count of failed bounce retests.
   * Protentive Coherence decays exponentially:
-    `C_prot(t) = Delta_P_expected(t) * exp(-lambda_decay * k)` (with `lambda_decay = 0.45`).
+    `C_prot(t) = Delta_P_expected(t) * exp(-lambda_decay * k)` (where `lambda_decay` is a proprietary calibrated decay parameter).
   * Protentive Entropy across directional outcomes:
     `H_prot(t) = - sum(P(Bounce_i) * log2(P(Bounce_i)))`.
-  * **Temporal Rupture Condition:** When `C_prot(t) <= 0.15 * ATR_14` and `H_prot(t) <= 0.20`, protentive coherence reaches terminal collapse. The trader can no longer construct a viable mental future, triggering an immediate reflex liquidation cascade.
+  * **Temporal Rupture Condition:** When `C_prot(t) <= alpha_rupture * ATR_14` and `H_prot(t) <= H_threshold` (governed by proprietary temporal rupture thresholds), protentive coherence reaches terminal collapse. The trader can no longer construct a viable mental future, triggering an immediate reflex liquidation cascade.
 
 ### Pillar 2: The Dissonance Ratio (Wyckoff Effort vs. Result)
 Quantifies whether market participants are slamming headfirst into an invisible concrete wall:
@@ -216,18 +216,18 @@ Displacement = abs(Close - Open) / ATR_14
 Effort = Volume / Volume_SMA_20
 Dissonance = Effort / max(Displacement, 0.10)
 ```
-* High aggressive market volume (+500 BTC market buying) producing near-zero candle displacement (`Dissonance >= 15.0`) constitutes deterministic mathematical proof of institutional iceberg absorption.
+* High aggressive market volume (+500 BTC market buying) producing near-zero candle displacement (`Dissonance >= D_iceberg`, calibrated to proprietary absorption thresholds) constitutes deterministic mathematical proof of institutional iceberg absorption.
 
 ### Pillar 3: The Tri-State Auction Regime
 Classifies the session terrain into three execution postures:
-1. **State 1 (The Liquidation Trap):** Fade the rejection wick after an Equal High/Low sweep. Target the opposing trapped pool (2.60R). Hold stop loss loose (+1.40R) to let trapped retail thrash without clipping our position.
+1. **State 1 (The Liquidation Trap):** Fade the rejection wick after an Equal High/Low sweep. Target the opposing trapped pool (2.60R). Hold stop loss loose past initial noise to let trapped retail thrash without clipping our position.
 2. **State 2 (The Sovereign Expansion):** Trend continuation. Enter on Fair Value Gap (FVG) retests. Target 3.0R+ with aggressive stepped defense at +1.0R.
 3. **State 3 (The Auction Discovery):** Balanced two-way rotation. Stand down or micro-scalp Value Area Low to Value Area High.
 
 ### Pillar 4: The Anti-Suffocation Execution Policy
 * In biological organisms, death throes produce violent, erratic reflex twitches. Trapped traders average down and attempt **1 to 2 desperate relief bounces** back toward their entry before margin calls trigger.
 * **The Flaw of Standard Quants:** Algorithms that trail stops to breakeven at +1.0R get suffocated by the trapped herd's dying breath.
-* **The Anti-Suffocation Invariant:** In State 1 traps, the engine **holds the initial stop loss loose until +1.40R**, trailing only when the herd's capitulation is irreversible.
+* **The Anti-Suffocation Invariant:** In State 1 traps, the engine **holds the initial stop loss loose past standard retail noise (governed by proprietary anti-suffocation thresholds)**, trailing only when the herd's capitulation is irreversible.
 
 ---
 
@@ -280,7 +280,7 @@ Where the tri-axial factors are normalized along bounded non-linear response cur
 └─────────────────────┴─────────────────────────────────────┴─────────────────────────────────┘
 ```
 
-When `POI >= 75.0`, the system flags `is_overextended = True`, confirming that the move has exhausted its human fuel and an asymmetric mean-reversion reversal is primed.
+When `POI >= POI_threshold` (calibrated to proprietary market regime volatility), the system flags `is_overextended = True`, confirming that the move has exhausted its human fuel and an asymmetric mean-reversion reversal is primed.
 
 ### The Protentive Entropy Decay Function & The Temporal Rupture Boundary
 
@@ -293,7 +293,7 @@ While POI quantifies the cumulative build-up of adverse capital and somatic pres
 2. **Protentive Coherence Decay:**
    With each successive failed relief bounce (where price tests the shelf and gets rejected by institutional iceberg absorption), the trader's forward anticipation experiences exponential decay:
    `C_prot(t) = Delta_P_expected(t) * exp(-lambda_decay * k_failed_retests)`
-   *(where `lambda_decay = 0.45`, calibrated to continuous 5m auction order book data).*
+   *(where `lambda_decay` is a proprietary calibrated rate derived from continuous 5m auction order book data).*
 
 3. **Protentive Information Entropy:**
    Let `P(State_i)` represent the subjective probability distribution over forward auction outcomes:
@@ -305,7 +305,7 @@ While POI quantifies the cumulative build-up of adverse capital and somatic pres
    `H_prot(t) = - sum(P(State_i) * log2(P(State_i)))`
 
 4. **The Temporal Rupture Threshold:**
-   When `C_prot(t) <= 0.15 * ATR_14` and `H_prot(t) <= 0.20`:
+   When `C_prot(t) <= alpha_rupture * ATR_14` and `H_prot(t) <= H_threshold` (governed by proprietary temporal rupture thresholds):
    * Protentive variance collapses to zero.
    * The forward temporal horizon dissolves; the agent is incapable of mentally constructing a viable future state.
    * **Husserlian Temporal Rupture occurs:** Holding collapses into involuntary reflex market-sell capitulation, feeding the exact liquidity pocket required by institutional buy orders.
