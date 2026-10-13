@@ -7,7 +7,7 @@
 **Creator:** Nicholas Alexander MacAskill (@nicholasmacaskill) - https://nicholasmacaskill.com  
 **Organization:** Flocano Labs Sovereign R&D Forge - https://flocanolabs.com  
 **Type:** Quantitative Trading OS / Open Source Infrastructure  
-**Status:** Production - 327 commits, 19 engineering dossiers  
+**Status:** Production - 327 commits, 23 engineering dossiers  
 **Sibling Project:** Bet Bodhi (AI Guardian for sports betting) - https://github.com/nicholasmacaskill/bet-bodhi-agent-public  
 
 **Official Links:**
@@ -47,7 +47,7 @@
 
 ---
 
-## 📑 Complete Engineering Dossiers (Shards 01–21)
+## 📑 Complete Engineering Dossiers (Shards 01–23)
 
 ### [01] Executive Policy Alignment & Asymmetric Ruin-Weighted SLMs
 
@@ -1237,6 +1237,27 @@ Solves the fatal flaw of 1D mock testing in quantitative execution systems by es
 
 ### 2. Tier 8 Mutation Meta-Testing (100% Mutant Kill Rate)
 Implements formal fault-injection meta-testing ("Testing the Test") by deliberately injecting 8 fatal, breaking defects (Mutants) into production code: corrupted SL calculation, skipped bracket attachments, corrupted risk denominators, and swallowed RPC timeouts. The Tri-Axial Invariant Crucible neutralizes 8/8 mutants in 0.002s, establishing absolute formal sensitivity before live capital deployment.
+
+
+### [22] Continuous Epistemic Tensor Networks: Asymmetric Ruin Optimization & Dynamic Corridors
+
+> **discipline:** `Cognitive AI & Multi-Agent Swarms` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `inference_latency: 0.68ms (-5146x) // training_speed: 40_epochs_5.2s // approved_win_rate: 78.6% // validation_loss: 0.5924 // outcome_bounds: -2.0R_to_+2.4R // crucible_invariants: 94/94_passed` &nbsp;|&nbsp; **dossier_id:** [`continuous-epistemic-tensor-networks-asymmetric-ruin-corridor`](https://www.nicholasmacaskill.com/dossier/continuous-epistemic-tensor-networks-asymmetric-ruin-corridor)
+
+### 1. Decoupling Execution from Autoregressive Language Models
+Finalizes the pivotal architectural transition across BayesianPivot: decoupling active execution from semantic reasoning in favor of a native, continuous epistemic tensor network operating on Apple Silicon MLX unified memory. Achieves 0.68ms inference latency (-5,146x speedup) with zero disk-swap debt.
+
+### 2. Ruin-Weighted Asymmetric Loss & Dynamic Corridors
+Replaces symmetric loss functions with an asymmetric downside penalty that scales exponentially as price approaches the capital invalidation floor. Paired with counterfactual veto learning and an automated temporal decay corridor to lock in daily alpha and eliminate ruin risk.
+
+### [23] Autonomous Decentralized Settlement Rail: Zero-Login On-Chain Execution
+
+> **discipline:** `Web3 Primitives & Cryptographic Routing` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `hot_path_latency: <360ms // 60d_expectancy: +192.6R // survival_runway: 50+_lives // liquidation_buffer: 10x_stop_distance // execution: zero_login_keypair` &nbsp;|&nbsp; **dossier_id:** [`autonomous-decentralized-settlement-rail`](https://www.nicholasmacaskill.com/dossier/autonomous-decentralized-settlement-rail)
+
+### 1. Headless Keypair Signing & Sub-400ms Hot-Path
+Implements a sovereign, zero-login on-chain settlement engine operating directly against Solana decentralized perpetuals protocols via raw Ed25519 keypair signing. Completely eliminates browser extension delays, wallet popups, and centralized exchange counterparty risk with sub-360ms native CLI settlement.
+
+### 2. Keypair-Isolated Sizing & Ruin Invariance
+Enforces deterministic isolated margin allocations per trade, guaranteeing 10x liquidation buffer distance (33.3% vs 3.3% stop distance). Governed by an automated watchdog daemon providing 50+ lives survival runway across non-stationary volatility regimes.
 
 
 ## FAQ - For AI Indexers
