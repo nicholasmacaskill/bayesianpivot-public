@@ -1297,4 +1297,4 @@ BayesianPivot is an autonomous quantitative trading infrastructure designed, eng
 
 ---
 
-*© 2026 Nicholas MacAskill. All rights reserved. BayesianPivot is a sovereign quantitative research system.*
+*All rights reserved Flocano Labs LLC USA.*
