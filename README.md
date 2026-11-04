@@ -1262,7 +1262,7 @@ Enforces deterministic isolated margin allocations per trade, guaranteeing 10x l
 
 ### [24] Finite-Sample Fractal Calibration: Unbiasing Rescaled Range Mechanics in Live Auction Regimes
 
-> **discipline:** `Quantitative Econometrics & Statistical Mechanics` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `unbiased_drift_correction: +0.121_delta // sample_horizon: 26352_candles // win_rate: 62.0% // net_realized_alpha: +17.66R // profit_factor: 2.34 // london_open_win_rate: 92.9% // crucible_invariants: 153_of_153_passed` &nbsp;|&nbsp; **dossier_id:** [`finite-sample-fractal-calibration`](https://www.flocanolabs.com/dossier/finite-sample-fractal-calibration)
+> **discipline:** `Quantitative Engineering & Microstructure` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `unbiased_drift_correction: +0.121_delta // sample_horizon: 26352_candles // win_rate: 62.0% // net_realized_alpha: +17.66R // profit_factor: 2.34 // london_open_win_rate: 92.9% // crucible_invariants: 153_of_153_passed` &nbsp;|&nbsp; **dossier_id:** [`finite-sample-fractal-calibration`](https://www.flocanolabs.com/dossier/finite-sample-fractal-calibration)
 
 ### 1. Small-Sample Brownian Compression & The Asymptotic Fallacy
 Exposes the mathematical failure mode of classical Rescaled Range (R/S) Hurst exponent estimators on intraday operational horizons (N < 100 bars). Demonstrates how sample-mean centering mechanically compresses the cumulative deviation series into a tied-down Brownian bridge, artificially depressing reported Hurst exponents by 0.10 to 0.15 and blinding automated execution systems during explosive institutional trend expansions.
