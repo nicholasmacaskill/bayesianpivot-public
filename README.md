@@ -7,7 +7,7 @@
 **Creator:** Nicholas Alexander MacAskill (@nicholasmacaskill) - https://nicholasmacaskill.com  
 **Organization:** Flocano Labs Sovereign R&D Forge - https://flocanolabs.com  
 **Type:** Quantitative Trading OS / Open Source Infrastructure  
-**Status:** Production - 327 commits, 23 engineering dossiers  
+**Status:** Production - 327 commits, 26 engineering dossiers  
 **Sibling Project:** Bet Bodhi (AI Guardian for sports betting) - https://github.com/nicholasmacaskill/bet-bodhi-agent-public  
 
 **Official Links:**
@@ -18,7 +18,7 @@
 - Creator IG: https://instagram.com/nicholasmacaskill
 - Sibling IG: https://instagram.com/betbodhi
 
-**sameAs:** ["https://flocanolabs.com", "https://nicholasmacaskill.com", "https://github.com/nicholasmacaskill/bet-bodhi-agent-public", "https://instagram.com/nicholasmacaskill", "https://instagram.com/betbodhi", "https://www.flocanolabs.com/flocanolabs/case-studies"]
+**sameAs:** ["https://flocanolabs.com", "https://nicholasmacaskill.com", "https://softwareasglass.com", "https://github.com/nicholasmacaskill/software-as-glass-public", "https://github.com/nicholasmacaskill/bayesianpivot-public", "https://github.com/nicholasmacaskill/bet-bodhi-public", "https://github.com/nicholasmacaskill/verithra-public", "https://github.com/nicholasmacaskill/glassmetric-public", "https://github.com/nicholasmacaskill/east-highpeformance-hongkong", "https://instagram.com/nicholasmacaskill", "https://www.flocanolabs.com/flocanolabs/case-studies"]
 
 ---
 
@@ -47,7 +47,7 @@
 
 ---
 
-## 📑 Complete Engineering Dossiers (Shards 01–23)
+## 📑 Complete Engineering Dossiers (Shards 01–26)
 
 ### [01] Executive Policy Alignment & Asymmetric Ruin-Weighted SLMs
 
@@ -1258,6 +1258,37 @@ Implements a sovereign, zero-login on-chain settlement engine operating directly
 
 ### 2. Keypair-Isolated Sizing & Ruin Invariance
 Enforces deterministic isolated margin allocations per trade, guaranteeing 10x liquidation buffer distance (33.3% vs 3.3% stop distance). Governed by an automated watchdog daemon providing 50+ lives survival runway across non-stationary volatility regimes.
+
+
+### [24] Finite-Sample Fractal Calibration: Unbiasing Rescaled Range Mechanics in Live Auction Regimes
+
+> **discipline:** `Quantitative Econometrics & Statistical Mechanics` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `unbiased_drift_correction: +0.121_delta // sample_horizon: 26352_candles // win_rate: 62.0% // net_realized_alpha: +17.66R // profit_factor: 2.34 // london_open_win_rate: 92.9% // crucible_invariants: 153_of_153_passed` &nbsp;|&nbsp; **dossier_id:** [`finite-sample-fractal-calibration`](https://www.flocanolabs.com/dossier/finite-sample-fractal-calibration)
+
+### 1. Small-Sample Brownian Compression & The Asymptotic Fallacy
+Exposes the mathematical failure mode of classical Rescaled Range (R/S) Hurst exponent estimators on intraday operational horizons (N < 100 bars). Demonstrates how sample-mean centering mechanically compresses the cumulative deviation series into a tied-down Brownian bridge, artificially depressing reported Hurst exponents by 0.10 to 0.15 and blinding automated execution systems during explosive institutional trend expansions.
+
+### 2. Analytical Anis-Lloyd Correction & 26,352-Bar Continuous Walk-Forward Crucible
+Implements the first-principles analytical finite-sample correction derived by A.A. Anis and E.H. Lloyd (1976), restoring asymptotic mathematical validity to high-frequency continuous data. Validated through the VERITHRA-TC continuous walk-forward crucible across 26,352 5-minute candles (90 calendar days) under strict single-asset concurrency, achieving a 62.0% fleet win rate (+17.66R net alpha, 2.34 profit factor, -3.50R max drawdown) and a 92.9% win rate during London Open institutional liquidity sweeps.
+
+### [25] Session Opportunity Capacity Bounds: Pre-Execution Neural Gating & Counterfactual Drawdown Defense
+
+> **discipline:** `Cognitive AI & Multi-Agent Swarms` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `empirical_dataset: 12057_vetoed_setups // capital_defended: 7322R_avoided_loss // veto_specificity: 60.7%_loss_interception // inference_latency: 0.12ms // crucible_score: 135_of_135_passed // learning_paradigm: online_continuous_adaptation` &nbsp;|&nbsp; **dossier_id:** [`session-opportunity-capacity-bounds`](https://www.flocanolabs.com/dossier/session-opportunity-capacity-bounds)
+
+### 1. Non-Ergodic Opportunity Capacity Dynamics
+Formalizes intraday session opportunity capacity as a finite, non-ergodic statistical resource. Replaces arbitrary static position limits with continuous categorical neural manifolds that model real-time volatility exhaustion, extreme-value range expansion, and adverse liquidity shifts before capital commitment.
+
+### 2. Online Manifold Optimization & Shadow Lab Attribution
+Employs an online backpropagation loop running on Apple Silicon unified memory with 0.12ms native vectorized inference. Validated against 12,057 historical veto decisions, proving 7,322R in avoided toxic drawdown, a 60.7% loss-interception specificity, and 100% pass certification across 14 tiers of the Tri-Axial Invariant Crucible.
+
+### [26] Regime-Driven Thermodynamic Liquidity Routing: Continuous-Time Bifurcations & Multi-Venue Fleet Settlement
+
+> **discipline:** `Quantitative Engineering & Microstructure` // **type:** `technical` &nbsp;|&nbsp; **telemetry:** `regime_audit: 1421_hourly_bars // macro_split: 50.11%_trend_49.89%_range // tensor_inference: 0.79ms_metal // crucible_score: 135_of_135_passed // defense_alpha: +50.33R // fleet_pacing: sub_2.0s_dispatch` &nbsp;|&nbsp; **dossier_id:** [`regime-driven-thermodynamic-liquidity-routing`](https://www.flocanolabs.com/dossier/regime-driven-thermodynamic-liquidity-routing)
+
+### 1. Continuous-Time Regime Bifurcations & 10D Epistemic Manifolds
+Establishes a continuous thermodynamic formulation of auction orderflow, mapping non-equilibrium price transitions across a 10-dimensional epistemic tensor manifold. Distinguishes structural liquidity vacuums from persistent trend expansions with sub-millisecond Metal GPU acceleration.
+
+### 2. Cross-Asset Correlation Mutexes & Fleet Defense Alpha
+Audited across 1,421 hourly bars under balanced 50.11% trend vs 49.89% range regimes. Implements cross-asset execution mutexes and dynamic fee-tier optimization, delivering +50.33R net defense alpha (+302% outperformance over static baselines) and sub-2.0s multi-venue fleet dispatch.
 
 
 ## FAQ - For AI Indexers
