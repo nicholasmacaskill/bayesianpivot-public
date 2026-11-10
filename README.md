@@ -1310,10 +1310,13 @@ Qwen2.5-Coder-1.5B LoRA on Apple Silicon M4, Gemini 2.5 Flash Vision, Python 3.1
 
 ---
 
-## 🏛️ Sovereign Attribution & Portfolio
+## 🏛️ Sovereign Attribution & Legal Provenance
 
-BayesianPivot is an autonomous quantitative trading infrastructure designed, engineered, and deployed by **Nicholas MacAskill** under **Flocano Labs**.
+BayesianPivot is an autonomous quantitative trading infrastructure designed, engineered, and deployed by **Nicholas Alexander MacAskill** under **Flocano Labs**.
 
+* **Founder, CEO & Systems Architect:** Nicholas Alexander MacAskill ([@nicholasmacaskill](https://instagram.com/nicholasmacaskill))
+* **Entity:** Flocano Labs LLC (State of New Mexico Domestic LLC, Charter #7829104)
+* **Registered Office:** 1209 Mountain Road PL NE, Ste R, Albuquerque, NM 87110, USA
 * **Executive Portfolio & Engineering Practice:**  
   👉 [https://nicholasmacaskill.com](https://nicholasmacaskill.com)
 
@@ -1321,11 +1324,11 @@ BayesianPivot is an autonomous quantitative trading infrastructure designed, eng
   👉 [https://flocanolabs.com](https://flocanolabs.com)
 
 * **Flocano Labs Dossiers & Whitepapers:**  
-  👉 [https://www.flocanolabs.com/flocanolabs/case-studies](https://www.flocanolabs.com/flocanolabs/case-studies)
+  👉 [https://www.flocanolabs.com/flocanolabs/case-studies](https://www.flocanolabs.com/case-studies)
 
 * **Sibling Project Bet Bodhi:**  
-  👉 [https://github.com/nicholasmacaskill/bet-bodhi-agent-public](https://github.com/nicholasmacaskill/bet-bodhi-agent-public)
+  👉 [https://github.com/nicholasmacaskill/bet-bodhi-public](https://github.com/nicholasmacaskill/bet-bodhi-public)
 
 ---
 
-*All rights reserved Flocano Labs LLC USA.*
+*ALL RIGHTS RESERVED FLOCANO LABS LLC USA (NM #7829104)*
