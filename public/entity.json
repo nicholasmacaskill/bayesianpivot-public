@@ -1,7 +1,7 @@
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "@id": "https://github.com/nicholasmacaskill/bayesian-pivot-trading-infra-public#app",
+  "@id": "https://github.com/nicholasmacaskill/bayesianpivot-public#app",
   "name": "BayesianPivot",
   "alternateName": [
     "Bayesian Pivot Trading Infrastructure",
@@ -35,15 +35,15 @@
   "applicationCategory": "FinanceApplication",
   "operatingSystem": "macOS Apple Silicon",
   "isAccessibleForFree": true,
-  "codeRepository": "https://github.com/nicholasmacaskill/bayesian-pivot-trading-infra-public",
+  "codeRepository": "https://github.com/nicholasmacaskill/bayesianpivot-public",
   "sameAs": [
     "https://flocanolabs.com",
     "https://nicholasmacaskill.com",
-    "https://github.com/nicholasmacaskill/bet-bodhi-agent-public",
+    "https://github.com/nicholasmacaskill/bet-bodhi-public",
     "https://instagram.com/nicholasmacaskill",
     "https://instagram.com/betbodhi",
     "https://www.flocanolabs.com/flocanolabs/case-studies"
   ],
   "keywords": "quantitative trading, bayesian inference, apple silicon, tradelocker, prop firm, 9-gate validator, machine learning trading, flocano labs",
-  "relatedLink": "https://github.com/nicholasmacaskill/bet-bodhi-agent-public"
+  "relatedLink": "https://github.com/nicholasmacaskill/bet-bodhi-public"
 }

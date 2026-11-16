@@ -8,7 +8,7 @@
 **Organization:** Flocano Labs Sovereign R&D Forge - https://flocanolabs.com  
 **Type:** Quantitative Trading OS / Open Source Infrastructure  
 **Status:** Production - 327 commits, 26 engineering dossiers  
-**Sibling Project:** Bet Bodhi (AI Guardian for sports betting) - https://github.com/nicholasmacaskill/bet-bodhi-agent-public  
+**Sibling Project:** Bet Bodhi (AI Guardian for sports betting) - https://github.com/nicholasmacaskill/bet-bodhi-public  
 
 **Official Links:**
 - Flocano Labs: https://flocanolabs.com
@@ -18,7 +18,7 @@
 - Creator IG: https://instagram.com/nicholasmacaskill
 - Sibling IG: https://instagram.com/betbodhi
 
-**sameAs:** ["https://flocanolabs.com", "https://nicholasmacaskill.com", "https://softwareasglass.com", "https://github.com/nicholasmacaskill/software-as-glass-public", "https://github.com/nicholasmacaskill/bayesianpivot-public", "https://github.com/nicholasmacaskill/bet-bodhi-public", "https://github.com/nicholasmacaskill/verithra-public", "https://github.com/nicholasmacaskill/glassmetric-public", "https://github.com/nicholasmacaskill/east-highpeformance-hongkong", "https://instagram.com/nicholasmacaskill", "https://www.flocanolabs.com/flocanolabs/case-studies"]
+**sameAs:** ["https://flocanolabs.com", "https://nicholasmacaskill.com", "https://softwareasglass.com", "https://github.com/nicholasmacaskill/software-as-glass-public", "https://github.com/nicholasmacaskill/bayesianpivot-public", "https://github.com/nicholasmacaskill/bet-bodhi-public", "https://github.com/nicholasmacaskill/verithra-public", "https://github.com/nicholasmacaskill/glassmetric-public", "https://github.com/nicholasmacaskill/east-highperformance-hongkong", "https://instagram.com/nicholasmacaskill", "https://www.flocanolabs.com/flocanolabs/case-studies"]
 
 ---
 
